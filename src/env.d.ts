@@ -16,5 +16,7 @@ interface ImportMeta {
 declare namespace App {
   interface Locals {
     lang: 'en' | 'pl';
+    supabase: import('@supabase/supabase-js').SupabaseClient;
+    session: import('@supabase/supabase-js').Session | null;
   }
 }

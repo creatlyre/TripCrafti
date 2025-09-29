@@ -1,45 +1,44 @@
+import { createSupabase } from '@/lib/supabase';
+import { sequence } from 'astro/middleware';
 import type { MiddlewareHandler } from 'astro';
-import type { Lang } from './lib/i18n';
 
-// Supported languages and cookie name
-const SUPPORTED: Lang[] = ['pl', 'en'];
-const COOKIE = 'tc_lang';
-
-export const onRequest: MiddlewareHandler = async (context, next) => {
-  // 1. Lang from explicit query parameter
+const langMiddleware: MiddlewareHandler = async (context, next) => {
   const url = new URL(context.request.url);
-  let lang = url.searchParams.get('lang') as Lang | null;
+  let lang = url.searchParams.get('lang') as 'pl' | 'en' | null;
 
-  // 2. Persisted cookie value
   if (!lang) {
-    const cookieVal = context.cookies.get(COOKIE)?.value as Lang | undefined;
-    if (cookieVal && SUPPORTED.includes(cookieVal)) lang = cookieVal;
+    const cookieVal = context.cookies.get('tc_lang')?.value as 'pl' | 'en' | undefined;
+    if (cookieVal && ['pl', 'en'].includes(cookieVal)) lang = cookieVal;
   }
 
-  // 3. Browser Accept-Language heuristic (first language, first 2 chars)
   if (!lang) {
     const header = context.request.headers.get('accept-language');
     if (header) {
       const preferred = header.split(',')[0]?.trim().toLowerCase().slice(0, 2);
-      if (SUPPORTED.includes(preferred as Lang)) lang = preferred as Lang;
+      if (['pl', 'en'].includes(preferred)) lang = preferred as 'pl' | 'en';
     }
   }
 
-  // 4. Default fallback
-  if (!lang || !SUPPORTED.includes(lang)) lang = 'pl';
+  if (!lang) lang = 'pl';
 
-  // Persist cookie if changed
-  const existing = context.cookies.get(COOKIE)?.value;
-  if (existing !== lang) {
-    context.cookies.set(COOKIE, lang, {
-      path: '/',
-      maxAge: 60 * 60 * 24 * 365,
-      sameSite: 'lax'
-    });
+  if (context.cookies.get('tc_lang')?.value !== lang) {
+    context.cookies.set('tc_lang', lang, { path: '/', maxAge: 31536000, sameSite: 'lax' });
   }
 
-  // Expose to routes
   context.locals.lang = lang;
+  return next();
+};
+
+const authMiddleware: MiddlewareHandler = async (context, next) => {
+  const supabase = createSupabase();
+  context.locals.supabase = supabase;
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  context.locals.session = session;
 
   return next();
 };
+
+export const onRequest = sequence(langMiddleware, authMiddleware);

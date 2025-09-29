@@ -57,9 +57,14 @@ export default function Login() {
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setError(null);
-      }
+      if (typeof window === 'undefined') return;
+      if (!session) return;
+      // Only redirect automatically if user is currently on /login
+      const current = new URL(window.location.href);
+  if (current.pathname !== '/login') return;
+      setError(null);
+      const lang = current.searchParams.get('lang') || 'pl';
+      window.location.replace('/app?lang=' + lang);
     });
     return () => listener.subscription.unsubscribe();
   }, [supabase]);
@@ -80,6 +85,9 @@ export default function Login() {
           >
             {loading ? 'Signing out…' : 'Sign Out'}
           </button>
+          <div className="mt-4 text-xs text-slate-500">
+            <a href="/app" className="underline hover:text-slate-300">Go to dashboard</a>
+          </div>
         </div>
       </div>
     );

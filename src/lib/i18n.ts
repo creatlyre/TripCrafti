@@ -23,6 +23,30 @@ interface Dictionary {
     back: string;
   };
   langSwitcher: { label: string; english: string; polish: string };
+  dashboard?: {
+    heading: string;
+    sub: string;
+    refresh: string;
+    create: {
+      heading: string;
+      description: string;
+      title: string;
+      destination: string;
+      budget: string;
+      start: string;
+      end: string;
+      submit: string;
+      requiredHint: string;
+    };
+    empty: string;
+    listLabel: string;
+    loading: string;
+    redirecting: string;
+    checking: string;
+    open: string;
+    dates: string;
+    budget: string;
+  };
 }
 
 const year = new Date().getFullYear();
@@ -54,6 +78,30 @@ export const dictionaries: Record<Lang, Dictionary> = {
       back: 'Powrót',
     },
     langSwitcher: { label: 'Język', english: 'Angielski', polish: 'Polski' },
+    dashboard: {
+      heading: 'Twoje Podróże',
+      sub: 'Planuj, organizuj i rozwijaj swoje wyjazdy.',
+      refresh: 'Odśwież',
+      create: {
+        heading: 'Utwórz nową podróż',
+        description: 'Zacznij od podstaw – później dodasz rezerwacje, wydatki i aktywności.',
+        title: 'Tytuł',
+        destination: 'Cel',
+        budget: 'Budżet (opcjonalnie)',
+        start: 'Data startu',
+        end: 'Data końca',
+        submit: 'Utwórz podróż',
+        requiredHint: 'Wszystkie pola oprócz budżetu są wymagane.'
+      },
+      empty: 'Brak podróży. Utwórz pierwszą powyżej.',
+      listLabel: 'Istniejące podróże',
+      loading: 'Ładowanie podróży…',
+      redirecting: 'Przekierowanie do logowania…',
+      checking: 'Sprawdzanie sesji…',
+      open: 'Otwórz',
+      dates: 'Daty',
+      budget: 'Budżet'
+    },
   },
   en: {
     hero: {
@@ -81,6 +129,30 @@ export const dictionaries: Record<Lang, Dictionary> = {
       back: 'Back',
     },
     langSwitcher: { label: 'Language', english: 'English', polish: 'Polish' },
+    dashboard: {
+      heading: 'Your Trips',
+      sub: 'Plan, organize and enrich your journeys.',
+      refresh: 'Refresh',
+      create: {
+        heading: 'Create a new trip',
+        description: 'Start with the basics. You can later add bookings, expenses and activities.',
+        title: 'Title',
+        destination: 'Destination',
+        budget: 'Budget (optional)',
+        start: 'Start date',
+        end: 'End date',
+        submit: 'Create Trip',
+        requiredHint: 'All fields except budget are required.'
+      },
+      empty: 'No trips yet. Create your first one above.',
+      listLabel: 'Existing trips',
+      loading: 'Loading trips…',
+      redirecting: 'Redirecting to login…',
+      checking: 'Checking session…',
+      open: 'Open',
+      dates: 'Dates',
+      budget: 'Budget'
+    },
   },
 };
 
