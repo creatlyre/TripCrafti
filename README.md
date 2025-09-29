@@ -92,3 +92,97 @@ Please follow the AI guidelines and coding practices defined in the AI configura
 ## License
 
 MIT
+
+## Internationalization (i18n)
+
+The project includes a very lightweight internationalization setup for Polish (`pl`) and English (`en`).
+
+How it works:
+
+1. A middleware (`src/middleware.ts`) runs on every request and determines the active language in this order:
+	- `?lang=` query parameter (e.g. `/?lang=en`)
+	- Cookie `tc_lang`
+	- First value from the `Accept-Language` request header (2‑letter code)
+	- Fallback: `pl`
+2. The resolved language is stored on `Astro.locals.lang` and consumed in pages/layouts.
+3. Dictionaries live in `src/lib/i18n.ts` – extend the `dictionaries` object to add more languages.
+4. Changing the language sets/updates the `tc_lang` cookie so subsequent navigations keep the choice.
+
+Adding a new language:
+
+1. Extend the `Lang` union and `dictionaries` map in `src/lib/i18n.ts`.
+2. Add the new language code to `SUPPORTED` in `src/middleware.ts`.
+3. Update any hard‑coded language conditionals (e.g. small inline ternaries) if needed.
+4. Restart the dev server if types are not picked up.
+
+Troubleshooting:
+
+- If `?lang=en` in the URL does not change content, ensure the middleware file is named `src/middleware.ts` (Astro only auto-loads that path) and that `export const prerender = false;` is set on pages that must stay dynamic.
+- Clear the `tc_lang` cookie or open a private window to test Accept-Language detection.
+
+## Authentication (Supabase)
+
+The project ships with a ready-to-use Supabase authentication setup (email + optional OAuth providers).
+
+### Files Added
+
+- `src/lib/supabase.ts` – central client created with `createClient()`
+- `src/components/auth/SupabaseProvider.tsx` – wraps the app in `SessionContextProvider`
+- `src/components/auth/Login.tsx` – React component rendering the Supabase Auth UI (with custom styling to match the existing slate / indigo aesthetic)
+- `src/pages/login.astro` – Uses the React component (`<AuthLogin client:load />`)
+
+### Environment Variables
+
+Add these to your `.env` (or copy `.env.example`):
+
+```
+PUBLIC_SUPABASE_URL=YOUR_PROJECT_URL
+PUBLIC_SUPABASE_ANON_KEY=YOUR_ANON_KEY
+```
+
+Only use the public (anon) key client-side. Never expose the `service_role` key in the browser or commit it to the repo.
+
+Legacy fallback variables `SUPABASE_URL` / `SUPABASE_KEY` are still supported if already present in your deployment environment.
+
+### Adding OAuth Providers
+
+In `src/components/auth/Login.tsx` adjust:
+
+```ts
+<Auth
+	providers={['google', 'github']}
+	...
+/>
+```
+
+Enable and configure each provider in your Supabase dashboard (Authentication → Providers) and add the required callback URL, typically:
+
+```
+http://localhost:3000
+```
+
+### Session Availability
+
+All React islands inside the layout can access the session via `useUser()` and the client via `useSupabaseClient()` thanks to the provider added in `src/layouts/Layout.astro`.
+
+### Redirects After Auth
+
+The Auth UI currently uses `redirectTo={window.location.origin}`. Adjust this if you want to send users somewhere else post-login (e.g. `/app`). For protected pages you can add server-side guards later using Astro middleware or server load functions.
+
+### Styling Overrides
+
+Custom appearance overrides live inside `Login.tsx` (gradient buttons, slate backgrounds). Adjust or remove if you prefer the default ThemeSupa styles.
+
+### Common Issues
+
+- Blank auth form: ensure the env vars are loaded (restart dev server after adding `.env`).
+- 400 errors on OAuth: verify provider callback URL matches exactly (no trailing slash mismatch).
+- Session not persisting: check that cookies are not blocked and that `persistSession: true` is set in `supabase.ts`.
+
+### React Version Compatibility
+
+`@supabase/auth-ui-react@0.4.x` currently declares React 18 in its dependencies. Running the project on React 19 caused a duplicated React copy and the runtime error `Cannot read properties of null (reading 'useState')` (invalid hooks dispatcher during SSR). The project pins React to 18.3.x to ensure a single reconciler instance. If/when the auth UI library updates to React 19 peer dependency only, you can upgrade React again. Until then keep React 18.
+
+Additionally the login island uses `client:only="react"` to avoid server-rendering the auth widget (which relies on browser-only APIs and hooks initialization). Remove that directive if you prefer SSR once upstream fully supports it.
+
+

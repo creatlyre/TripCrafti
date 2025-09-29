@@ -1,6 +1,19 @@
-# AI Rules for {{project-name}}
+# AI Rules for TripCraft
 
-{{project-description}}
+TripCraft is an advanced web application designed to revolutionize how users plan their travels by combining precise, manual management with the power of AI-driven assistants. The app is meant to be a comprehensive tool that supports the traveler at every stage—from initial inspiration, through detailed planning and budgeting, to the final packing process.
+
+Key Application Modules
+
+    1. Core Trip Planner (CRUD Core): This is the heart of the application. After logging in (authentication via Supabase), a user can create "Trips." Within each trip, they have full CRUD (Create, Read, Update, Delete) control over key elements such as:
+    - Bookings: Flights, hotels, cars.
+    - Expenses: Tracking costs and comparing them against a set budget.
+    - Activities: Manually adding planned attractions or meetings.
+
+    2. AI Itinerary Assistant (AI Feature): This module automates the creation of a travel itinerary. The user provides basic details about their trip (destination, dates, interests, budget), and the application, by communicating with an external Large Language Model (LLM), generates a detailed, day-by-day schedule in JSON format. The user can then accept this plan and modify it within the core planner.
+
+    3. AI Packing Assistant (AI Feature): This feature uses trip data (destination, duration, planned activities) to generate a personalized packing list. The AI is also tasked with categorizing items and helping to verify the list, ensuring the user doesn't forget anything.
+
+The overall goal is to create a single, cohesive tool that guides the user from "A to Z," minimizing organizational stress and allowing them to enjoy traveling more. The backend will be implemented using Astro Server Endpoints, which will handle business logic and communication with Supabase and external APIs
 
 ## Tech Stack
 
