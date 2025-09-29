@@ -1,5 +1,7 @@
 ---
 import "../styles/global.css";
+import SupabaseProvider from "../components/auth/SupabaseProvider.tsx";
+const lang = (Astro.locals?.lang as 'pl' | 'en') ?? 'pl';
 
 interface Props {
   title?: string;
@@ -9,7 +11,7 @@ const { title = "10x Astro Starter" } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={lang}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
@@ -18,7 +20,9 @@ const { title = "10x Astro Starter" } = Astro.props;
     <title>{title}</title>
   </head>
   <body>
-    <slot />
+    <SupabaseProvider client:load>
+      <slot />
+    </SupabaseProvider>
   </body>
 </html>
 
