@@ -1,29 +1,20 @@
 /**
- * import tyimport type { Trip, Itinerary as GeneratedItinerary, ItineraryPlan, ItineraryPreferences } from "@/types";e { Trip, Itinerary as GeneratedItinerary, ItineraryPlan, ItineraryPreferences } from "@/types";e { Trip, Itinerary as GeneratedItinerary, ItineraryPlan, ItineraryPreferences } from "@/types";e { Trip, Itinerary as GeneratedItinerary, ItineraryPlan, ItineraryPreferences } from "@/types"; Itinerary as GeneratedItinerary, ItineraryPlan } from "@/types";
-import { Button } from "./ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "./ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "./ui/dialog";
-import type { Lang } from "@/lib/i18n";
-import { getDictionary } from "@/lib/i18n";
-import { useAuth } from "@/components/hooks/useAuth";
-import { ItineraryPreferencesForm } from "./itinerary/ItineraryPreferencesForm";
-import { ItineraryView } from "./itinerary/ItineraryView";
-import type { ItineraryPreferences } from "@/types";ard
  * Authenticated user panel with improved UI/UX.
  * - Trip creation form is in a modal dialog.
  * - A new, actionable empty state guides new users.
  */
 import React, { useEffect, useState } from "react";
-import type { Trip, TripInput } from "@/types";
+import type { Trip, TripInput, GeneratedItinerary, Itinerary, ItineraryPreferences } from "@/types";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "./ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "./ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import type { Lang } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n";
 import { useAuth } from "@/components/hooks/useAuth";
-import { ItineraryPreferencesForm } from "./itinerary/ItineraryPreferencesForm";
-import { ItineraryView } from "./itinerary/ItineraryView";
-import type { GeneratedItinerary, Itinerary, ItineraryPlan, ItineraryPreferences } from "@/types";
+import { ItineraryPreferencesFormEnhanced as ItineraryPreferencesForm } from "./itinerary/ItineraryPreferencesFormEnhanced";
+import { ItineraryViewEnhanced as ItineraryView } from "./itinerary/ItineraryViewEnhanced";
+import { TripOverviewPanel } from "./TripOverviewPanel";
 
 const SuitcaseIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -121,14 +112,17 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
             setIsGenerating(false);
             clearInterval(poll);
             if (latestItinerary.status === 'FAILED') {
-              setItineraryError("Failed to generate itinerary.");
+              setItineraryError("Failed to generate itinerary. Check server logs for details.");
             }
             if (updatedTrip) setSelectedTrip(updatedTrip);
           }
         }, 5000);
       } else {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to start itinerary generation");
+        let body: any = {};
+        try { body = await res.json(); } catch {}
+        const messageParts = [body.error || 'Failed to start itinerary generation'];
+        if (body.details) messageParts.push('-', typeof body.details === 'string' ? body.details : JSON.stringify(body.details));
+        throw new Error(messageParts.join(' '));
       }
     } catch (e: any) {
       setItineraryError(e.message);
@@ -136,7 +130,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
     }
   }
 
-  async function handleSaveItinerary(itineraryId: string, plan: ItineraryPlan) {
+  async function handleSaveItinerary(itineraryId: string, plan: Itinerary) {
     try {
       const res = await fetch(`/api/itineraries/${itineraryId}`, {
         method: "PUT",
@@ -238,7 +232,9 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
       </header>
 
       <Dialog open={isCreateModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent>
+        <DialogContent
+          className="max-h-[90vh] overflow-y-auto"
+        >
           <DialogHeader>
             <DialogTitle>{dict.create.heading}</DialogTitle>
             <DialogDescription>{dict.create.description}</DialogDescription>
@@ -356,30 +352,192 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
       </Dialog>
 
       <Dialog open={!!selectedTrip} onOpenChange={(isOpen) => !isOpen && setSelectedTrip(null)}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent
+          className="max-w-7xl w-full max-h-[90vh] overflow-y-auto bg-slate-50/95 dark:bg-slate-900/95"
+        >
           {selectedTrip && (
             <>
-              <DialogHeader>
-                <DialogTitle>{selectedTrip.title}</DialogTitle>
-                <DialogDescription>{selectedTrip.destination}</DialogDescription>
-              </DialogHeader>
-              <div className="py-4">
-                {itineraryError && <div className="text-red-500 mb-4">{itineraryError}</div>}
-                {selectedTrip.itineraries && selectedTrip.itineraries.length > 0 && selectedTrip.itineraries[0].generated_plan_json ? (
-                  <ItineraryView
-                    itineraryId={selectedTrip.itineraries[0].id}
-                    initialPlan={selectedTrip.itineraries[0].generated_plan_json}
-                    onSave={handleSaveItinerary}
-                  />
-                ) : (
-                  <ItineraryPreferencesForm
-                    tripId={selectedTrip.id}
-                    onSubmit={handleGenerateItinerary}
-                    isGenerating={isGenerating}
-                    language={lang}
-                    tripBudget={selectedTrip.budget}
-                  />
-                )}
+              {/* Accessible dialog title (visually hidden to satisfy Radix accessibility requirement) */}
+              <DialogTitle className="sr-only">
+                {lang === "pl" ? "Szczegóły podróży:" : "Trip details:"} {selectedTrip.title}
+              </DialogTitle>
+              <div className="flex flex-col">
+                {/* Header with close button (sticky remains for scrollable parent) */}
+                <div className="flex items-center justify-between p-6 border-b bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{selectedTrip.title}</h2>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">{selectedTrip.destination}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedTrip(null)}
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Main content area */}
+                <div>
+                  <Tabs defaultValue="overview" className="flex flex-col">
+                    <TabsList className="mx-6 mt-4 w-fit bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200 dark:border-slate-700">
+                      <TabsTrigger value="overview">
+                        {lang === "pl" ? "Przegląd" : "Overview"}
+                      </TabsTrigger>
+                      <TabsTrigger value="itinerary">
+                        {lang === "pl" ? "Plan podróży" : "Itinerary"}
+                      </TabsTrigger>
+                      <TabsTrigger value="budget">
+                        {lang === "pl" ? "Budżet" : "Budget"}
+                      </TabsTrigger>
+                      <TabsTrigger value="packing">
+                        {lang === "pl" ? "Pakowanie" : "Packing"}
+                      </TabsTrigger>
+                      <TabsTrigger value="settings">
+                        {lang === "pl" ? "Ustawienia" : "Settings"}
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <div>
+                      <TabsContent value="overview" className="p-6 space-y-6 m-0">
+                        <TripOverviewPanel 
+                          trip={selectedTrip} 
+                          itineraries={selectedTrip.itineraries || []} 
+                          lang={lang} 
+                        />
+                      </TabsContent>
+
+                      <TabsContent value="itinerary" className="p-0 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800">
+                        <div className="p-6 space-y-4 pb-8">
+                          {itineraryError && (
+                            <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400">
+                              <div className="flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span className="font-medium">{lang === "pl" ? "Błąd" : "Error"}</span>
+                              </div>
+                              <p className="mt-1 text-sm">{itineraryError}</p>
+                            </div>
+                          )}
+
+                          {selectedTrip.itineraries && selectedTrip.itineraries.length > 0 && selectedTrip.itineraries[0].generated_plan_json ? (
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                {lang === "pl" ? "Plan podróży został wygenerowany" : "Itinerary has been generated"}
+                              </div>
+                              <ItineraryView
+                                itineraryId={selectedTrip.itineraries[0].id}
+                                initialPlan={selectedTrip.itineraries[0].generated_plan_json}
+                                onSave={handleSaveItinerary}
+                              />
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              <div className="text-center py-8 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                                  <svg className="w-8 h-8 text-slate-400 dark:text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                  </svg>
+                                </div>
+                                <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">
+                                  {lang === "pl" ? "Brak planu podróży" : "No itinerary yet"}
+                                </h3>
+                                <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">
+                                  {lang === "pl" 
+                                    ? "Wygeneruj inteligentny plan podróży na podstawie swoich preferencji i zainteresowań." 
+                                    : "Generate an intelligent travel plan based on your preferences and interests."}
+                                </p>
+                              </div>
+                              <div>
+                                <ItineraryPreferencesForm
+                                  tripId={selectedTrip.id}
+                                  onSubmit={handleGenerateItinerary}
+                                  isGenerating={isGenerating}
+                                  language={lang}
+                                  tripBudget={selectedTrip.budget}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="budget" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
+                        <div className="space-y-6">
+                          <div className="text-center py-12 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
+                              <svg className="w-8 h-8 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                              </svg>
+                            </div>
+                            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">
+                              {lang === "pl" ? "Zarządzanie budżetem" : "Budget Management"}
+                            </h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">
+                              {lang === "pl" 
+                                ? "Funkcja zarządzania budżetem będzie dostępna wkrótce." 
+                                : "Budget management features coming soon."}
+                            </p>
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="packing" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
+                        <div className="space-y-6">
+                          <div className="text-center py-12 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                              <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.5 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                              </svg>
+                            </div>
+                            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">
+                              {lang === "pl" ? "Asystent Pakowania" : "Packing Assistant"}
+                            </h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">
+                              {lang === "pl" 
+                                ? "Pozwól sztucznej inteligencji stworzyć idealną listę rzeczy do spakowania. Ta funkcja jest już w przygotowaniu." 
+                                : "Let AI create the perfect packing list for your trip. This feature is on its way."}
+                            </p>
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="settings" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
+                        <div className="space-y-6">
+                          <div className="text-center py-12 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                              <svg className="w-8 h-8 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                            </div>
+                            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">
+                              {lang === "pl" ? "Ustawienia podróży" : "Trip Settings"}
+                            </h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">
+                              {lang === "pl" 
+                                ? "Opcje edycji i zarządzania podróżą będą dostępne wkrótce." 
+                                : "Trip editing and management options coming soon."}
+                            </p>
+                          </div>
+                        </div>
+                      </TabsContent>
+                    </div>
+                  </Tabs>
+                </div>
               </div>
             </>
           )}

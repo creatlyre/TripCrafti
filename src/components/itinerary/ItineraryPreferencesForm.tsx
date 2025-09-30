@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import type { ItineraryPreferences } from "@/types";
 import { Input } from "../ui/input";
 
@@ -47,6 +48,7 @@ export const ItineraryPreferencesForm: React.FC<ItineraryPreferencesFormProps> =
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<PreferencesFormData>({
     resolver: zodResolver(preferencesSchema),
@@ -57,86 +59,163 @@ export const ItineraryPreferencesForm: React.FC<ItineraryPreferencesFormProps> =
     },
   });
 
-  const handleFormSubmit = (data: PreferencesFormData) => {
+  const onFormSubmit = (data: PreferencesFormData) => {
     onSubmit({ ...data, language });
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Wygeneruj inteligentny plan podróży</CardTitle>
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader className="text-center pb-6">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+          <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        </div>
+        <CardTitle className="text-xl">Wygeneruj inteligentny plan podróży</CardTitle>
+        <p className="text-muted-foreground text-sm">
+          Dostosuj preferencje, a my stworzymy dla Ciebie spersonalizowany plan aktywności
+        </p>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Zainteresowania</label>
-            <div className="mt-2 grid grid-cols-2 gap-4">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">
+          {/* Interests Section */}
+          <div className="space-y-4">
+            <label className="text-sm font-medium text-foreground">
+              Zainteresowania
+              <span className="text-xs text-muted-foreground ml-2">(wybierz co najmniej jedno)</span>
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {interests.map((interest) => (
-                <div key={interest} className="flex items-center">
+                <label
+                  key={interest}
+                  className="flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-muted-foreground/40 peer-checked:border-primary peer-checked:bg-primary/5"
+                >
                   <input
-                    id={interest}
                     type="checkbox"
                     value={interest}
                     {...register("interests")}
-                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="peer sr-only"
                   />
-                  <label htmlFor={interest} className="ml-3 block text-sm text-gray-900">
+                  <div className="w-4 h-4 rounded border-2 border-muted-foreground/40 peer-checked:bg-primary peer-checked:border-primary flex items-center justify-center transition-colors mr-3">
+                    <svg className="w-2.5 h-2.5 text-white opacity-0 peer-checked:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium peer-checked:text-primary">
                     {interest}
-                  </label>
-                </div>
+                  </span>
+                </label>
               ))}
             </div>
-            {errors.interests && <p className="mt-2 text-sm text-red-600">{errors.interests.message}</p>}
+            {errors.interests && (
+              <p className="text-sm text-red-500 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {errors.interests.message}
+              </p>
+            )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Styl podróży</label>
-            <div className="mt-2 space-y-2">
+          {/* Travel Style Section */}
+          <div className="space-y-4">
+            <label className="text-sm font-medium text-foreground">Styl podróży</label>
+            <div className="space-y-3">
               {travelStyleOptions.map((style) => (
-                <div key={style.value} className="flex items-center">
+                <label
+                  key={style.value}
+                  className="flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-muted-foreground/40 peer-checked:border-primary peer-checked:bg-primary/5"
+                >
                   <input
-                    id={style.value}
                     type="radio"
                     value={style.value}
                     {...register("travelStyle")}
-                    className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    className="peer sr-only"
                   />
-                  <label htmlFor={style.value} className="ml-3 block text-sm text-gray-900">
-                    {style.label}
-                  </label>
-                </div>
+                  <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/40 peer-checked:border-primary mr-3 flex items-center justify-center transition-colors">
+                    <div className="w-2 h-2 rounded-full bg-primary opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="font-medium text-sm peer-checked:text-primary">
+                      {style.label}
+                    </span>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {style.value === "Relaxed" && "Spokojne tempo, dużo czasu na relaks"}
+                      {style.value === "Balanced" && "Idealna równowaga między zwiedzaniem a odpoczynkiem"}
+                      {style.value === "Intense" && "Maksimum atrakcji, dynamiczne zwiedzanie"}
+                    </p>
+                  </div>
+                </label>
               ))}
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Budżet</label>
-            <div className="mt-2">
-              {tripBudget ? (
-                <Input
-                  type="text"
-                  readOnly
-                  value={`Zdefiniowany budżet: ${tripBudget}`}
-                  className="block w-full rounded-md border-gray-300 bg-gray-100 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                />
-              ) : (
-                <select
-                  {...register("budget")}
-                  className="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                >
-                  {budgetOptions.map((budget) => (
-                    <option key={budget.value} value={budget.value}>
+          {/* Budget Section */}
+          <div className="space-y-4">
+            <label className="text-sm font-medium text-foreground">Budżet</label>
+            {tripBudget ? (
+              <div className="p-4 rounded-lg bg-muted/50 border border-muted-foreground/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">Budżet został już zdefiniowany</p>
+                    <p className="text-xs text-muted-foreground">
+                      Kwota: <span className="font-medium">{tripBudget}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {budgetOptions.map((budget) => (
+                  <label
+                    key={budget.value}
+                    className="flex items-center p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-muted-foreground/40 peer-checked:border-primary peer-checked:bg-primary/5"
+                  >
+                    <input
+                      type="radio"
+                      value={budget.value}
+                      {...register("budget")}
+                      className="peer sr-only"
+                    />
+                    <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/40 peer-checked:border-primary mr-3 flex items-center justify-center transition-colors">
+                      <div className="w-2 h-2 rounded-full bg-primary opacity-0 peer-checked:opacity-100" />
+                    </div>
+                    <span className="font-medium text-sm peer-checked:text-primary">
                       {budget.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
-          <Button type="submit" disabled={isGenerating}>
-            {isGenerating ? "Generowanie..." : "Wygeneruj plan"}
-          </Button>
+          {/* Submit Button */}
+          <div className="pt-4">
+            <Button 
+              type="submit" 
+              disabled={isGenerating} 
+              className="w-full h-12 text-base font-medium"
+            >
+              {isGenerating ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Generowanie planu...
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Wygeneruj plan
+                </div>
+              )}
+            </Button>
+          </div>
         </form>
       </CardContent>
     </Card>
