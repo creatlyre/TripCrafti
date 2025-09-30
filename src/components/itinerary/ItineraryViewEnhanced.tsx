@@ -54,179 +54,164 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Itinerary Header */}
-      <div className="flex items-center justify-between p-4 bg-muted/20 rounded-lg border">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+            <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <div>
-            <h3 className="font-semibold text-lg">Plan podróży wygenerowany</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100">Plan podróży wygenerowany</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {plan.itinerary.length} dni · {plan.itinerary.reduce((total, day) => total + day.activities.length, 0)} aktywności
             </p>
           </div>
         </div>
-        <Badge variant="success" className="text-xs">
+        <Badge variant="outline" className="text-xs font-medium border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-300">
           Gotowe
         </Badge>
       </div>
 
       {/* Days Timeline */}
-      <div className="space-y-6">
+      <div className="space-y-8">
         {plan.itinerary.map((day, dayIndex) => (
-          <Card key={day.day} className="overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b border-primary/20">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                  {day.day}
-                </div>
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{day.date}</CardTitle>
-                  <p className="text-sm text-muted-foreground font-medium mt-1">{day.theme}</p>
-                </div>
+          <div key={day.day} className="relative pl-10">
+            {/* Timeline line */}
+            <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700"></div>
+            
+            {/* Day Header */}
+            <div className="flex items-center gap-4 mb-4">
+              <div className="absolute left-0 w-10 h-10 rounded-full bg-slate-800 text-slate-100 flex items-center justify-center font-bold z-10 border-4 border-slate-900">
+                {day.day}
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="space-y-0">
-                {day.activities.map((activity, activityIndex) => {
-                  const editId = `day-${dayIndex}-activity-${activityIndex}`;
-                  const isCurrentlyEditing = isEditing === editId;
+              <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg px-4 py-2 border border-slate-700">
+                <h3 className="text-lg font-semibold text-slate-100">{day.date}</h3>
+                <p className="text-sm text-slate-400 font-medium">{day.theme}</p>
+              </div>
+            </div>
 
-                  return (
-                    <div key={activityIndex} className={`p-6 border-b last:border-b-0 transition-all duration-200 ${
-                      isCurrentlyEditing ? "bg-muted/20" : "hover:bg-muted/10"
-                    }`}>
-                      {isCurrentlyEditing ? (
-                        <div className="space-y-4">
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                Nazwa aktywności
-                              </label>
-                              <Input
-                                value={activity.activity_name}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleActivityChange(dayIndex, activityIndex, "activity_name", e.target.value)}
-                                className="mt-1 text-lg font-semibold"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                Godzina
-                              </label>
-                              <Input
-                                value={activity.time}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleActivityChange(dayIndex, activityIndex, "time", e.target.value)}
-                                className="mt-1"
-                              />
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                              Opis
+            {/* Activities */}
+            <div className="space-y-4">
+              {day.activities.map((activity, activityIndex) => {
+                const editId = `day-${dayIndex}-activity-${activityIndex}`;
+                const isCurrentlyEditing = isEditing === editId;
+
+                return (
+                  <Card key={activityIndex} className={`transition-all duration-300 overflow-hidden ${
+                    isCurrentlyEditing ? "bg-slate-800/90 border-indigo-500/50" : "bg-slate-800/50 border-slate-700/50 hover:border-slate-600"
+                  }`}>
+                    {isCurrentlyEditing ? (
+                      <CardContent className="p-4 space-y-4">
+                        <div className="grid md:grid-cols-5 gap-4">
+                          <div className="md:col-span-3">
+                            <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+                              Nazwa aktywności
                             </label>
-                            <Textarea
-                              value={activity.description}
-                              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleActivityChange(dayIndex, activityIndex, "description", e.target.value)}
-                              className="mt-1"
-                              rows={3}
+                            <Input
+                              value={activity.activity_name}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleActivityChange(dayIndex, activityIndex, "activity_name", e.target.value)}
+                              className="mt-1 text-base font-semibold bg-slate-700/50 border-slate-600 text-slate-100"
                             />
                           </div>
-                          
-                          <div className="flex items-center gap-4">
-                            <div className="flex-1">
-                              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                Szacowany koszt
-                              </label>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Input
-                                  type="number"
-                                  value={activity.estimated_cost}
-                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleActivityChange(dayIndex, activityIndex, "estimated_cost", parseFloat(e.target.value))}
-                                  className="w-24"
-                                />
-                                <span className="text-sm text-muted-foreground">{activity.currency}</span>
-                              </div>
-                            </div>
-                            <div className="flex gap-2 mt-6">
-                              <Button onClick={handleSave} size="sm" variant="default">
-                                Zapisz
-                              </Button>
-                              <Button onClick={() => setIsEditing(null)} size="sm" variant="outline">
-                                Anuluj
-                              </Button>
+                          <div>
+                            <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+                              Godzina
+                            </label>
+                            <Input
+                              value={activity.time}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleActivityChange(dayIndex, activityIndex, "time", e.target.value)}
+                              className="mt-1 bg-slate-700/50 border-slate-600 text-slate-100"
+                            />
+                          </div>
+                          <div className="flex items-end">
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                value={activity.estimated_cost}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleActivityChange(dayIndex, activityIndex, "estimated_cost", parseFloat(e.target.value))}
+                                className="w-24 bg-slate-700/50 border-slate-600 text-slate-100"
+                              />
+                              <span className="text-sm text-slate-400">{activity.currency}</span>
                             </div>
                           </div>
                         </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                  </svg>
-                                </div>
-                                <div>
-                                  <h4 className="text-lg font-semibold text-foreground">{activity.activity_name}</h4>
-                                  <Badge variant="outline" className="text-xs">
-                                    {activity.time}
-                                  </Badge>
-                                </div>
-                              </div>
-                              
-                              <p className="text-muted-foreground leading-relaxed mb-3">
+                        
+                        <div>
+                          <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+                            Opis
+                          </label>
+                          <Textarea
+                            value={activity.description}
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleActivityChange(dayIndex, activityIndex, "description", e.target.value)}
+                            className="mt-1 bg-slate-700/50 border-slate-600 text-slate-300"
+                            rows={2}
+                          />
+                        </div>
+                        
+                        <div className="flex justify-end gap-2">
+                          <Button onClick={() => setIsEditing(null)} size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+                            Anuluj
+                          </Button>
+                          <Button onClick={handleSave} size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white">
+                            Zapisz
+                          </Button>
+                        </div>
+                      </CardContent>
+                    ) : (
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-4">
+                            <div className="flex flex-col items-center justify-center w-16">
+                              <div className="text-xl font-bold text-slate-200">{activity.time.split(':')[0]}</div>
+                              <div className="text-sm text-slate-400">:{activity.time.split(':')[1]}</div>
+                            </div>
+                            <div className="h-16 w-px bg-slate-700"></div>
+                            <div>
+                              <h4 className="text-base font-semibold text-slate-100">{activity.activity_name}</h4>
+                              <p className="text-slate-400 text-sm leading-relaxed mt-1">
                                 {activity.description}
                               </p>
-                              
-                              <div className="flex items-center gap-2">
-                                <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                                </svg>
-                                <span className="text-sm font-medium">
-                                  {activity.estimated_cost} {activity.currency}
-                                </span>
-                              </div>
                             </div>
-                            
+                          </div>
+                          
+                          <div className="flex flex-col items-end justify-between h-full gap-2">
+                             <div className="text-sm font-medium text-slate-300 whitespace-nowrap">
+                                {activity.estimated_cost > 0 ? `${activity.estimated_cost} ${activity.currency}` : 'Darmowe'}
+                              </div>
                             <div className="flex items-center space-x-2">
                               <Button 
                                 onClick={() => setIsEditing(editId)} 
-                                variant="outline" 
-                                size="sm"
-                                className="text-xs"
+                                variant="ghost" 
+                                size="icon"
+                                className="text-slate-400 hover:text-white hover:bg-slate-700"
                               >
-                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
-                                Edytuj
                               </Button>
                               <Button 
                                 onClick={() => handleRemoveActivity(dayIndex, activityIndex)} 
-                                variant="destructive" 
-                                size="sm"
-                                className="text-xs"
+                                variant="ghost" 
+                                size="icon"
+                                className="text-red-500/70 hover:text-red-500 hover:bg-red-900/50"
                               >
-                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
-                                Usuń
                               </Button>
                             </div>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
         ))}
       </div>
     </div>

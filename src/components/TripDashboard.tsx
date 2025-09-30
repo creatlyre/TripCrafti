@@ -8,6 +8,7 @@ import type { Trip, TripInput, GeneratedItinerary, Itinerary, ItineraryPreferenc
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "./ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "./ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import type { Lang } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n";
@@ -28,6 +29,7 @@ const empty: CreateFormState = {
   start_date: "",
   end_date: "",
   budget: undefined,
+  currency: "",
 };
 
 interface TripDashboardProps {
@@ -44,6 +46,16 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<(Trip & { itineraries: GeneratedItinerary[] }) | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
+
+  function handleOpenTrip(trip: (Trip & { itineraries: GeneratedItinerary[] }), tab?: string) {
+    setSelectedTrip(trip);
+    if (tab) {
+      setActiveTab(tab);
+    } else {
+      setActiveTab("overview");
+    }
+  }
   const [isGenerating, setIsGenerating] = useState(false);
   const [itineraryError, setItineraryError] = useState<string | null>(null);
   const [duration, setDuration] = useState<number | undefined>(undefined);
@@ -143,6 +155,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
         start_date: form.start_date,
         end_date: form.end_date,
         budget: form.budget ? Number(form.budget) : undefined,
+        currency: form.currency,
       };
       const res = await fetch("/api/trips", {
         method: "POST",
@@ -266,19 +279,41 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                 placeholder={lang === "pl" ? "Toskania" : "Tuscany"}
               />
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="budget" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {dict.create.budget}
-              </label>
-              <input
-                id="budget"
-                type="number"
-                min={0}
-                value={form.budget ?? ""}
-                onChange={(e) => onChange("budget", e.target.value)}
-                className="h-9 rounded-md border bg-transparent px-3 text-sm"
-                placeholder="1200"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="budget" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {dict.create.budget}
+                </label>
+                <input
+                  id="budget"
+                  type="number"
+                  min={0}
+                  value={form.budget ?? ""}
+                  onChange={(e) => onChange("budget", e.target.value)}
+                  className="h-9 rounded-md border bg-transparent px-3 text-sm"
+                  placeholder="1200"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="currency" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Currency
+                </label>
+                <Select
+                  value={form.currency ?? ""}
+                  onValueChange={(value) => onChange("currency", value)}
+                  disabled={!form.budget}
+                >
+                  <SelectTrigger className="h-9 rounded-md border bg-transparent px-3 text-sm uppercase">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PLN">PLN</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="start_date" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -338,7 +373,12 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!selectedTrip} onOpenChange={(isOpen) => !isOpen && setSelectedTrip(null)}>
+      <Dialog open={!!selectedTrip} onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          setSelectedTrip(null);
+          setActiveTab("overview");
+        }
+      }}>
         <DialogContent
           className="max-w-7xl w-full max-h-[90vh] overflow-y-auto bg-slate-50/95 dark:bg-slate-900/95"
         >
@@ -375,7 +415,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
 
                 {/* Main content area */}
                 <div>
-                  <Tabs defaultValue="overview" className="flex flex-col">
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col">
                     <TabsList className="mx-6 mt-4 w-fit bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200 dark:border-slate-700">
                       <TabsTrigger value="overview">
                         {lang === "pl" ? "Przegląd" : "Overview"}
@@ -561,11 +601,12 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
               <TripCard
                 key={t.id}
                 trip={t}
-                onOpen={() => setSelectedTrip(t)}
+                onOpen={(tab) => handleOpenTrip(t, tab)}
                 dict={{
                   dates: dict.dates,
                   budget: dict.budget,
                   open: dict.open,
+                  openPlan: dict.openPlan,
                 }}
               />
             ))}

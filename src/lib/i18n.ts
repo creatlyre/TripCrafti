@@ -63,6 +63,7 @@ interface Dictionary {
     refresh: string;
     loading: string;
     open: string;
+    openPlan: string;
     dates: string;
     budget: string;
     create: {
@@ -186,6 +187,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
       refresh: "Odśwież",
       loading: "Ładowanie...",
       open: "Otwórz",
+      openPlan: "Otwórz plan",
       dates: "Daty",
       budget: "Budżet",
       create: {
@@ -323,6 +325,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
       refresh: "Refresh",
       loading: "Loading...",
       open: "Open",
+      openPlan: "Open Plan",
       dates: "Dates",
       budget: "Budget",
       create: {

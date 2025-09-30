@@ -8,6 +8,7 @@ export interface Trip {
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
   budget: number | null;
+  currency: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -19,6 +20,7 @@ export interface TripInput {
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
   budget?: number; // optional
+  currency?: string; // optional
 }
 
 export type ItineraryStatus = 'GENERATING' | 'COMPLETED' | 'FAILED';
