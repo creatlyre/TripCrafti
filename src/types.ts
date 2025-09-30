@@ -8,6 +8,11 @@ export interface Trip {
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
   budget: number | null;
+  currency: string | null;
+  // Optional lodging metadata (may be null if user did not provide)
+  lodging?: string | null;
+  lodging_lat?: number | null;
+  lodging_lon?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -19,4 +24,52 @@ export interface TripInput {
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
   budget?: number; // optional
+  currency?: string; // optional
+  lodging?: string; // optional lodging string provided by user (name / URL / address)
+}
+
+export type ItineraryStatus = 'GENERATING' | 'COMPLETED' | 'FAILED';
+
+export interface ItineraryPreferences {
+  interests: string[];
+  travelStyle: 'Relaxed' | 'Balanced' | 'Intense';
+  budget: string;
+  language: string;
+  // Optional richer context for itinerary generation
+  adultsCount?: number; // number of adult travelers
+  kidsCount?: number; // number of kids
+  kidsAges?: number[]; // ages of kids in years corresponding to kidsCount
+  hotelNameOrUrl?: string; // hotel name, address or booking URL provided by user
+  maxTravelDistanceKm?: number; // optional max distance in km for daily activities from lodging
+}
+
+export interface Activity {
+  time: string;
+  activity_name: string;
+  description: string;
+  estimated_cost: number;
+  currency: string;
+}
+
+export interface DayPlan {
+  day: number;
+  date: string;
+  theme: string;
+  activities: Activity[];
+}
+
+export interface Itinerary {
+  itinerary: DayPlan[];
+}
+
+export interface GeneratedItinerary {
+  id: string;
+  trip_id: string;
+  preferences_json: ItineraryPreferences;
+  generated_plan_json: Itinerary;
+  status: ItineraryStatus;
+  input_tokens?: number | null;
+  thought_tokens?: number | null;
+  created_at: string;
+  updated_at: string;
 }

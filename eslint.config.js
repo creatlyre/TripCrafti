@@ -9,6 +9,7 @@ import eslintPluginReactHooks from "eslint-plugin-react-hooks";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import tseslint from "typescript-eslint";
+import perfectionist from "eslint-plugin-perfectionist";
 
 // File path setup
 const __filename = fileURLToPath(import.meta.url);
@@ -62,5 +63,49 @@ export default tseslint.config(
   jsxA11yConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],
-  eslintPluginPrettier
+  {
+    plugins: {
+      perfectionist,
+    },
+    rules: {
+      "perfectionist/sort-imports": [
+        "error",
+        {
+          type: "natural",
+          order: "asc",
+          "newlines-between": "always",
+          groups: [
+            "type",
+            "react",
+            "astro",
+            ["builtin", "external"],
+            "internal-type",
+            "internal",
+            ["parent-type", "sibling-type", "index-type"],
+            ["parent", "sibling", "index"],
+            "object",
+            "unknown",
+          ],
+          "custom-groups": {
+            value: {
+              react: ["react", "react-*"],
+              astro: ["astro", "astro-*"],
+            },
+          },
+          "internal-pattern": ["@/**"],
+        },
+      ],
+    },
+  },
+  eslintPluginPrettier,
+  {
+    rules: {
+      "prettier/prettier": [
+        "error",
+        {
+          endOfLine: "auto",
+        },
+      ],
+    },
+  }
 );

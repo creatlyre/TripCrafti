@@ -57,13 +57,23 @@ interface Dictionary {
   };
   langSwitcher: { label: string; english: string; polish: string };
   dashboard?: {
+    checking: string;
     heading: string;
     sub: string;
     refresh: string;
     loading: string;
     open: string;
+    openPlan: string;
     dates: string;
     budget: string;
+    delete?: {
+      heading: string;
+      body: string;
+      confirm: string;
+      cancel: string;
+      cascadingNote: string;
+        action?: string;
+    };
     create: {
       add: string;
       heading: string;
@@ -82,6 +92,40 @@ interface Dictionary {
       heading: string;
       description: string;
     };
+  };
+  itineraryPreferences?: {
+    title: string;
+    subtitle: string;
+    interestsLabel: string;
+    interestsHint: string;
+    travelStyleLabel: string;
+    budgetLabel: string;
+    budgetAlreadySet?: string;
+    budgetAmountLabel?: string;
+    submit: string;
+    generating: string;
+    generated: string;
+    noItineraryTitle: string;
+    noItineraryBody: string;
+    travelPartyLabel?: string;
+    adultsPlaceholder?: string;
+    kidsPlaceholder?: string;
+    kidsAgesHint?: string;
+    lodgingDistanceLabel?: string;
+    lodgingPlaceholder?: string;
+    distancePlaceholder?: string;
+    distanceHelper?: string;
+    tooltip: {
+      travelParty: string;
+      lodging: string;
+      distance: string;
+    };
+    validation?: {
+      adultsMin?: string; kidsCountInvalid?: string; kidsAgesMismatch?: string; distanceInvalid?: string;
+    };
+    travelStyles: { value: string; label: string; description: string }[];
+    budgetOptions: { value: string; label: string }[];
+    interests: { key: string; label: string }[];
   };
 }
 
@@ -161,13 +205,23 @@ export const dictionaries: Record<Lang, Dictionary> = {
     },
     langSwitcher: { label: "Język", english: "Angielski", polish: "Polski" },
     dashboard: {
+      checking: "Sprawdzanie statusu...",
       heading: "Twoje Podróże",
       sub: "Planuj, organizuj i rozwijaj swoje wyjazdy.",
       refresh: "Odśwież",
       loading: "Ładowanie...",
       open: "Otwórz",
+      openPlan: "Otwórz plan",
       dates: "Daty",
       budget: "Budżet",
+      delete: {
+        heading: "Usuń podróż",
+        body: "Tej operacji nie można cofnąć. Czy na pewno chcesz usunąć tę podróż oraz powiązane wygenerowane plany?",
+        confirm: "Usuń",
+        cancel: "Anuluj",
+        cascadingNote: "Powiązane rekordy zostaną usunięte kaskadowo.",
+        action: "Usuń podróż",
+      },
       create: {
         add: "Dodaj podróż",
         heading: "Utwórz nową podróż",
@@ -186,6 +240,67 @@ export const dictionaries: Record<Lang, Dictionary> = {
         heading: "Nie masz jeszcze żadnych podróży",
         description: "Zacznij planować swoją następną przygodę, tworząc pierwszą podróż.",
       },
+    },
+    itineraryPreferences: {
+      title: "Wygeneruj inteligentny plan podróży",
+      subtitle: "Dostosuj preferencje, a my stworzymy dla Ciebie spersonalizowany plan aktywności",
+      interestsLabel: "Zainteresowania",
+      interestsHint: "(wybierz co najmniej jedno)",
+      travelStyleLabel: "Styl podróży",
+      budgetLabel: "Budżet",
+  budgetAlreadySet: "Budżet został już zdefiniowany",
+  budgetAmountLabel: "Kwota:",
+      travelPartyLabel: "Skład podróży (opcjonalnie)",
+      adultsPlaceholder: "Dorośli",
+      kidsPlaceholder: "Dzieci",
+      kidsAgesHint: "Podaj wiek dzieci (0-17)",
+      lodgingDistanceLabel: "Nocleg i dystans (opcjonalnie)",
+      lodgingPlaceholder: "Nazwa / URL / adres hotelu",
+      distancePlaceholder: "Maks. km",
+      distanceHelper: "Jeśli ustawisz dystans, priorytetem będą aktywności w tym promieniu od noclegu.",
+      tooltip: {
+        travelParty: "Pomaga dostosować plan do rodzin (tempo, atrakcje przyjazne dzieciom).",
+        lodging: "Używane do skupiania rozpoczęcia i zakończenia dnia w pobliżu hotelu.",
+        distance: "AI będzie preferować aktywności w promieniu podanej liczby kilometrów od noclegu.",
+      },
+      validation: {
+        adultsMin: "Co najmniej 1 dorosły",
+        kidsCountInvalid: "Liczba dzieci nie może być ujemna",
+        kidsAgesMismatch: "Podaj wiek dla każdego dziecka",
+        distanceInvalid: "Dystans 1–500 km",
+      },
+      submit: "Wygeneruj plan",
+      generating: "Generowanie planu...",
+      generated: "Plan podróży wygenerowany",
+      noItineraryTitle: "Brak planu podróży",
+      noItineraryBody: "Wygeneruj inteligentny plan podróży na podstawie swoich preferencji i zainteresowań.",
+      travelStyles: [
+        { value: "Relaxed", label: "Relaksacyjny", description: "Spokojne tempo, dużo czasu na relaks" },
+        { value: "Balanced", label: "Zrównoważony", description: "Idealna równowaga między zwiedzaniem a odpoczynkiem" },
+        { value: "Intense", label: "Intensywny", description: "Maksimum atrakcji, dynamiczne zwiedzanie" },
+      ],
+      budgetOptions: [
+        { value: "Budget-Friendly", label: "Niski" },
+        { value: "Mid-Range", label: "Średni" },
+        { value: "Luxury", label: "Wysoki" },
+      ],
+      interests: [
+        { key: "art", label: "Sztuka" },
+        { key: "history", label: "Historia" },
+        { key: "nature", label: "Przyroda" },
+        { key: "food", label: "Jedzenie" },
+        { key: "entertainment", label: "Rozrywka" },
+        { key: "architecture", label: "Architektura" },
+        { key: "adventure", label: "Przygoda / Adrenalina" },
+        { key: "wildlife", label: "Fauna / Zoo" },
+        { key: "beach", label: "Plaża" },
+        { key: "shopping", label: "Zakupy" },
+        { key: "wellness", label: "Wellness & Spa" },
+        { key: "nightlife", label: "Życie nocne" },
+        { key: "family", label: "Rodzinne" },
+        { key: "photography", label: "Fotografia" },
+        { key: "technology", label: "Technologia / Nauka" },
+      ],
     },
   },
   en: {
@@ -255,13 +370,23 @@ export const dictionaries: Record<Lang, Dictionary> = {
     },
     langSwitcher: { label: "Language", english: "English", polish: "Polish" },
     dashboard: {
+      checking: "Checking status...",
       heading: "Your Trips",
       sub: "Plan, organize and enrich your journeys.",
       refresh: "Refresh",
       loading: "Loading...",
       open: "Open",
+      openPlan: "Open Plan",
       dates: "Dates",
       budget: "Budget",
+      delete: {
+        heading: "Delete trip",
+        body: "This action cannot be undone. Are you sure you want to delete this trip and its generated itineraries?",
+        confirm: "Delete",
+        cancel: "Cancel",
+        cascadingNote: "Related records will be removed via cascade.",
+        action: "Delete trip",
+      },
       create: {
         add: "Add Trip",
         heading: "Create a new trip",
@@ -280,6 +405,67 @@ export const dictionaries: Record<Lang, Dictionary> = {
         heading: "You don't have any trips yet",
         description: "Start planning your next adventure by creating your first trip.",
       },
+    },
+    itineraryPreferences: {
+      title: "Generate an intelligent travel plan",
+      subtitle: "Adjust your preferences and we'll create a personalized activity plan for you",
+      interestsLabel: "Interests",
+      interestsHint: "(select at least one)",
+      travelStyleLabel: "Travel style",
+      budgetLabel: "Budget",
+  budgetAlreadySet: "Budget already defined",
+  budgetAmountLabel: "Amount:",
+      travelPartyLabel: "Travel Party (optional)",
+      adultsPlaceholder: "Adults",
+      kidsPlaceholder: "Kids",
+      kidsAgesHint: "Provide ages (0-17)",
+      lodgingDistanceLabel: "Lodging & Distance (optional)",
+      lodgingPlaceholder: "Hotel name / URL / address",
+      distancePlaceholder: "Max km",
+      distanceHelper: "If set, prioritize activities within this radius from lodging.",
+      tooltip: {
+        travelParty: "Helps tailor pacing & family-friendly activities.",
+        lodging: "Used to cluster start/end of day near the hotel.",
+        distance: "AI will prefer activities within the given km radius from lodging.",
+      },
+      validation: {
+        adultsMin: "At least 1 adult",
+        kidsCountInvalid: "Kids cannot be negative",
+        kidsAgesMismatch: "Provide an age for each child",
+        distanceInvalid: "Distance 1–500 km",
+      },
+      submit: "Generate plan",
+      generating: "Generating plan...",
+      generated: "Itinerary generated",
+      noItineraryTitle: "No itinerary yet",
+      noItineraryBody: "Generate an intelligent travel plan based on your preferences and interests.",
+      travelStyles: [
+        { value: "Relaxed", label: "Relaxed", description: "Slower pace with more downtime" },
+        { value: "Balanced", label: "Balanced", description: "Ideal mix of sightseeing and rest" },
+        { value: "Intense", label: "Intense", description: "Maximum attractions, dynamic pacing" },
+      ],
+      budgetOptions: [
+        { value: "Budget-Friendly", label: "Low" },
+        { value: "Mid-Range", label: "Medium" },
+        { value: "Luxury", label: "High" },
+      ],
+      interests: [
+        { key: "art", label: "Art" },
+        { key: "history", label: "History" },
+        { key: "nature", label: "Nature" },
+        { key: "food", label: "Food" },
+        { key: "entertainment", label: "Entertainment" },
+        { key: "architecture", label: "Architecture" },
+        { key: "adventure", label: "Adventure / Thrill" },
+        { key: "wildlife", label: "Wildlife / Zoo" },
+        { key: "beach", label: "Beach" },
+        { key: "shopping", label: "Shopping" },
+        { key: "wellness", label: "Wellness & Spa" },
+        { key: "nightlife", label: "Nightlife" },
+        { key: "family", label: "Family" },
+        { key: "photography", label: "Photography" },
+        { key: "technology", label: "Technology / Science" },
+      ],
     },
   },
 };
