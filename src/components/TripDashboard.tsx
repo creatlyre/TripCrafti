@@ -16,25 +16,9 @@ import { ItineraryPreferencesFormEnhanced as ItineraryPreferencesForm } from "./
 import { ItineraryViewEnhanced as ItineraryView } from "./itinerary/ItineraryViewEnhanced";
 import { TripOverviewPanel } from "./TripOverviewPanel";
 import { TripImage } from "./TripImage";
-
-const SuitcaseIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <path d="M8 6h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
-    <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-    <path d="M12 20v-8" />
-  </svg>
-);
+import { EmptyState } from "./EmptyState";
+import { TripCard } from "./TripCard";
+import { TripCardSkeleton } from "./TripCardSkeleton";
 
 interface CreateFormState extends TripInput {}
 
@@ -219,16 +203,18 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{dict.heading}</h1>
-          <p className="text-sm text-muted-foreground">{dict.sub}</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-100">{dict.heading}</h1>
+          <p className="text-sm text-slate-400 mt-1">{dict.sub}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => loadTrips(true)} variant="secondary" disabled={loading && trips !== null}>
+          <Button onClick={() => loadTrips(true)} variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white" disabled={loading && trips !== null}>
             {loading && trips !== null ? dict.loading : dict.refresh}
           </Button>
-          <Button onClick={() => setCreateModalOpen(true)}>{dict.create.add}</Button>
+          <Button onClick={() => setCreateModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white">
+            {dict.create.add}
+          </Button>
         </div>
       </header>
 
@@ -551,50 +537,37 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
         </h2>
 
         {loading && trips === null && (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" aria-hidden>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-xl border bg-card/50 animate-pulse h-48" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <TripCardSkeleton key={i} />
             ))}
           </div>
         )}
 
         {!loading && trips && trips.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/20 py-20 text-center">
-            <SuitcaseIcon className="w-16 h-16 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-1">{dict.empty.heading}</h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-xs">{dict.empty.description}</p>
-            <Button onClick={() => setCreateModalOpen(true)}>{dict.create.add}</Button>
-          </div>
+          <EmptyState
+            onActionClick={() => setCreateModalOpen(true)}
+            dict={{
+              heading: dict.empty.heading,
+              description: dict.empty.description,
+              action: dict.create.add,
+            }}
+          />
         )}
 
         {trips && trips.length > 0 && (
-          <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {trips.map((t) => (
-              <li key={t.id} className="group" onClick={() => setSelectedTrip(t)}>
-                <Card className="h-full flex flex-col transition-all duration-200 group-hover:border-primary/60 group-hover:shadow-lg cursor-pointer">
-                  <TripImage destination={t.destination} />
-                  <CardHeader>
-                    <CardTitle className="text-base font-medium">{t.title}</CardTitle>
-                    <CardDescription>{t.destination}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="text-xs text-muted-foreground space-y-1.5 flex-grow">
-                    <p>
-                      <strong className="font-medium text-foreground">{dict.dates}:</strong> {t.start_date} →{" "}
-                      {t.end_date}
-                    </p>
-                    {t.budget != null && (
-                      <p>
-                        <strong className="font-medium text-foreground">{dict.budget}:</strong> {t.budget}
-                      </p>
-                    )}
-                  </CardContent>
-                  <CardFooter className="flex justify-end">
-                    <Button size="sm" variant="outline">
-                      {dict.open}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </li>
+              <TripCard
+                key={t.id}
+                trip={t}
+                onOpen={() => setSelectedTrip(t)}
+                dict={{
+                  dates: dict.dates,
+                  budget: dict.budget,
+                  open: dict.open,
+                }}
+              />
             ))}
           </ul>
         )}
