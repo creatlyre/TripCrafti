@@ -9,11 +9,49 @@ import type { ItineraryPreferences } from "@/types";
 import { Input } from "../ui/input";
 import { getDictionary } from "@/lib/i18n";
 
+const baseNumber = (msg: string) => z.number({ invalid_type_error: msg });
 const preferencesSchema = z.object({
-  interests: z.array(z.string()).min(1, "Wybierz co najmniej jedną kategorię"),
+  interests: z.array(z.string()).min(1, "Select at least one"),
   travelStyle: z.enum(["Relaxed", "Balanced", "Intense"]),
   budget: z.string(),
-});
+  adultsCount: baseNumber("Invalid")
+    .int("Invalid")
+    .min(1, "adultsMin")
+    .max(20, "Too many")
+    .optional()
+    .or(z.nan().transform(() => undefined)),
+  kidsCount: baseNumber("Invalid")
+    .int("Invalid")
+    .min(0, "kidsCountInvalid")
+    .max(20, "Too many")
+    .optional()
+    .or(z.nan().transform(() => undefined)),
+  kidsAges: z
+    .array(
+      baseNumber("Invalid")
+        .int("Invalid")
+        .min(0, "Age >= 0")
+        .max(17, "<18")
+    )
+    .optional()
+    .refine((arr) => !arr || arr.length <= 20, "Too many"),
+  hotelNameOrUrl: z
+    .string()
+    .max(300, "Too long")
+    .optional()
+    .transform((v) => (v?.trim() ? v.trim() : undefined)),
+  maxTravelDistanceKm: baseNumber("Invalid")
+    .min(1, "distanceInvalid")
+    .max(500, "distanceInvalid")
+    .optional()
+    .or(z.nan().transform(() => undefined)),
+}).refine((data) => {
+  if (typeof data.kidsCount === 'number' && data.kidsCount > 0) {
+    const ages = data.kidsAges || [];
+    return ages.length === data.kidsCount && ages.every(a => typeof a === 'number');
+  }
+  return true;
+}, { message: 'kidsAgesMismatch', path: ['kidsAges'] });
 
 type PreferencesFormData = z.infer<typeof preferencesSchema>;
 
@@ -59,11 +97,33 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
   };
 
   const onFormSubmit = (data: PreferencesFormData) => {
-    onSubmit({ ...data, interests: selectedInterests, language });
+    // Align kidsAges length with kidsCount if provided
+    let kidsAges = data.kidsAges;
+    if (typeof data.kidsCount === 'number') {
+      kidsAges = (kidsAges || []).slice(0, data.kidsCount);
+      if (kidsAges.length < data.kidsCount) {
+        // pad undefined removal by leaving as is (omit shorter)
+      }
+    } else {
+      kidsAges = undefined;
+    }
+
+    onSubmit({
+      ...data,
+      interests: selectedInterests,
+      language,
+      kidsAges,
+    } as any);
   };
 
   // Ensure language conforms to supported Lang union; fallback handled in getDictionary
   const dict = getDictionary(language as any).itineraryPreferences;
+  const validationMap: Record<string,string|undefined> = {
+    adultsMin: dict?.validation?.adultsMin,
+    kidsCountInvalid: dict?.validation?.kidsCountInvalid,
+    kidsAgesMismatch: dict?.validation?.kidsAgesMismatch,
+    distanceInvalid: dict?.validation?.distanceInvalid,
+  };
   const interests = dict?.interests ?? [];
   const travelStyleOptions = dict?.travelStyles ?? [];
   const budgetOptions = dict?.budgetOptions ?? [];
@@ -80,7 +140,7 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
         <p className="text-slate-600 dark:text-slate-400 text-xs">{dict?.subtitle}</p>
       </CardHeader>
       <CardContent className="p-4">
-        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+  <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
           {/* Interests Section */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
@@ -229,6 +289,97 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
               </div>
             )}
           </div>
+
+          {/* Optional Traveler Composition */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-100">
+              {dict?.travelPartyLabel}
+              {dict?.tooltip?.travelParty && (
+                <span title={dict.tooltip.travelParty} className="cursor-help text-slate-400 dark:text-slate-500">ⓘ</span>
+              )}
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Input
+                  type="number"
+                  placeholder={dict?.adultsPlaceholder || 'Adults'}
+                  min={1}
+                  {...register('adultsCount', { valueAsNumber: true })}
+                  className="text-sm"
+                />
+                {errors.adultsCount && <p className="text-xs text-red-600 dark:text-red-400">{validationMap[errors.adultsCount.message || ''] || errors.adultsCount.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <Input
+                  type="number"
+                  placeholder={dict?.kidsPlaceholder || 'Kids'}
+                  min={0}
+                  {...register('kidsCount', { valueAsNumber: true })}
+                  className="text-sm"
+                />
+                {errors.kidsCount && <p className="text-xs text-red-600 dark:text-red-400">{validationMap[errors.kidsCount.message || ''] || errors.kidsCount.message}</p>}
+              </div>
+            </div>
+            {/* Kids Ages Dynamic */}
+            {watch('kidsCount') && watch('kidsCount')! > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs text-slate-600 dark:text-slate-400">{dict?.kidsAgesHint}</p>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from({ length: Math.min(20, watch('kidsCount') || 0) }).map((_, idx) => (
+                    <input
+                      key={idx}
+                      type="number"
+                      aria-label={`Kid ${idx + 1} age`}
+                      min={0}
+                      max={17}
+                      className="w-16 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-xs"
+                      onChange={(e) => {
+                        const val = e.target.value ? parseInt(e.target.value, 10) : NaN;
+                        const current = watch('kidsAges') || [];
+                        const next = [...current];
+                        next[idx] = isNaN(val) ? undefined as any : val;
+                        setValue('kidsAges', next.filter(v => v !== undefined) as any, { shouldDirty: true, shouldValidate: true });
+                      }}
+                    />
+                  ))}
+                </div>
+                {errors.kidsAges && <p className="text-xs text-red-600 dark:text-red-400">{validationMap[errors.kidsAges.message || ''] || errors.kidsAges.message as any}</p>}
+              </div>
+            )}
+          </div>
+
+          {/* Optional Lodging & Distance */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-100">
+                {dict?.lodgingDistanceLabel}
+                {dict?.tooltip?.lodging && (
+                  <span title={dict.tooltip.lodging} className="cursor-help text-slate-400 dark:text-slate-500">ⓘ</span>
+                )}
+              </label>
+              <div className="space-y-2">
+                <Input
+                  type="text"
+                  placeholder={dict?.lodgingPlaceholder || 'Hotel name / URL / address'}
+                  {...register('hotelNameOrUrl')}
+                  className="text-sm"
+                />
+                {errors.hotelNameOrUrl && <p className="text-xs text-red-600 dark:text-red-400">{errors.hotelNameOrUrl.message}</p>}
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    placeholder={dict?.distancePlaceholder || 'Max travel km'}
+                    min={1}
+                    {...register('maxTravelDistanceKm', { valueAsNumber: true })}
+                    className="text-sm"
+                  />
+                  {errors.maxTravelDistanceKm && <p className="text-xs text-red-600 dark:text-red-400">{validationMap[errors.maxTravelDistanceKm.message || ''] || errors.maxTravelDistanceKm.message}</p>}
+                  {dict?.tooltip?.distance && (
+                    <span title={dict.tooltip.distance} className="cursor-help text-slate-400 dark:text-slate-500">ⓘ</span>
+                  )}
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">{dict?.distanceHelper}</p>
+              </div>
+            </div>
 
           {/* Submit Button */}
           <div className="pt-2">

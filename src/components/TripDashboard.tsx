@@ -263,6 +263,19 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                 placeholder={lang === "pl" ? "Lato we Włoszech" : "Summer in Italy"}
               />
             </div>
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label htmlFor="lodging" className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                {lang === 'pl' ? 'Hotel / nocleg (opcjonalnie)' : 'Lodging (optional)'}
+                <span title={lang==='pl' ? 'Wykorzystane aby dostosować plan do lokalizacji noclegu' : 'Used to tailor plan around lodging location'} className="text-muted-foreground cursor-help">ⓘ</span>
+              </label>
+              <input
+                id="lodging"
+                value={(form as any).lodging || ''}
+                onChange={(e) => onChange('lodging' as any, e.target.value)}
+                className="h-9 rounded-md border bg-transparent px-3 text-sm"
+                placeholder={lang === 'pl' ? 'Nazwa / URL / adres' : 'Name / URL / address'}
+              />
+            </div>
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="destination"

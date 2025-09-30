@@ -99,6 +99,22 @@ interface Dictionary {
     generated: string;
     noItineraryTitle: string;
     noItineraryBody: string;
+    travelPartyLabel?: string;
+    adultsPlaceholder?: string;
+    kidsPlaceholder?: string;
+    kidsAgesHint?: string;
+    lodgingDistanceLabel?: string;
+    lodgingPlaceholder?: string;
+    distancePlaceholder?: string;
+    distanceHelper?: string;
+    tooltip: {
+      travelParty: string;
+      lodging: string;
+      distance: string;
+    };
+    validation?: {
+      adultsMin?: string; kidsCountInvalid?: string; kidsAgesMismatch?: string; distanceInvalid?: string;
+    };
     travelStyles: { value: string; label: string; description: string }[];
     budgetOptions: { value: string; label: string }[];
     interests: { key: string; label: string }[];
@@ -218,6 +234,25 @@ export const dictionaries: Record<Lang, Dictionary> = {
       budgetLabel: "Budżet",
   budgetAlreadySet: "Budżet został już zdefiniowany",
   budgetAmountLabel: "Kwota:",
+      travelPartyLabel: "Skład podróży (opcjonalnie)",
+      adultsPlaceholder: "Dorośli",
+      kidsPlaceholder: "Dzieci",
+      kidsAgesHint: "Podaj wiek dzieci (0-17)",
+      lodgingDistanceLabel: "Nocleg i dystans (opcjonalnie)",
+      lodgingPlaceholder: "Nazwa / URL / adres hotelu",
+      distancePlaceholder: "Maks. km",
+      distanceHelper: "Jeśli ustawisz dystans, priorytetem będą aktywności w tym promieniu od noclegu.",
+      tooltip: {
+        travelParty: "Pomaga dostosować plan do rodzin (tempo, atrakcje przyjazne dzieciom).",
+        lodging: "Używane do skupiania rozpoczęcia i zakończenia dnia w pobliżu hotelu.",
+        distance: "AI będzie preferować aktywności w promieniu podanej liczby kilometrów od noclegu.",
+      },
+      validation: {
+        adultsMin: "Co najmniej 1 dorosły",
+        kidsCountInvalid: "Liczba dzieci nie może być ujemna",
+        kidsAgesMismatch: "Podaj wiek dla każdego dziecka",
+        distanceInvalid: "Dystans 1–500 km",
+      },
       submit: "Wygeneruj plan",
       generating: "Generowanie planu...",
       generated: "Plan podróży wygenerowany",
@@ -356,6 +391,25 @@ export const dictionaries: Record<Lang, Dictionary> = {
       budgetLabel: "Budget",
   budgetAlreadySet: "Budget already defined",
   budgetAmountLabel: "Amount:",
+      travelPartyLabel: "Travel Party (optional)",
+      adultsPlaceholder: "Adults",
+      kidsPlaceholder: "Kids",
+      kidsAgesHint: "Provide ages (0-17)",
+      lodgingDistanceLabel: "Lodging & Distance (optional)",
+      lodgingPlaceholder: "Hotel name / URL / address",
+      distancePlaceholder: "Max km",
+      distanceHelper: "If set, prioritize activities within this radius from lodging.",
+      tooltip: {
+        travelParty: "Helps tailor pacing & family-friendly activities.",
+        lodging: "Used to cluster start/end of day near the hotel.",
+        distance: "AI will prefer activities within the given km radius from lodging.",
+      },
+      validation: {
+        adultsMin: "At least 1 adult",
+        kidsCountInvalid: "Kids cannot be negative",
+        kidsAgesMismatch: "Provide an age for each child",
+        distanceInvalid: "Distance 1–500 km",
+      },
       submit: "Generate plan",
       generating: "Generating plan...",
       generated: "Itinerary generated",

@@ -30,6 +30,12 @@ export interface ItineraryPreferences {
   travelStyle: 'Relaxed' | 'Balanced' | 'Intense';
   budget: string;
   language: string;
+  // Optional richer context for itinerary generation
+  adultsCount?: number; // number of adult travelers
+  kidsCount?: number; // number of kids
+  kidsAges?: number[]; // ages of kids in years corresponding to kidsCount
+  hotelNameOrUrl?: string; // hotel name, address or booking URL provided by user
+  maxTravelDistanceKm?: number; // optional max distance in km for daily activities from lodging
 }
 
 export interface Activity {

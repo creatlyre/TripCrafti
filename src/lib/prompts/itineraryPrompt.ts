@@ -39,6 +39,12 @@ export function createAdvancedItineraryPrompt(
       <interests>${preferences.interests.join(", ")}</interests>
       <travel_style>${preferences.travelStyle}</travel_style>
       <budget>${preferences.budget}</budget>
+      ${preferences.adultsCount ? `<adults_count>${preferences.adultsCount}</adults_count>` : ''}
+      ${typeof preferences.kidsCount === 'number' ? `<kids_count>${preferences.kidsCount}</kids_count>` : ''}
+      ${preferences.kidsAges && preferences.kidsAges.length ? `<kids_ages>${preferences.kidsAges.join(',')}</kids_ages>` : ''}
+      ${preferences.hotelNameOrUrl ? `<lodging>${preferences.hotelNameOrUrl}</lodging>` : ''}
+      ${(preferences as any).lodgingCoords ? `<lodging_coords lat="${(preferences as any).lodgingCoords.lat}" lon="${(preferences as any).lodgingCoords.lon}" />` : ''}
+      ${preferences.maxTravelDistanceKm ? `<max_travel_distance_km>${preferences.maxTravelDistanceKm}</max_travel_distance_km>` : ''}
     </user_preferences>
   </input_data>
 
@@ -51,7 +57,9 @@ export function createAdvancedItineraryPrompt(
 
   <quality_guidelines>
     <guideline id="1">**Logical Flow:** Activities within a day must be logically sequenced. Consider geographical proximity to minimize travel time and realistic timing for each activity.</guideline>
-    <guideline id="2">**Personalization:** The itinerary must directly reflect the user's <user_preferences>. If interests include 'History', prioritize museums and historical sites. If the style is 'Relaxed', include more leisure time and fewer activities per day.</guideline>
+  <guideline id="2">**Personalization:** The itinerary must directly reflect the user's <user_preferences>. If interests include 'History', prioritize museums and historical sites. If the style is 'Relaxed', include more leisure time and fewer activities per day. If <kids_count> is present, ensure a family-friendly balance (avoid late-night only activities, include breaks). Use <kids_ages> to tailor suitability (e.g., toddlers vs teens). If <adults_count> is high and no kids, you can include more adult-focused experiences (culinary, nightlife) but stay aligned with travel_style.</guideline>
+  <guideline id="2b">**Distance Constraint:** If <max_travel_distance_km> and <lodging_coords> are provided, treat the coordinates as origin. 85% or more of activities each day must fall within the radius. At most one exception per day; clearly justify any exception in its description with phrase "Outside radius".</guideline>
+  <guideline id="2c">**Lodging Context:** If <lodging> is provided, cluster morning departure and evening return around this location to minimize backtracking. Mention the lodging implicitly (e.g., "Return near hotel area") without overusing its name.</guideline>
     <guideline id="3">**Date Accuracy:** Correctly calculate and populate the 'date' field for each day of the itinerary, starting from the <start_date>.</guideline>
     <guideline id="4">**Realistic Estimates:** 'estimated_cost' should be a reasonable approximation for a single person. Use the local currency if obvious, otherwise specify in the 'currency' field. If an activity is free, use 0.</guideline>
     <guideline id="5">**Autocorrect for Ambiguity:** If the <destination> is ambiguous (e.g., "Springfield"), assume the most famous and common tourist choice (e.g., Springfield, Illinois, USA). If you make such an assumption, add a "notes" field at the root of the JSON object, e.g., "notes": "Assuming destination is Springfield, Illinois, USA.".</guideline>

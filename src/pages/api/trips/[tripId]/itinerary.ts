@@ -3,6 +3,7 @@ import { z } from "zod";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdvancedItineraryPrompt } from "../../../../lib/prompts/itineraryPrompt";
+import { geocode } from "../../../../lib/geocoding";
 import type { ItineraryPreferences } from "../../../../types";
 
 export const prerender = false;
@@ -12,6 +13,11 @@ const preferencesSchema = z.object({
   travelStyle: z.enum(["Relaxed", "Balanced", "Intense"]),
   budget: z.string(),
   language: z.string().min(2),
+  adultsCount: z.number().int().min(1).max(20).optional(),
+  kidsCount: z.number().int().min(0).max(20).optional(),
+  kidsAges: z.array(z.number().int().min(0).max(17)).optional(),
+  hotelNameOrUrl: z.string().max(300).optional(),
+  maxTravelDistanceKm: z.number().int().min(1).max(500).optional(),
 });
 
 // Lazy init so we can validate presence of key inside handler (better error reporting)
@@ -121,10 +127,25 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
   // 3. Determine final budget and create final preferences object
   const finalBudget = trip.budget ? String(trip.budget) : preferences.budget;
-  const finalPreferences: ItineraryPreferences = {
+  const finalPreferences: ItineraryPreferences & { lodgingCoords?: { lat: number; lon: number } } = {
     ...preferences,
     budget: finalBudget,
   };
+
+  // If lodging info present, attempt geocode (fire & forget but await with timeout)
+  if (preferences.hotelNameOrUrl) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+      const geo = await geocode(`${preferences.hotelNameOrUrl} ${preferences?.interests?.length ? '' : trip.destination}`);
+      clearTimeout(timeout);
+      if (geo) {
+        finalPreferences.lodgingCoords = { lat: geo.lat, lon: geo.lon };
+      }
+    } catch (e) {
+      console.warn('[itinerary] geocode failed', e);
+    }
+  }
 
   try {
   // 4. Create a record in itinerary table (single canonical lowercase name)
