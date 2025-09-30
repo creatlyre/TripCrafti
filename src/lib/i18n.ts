@@ -57,6 +57,7 @@ interface Dictionary {
   };
   langSwitcher: { label: string; english: string; polish: string };
   dashboard?: {
+    checking: string;
     heading: string;
     sub: string;
     refresh: string;
@@ -161,6 +162,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
     },
     langSwitcher: { label: "Język", english: "Angielski", polish: "Polski" },
     dashboard: {
+      checking: "Sprawdzanie statusu...",
       heading: "Twoje Podróże",
       sub: "Planuj, organizuj i rozwijaj swoje wyjazdy.",
       refresh: "Odśwież",
@@ -255,6 +257,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
     },
     langSwitcher: { label: "Language", english: "English", polish: "Polish" },
     dashboard: {
+      checking: "Checking status...",
       heading: "Your Trips",
       sub: "Plan, organize and enrich your journeys.",
       refresh: "Refresh",

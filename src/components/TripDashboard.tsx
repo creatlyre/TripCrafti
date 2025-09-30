@@ -1,5 +1,14 @@
 /**
- * TripDashboard
+ * import tyimport type { Trip, Itinerary as GeneratedItinerary, ItineraryPlan, ItineraryPreferences } from "@/types";e { Trip, Itinerary as GeneratedItinerary, ItineraryPlan, ItineraryPreferences } from "@/types";e { Trip, Itinerary as GeneratedItinerary, ItineraryPlan, ItineraryPreferences } from "@/types";e { Trip, Itinerary as GeneratedItinerary, ItineraryPlan, ItineraryPreferences } from "@/types"; Itinerary as GeneratedItinerary, ItineraryPlan } from "@/types";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "./ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "./ui/dialog";
+import type { Lang } from "@/lib/i18n";
+import { getDictionary } from "@/lib/i18n";
+import { useAuth } from "@/components/hooks/useAuth";
+import { ItineraryPreferencesForm } from "./itinerary/ItineraryPreferencesForm";
+import { ItineraryView } from "./itinerary/ItineraryView";
+import type { ItineraryPreferences } from "@/types";ard
  * Authenticated user panel with improved UI/UX.
  * - Trip creation form is in a modal dialog.
  * - A new, actionable empty state guides new users.
@@ -12,6 +21,9 @@ import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogD
 import type { Lang } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n";
 import { useAuth } from "@/components/hooks/useAuth";
+import { ItineraryPreferencesForm } from "./itinerary/ItineraryPreferencesForm";
+import { ItineraryView } from "./itinerary/ItineraryView";
+import type { GeneratedItinerary, Itinerary, ItineraryPlan, ItineraryPreferences } from "@/types";
 
 const SuitcaseIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -49,13 +61,15 @@ interface TripDashboardProps {
 export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
   const { user, session, loading: authLoading } = useAuth();
   const dict = getDictionary(lang).dashboard!;
-  const [trips, setTrips] = useState<Trip[] | null>(null);
+  const [trips, setTrips] = useState<(Trip & { itineraries: GeneratedItinerary[] })[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<CreateFormState>(empty);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const [dateInputMode, setDateInputMode] = useState<"end_date" | "duration">("end_date");
+  const [selectedTrip, setSelectedTrip] = useState<(Trip & { itineraries: GeneratedItinerary[] }) | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [itineraryError, setItineraryError] = useState<string | null>(null);
   const [duration, setDuration] = useState<number | undefined>(undefined);
 
   async function loadTrips(showLoadingSpinner = true) {
@@ -81,6 +95,63 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
       loadTrips();
     }
   }, [authLoading, user]);
+
+  async function handleGenerateItinerary(preferences: ItineraryPreferences) {
+    if (!selectedTrip) return;
+    setIsGenerating(true);
+    setItineraryError(null);
+    try {
+      console.log("DEBUG");
+      const res = await fetch(`/api/trips/${selectedTrip.id}/itinerary`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify(preferences),
+      });
+
+      if (res.status === 202) {
+        // Poll for completion
+        const poll = setInterval(async () => {
+          await loadTrips(false);
+          const updatedTrip = trips?.find(t => t.id === selectedTrip.id);
+          const latestItinerary = updatedTrip?.itineraries?.[0];
+          if (latestItinerary?.status === 'COMPLETED' || latestItinerary?.status === 'FAILED') {
+            setIsGenerating(false);
+            clearInterval(poll);
+            if (latestItinerary.status === 'FAILED') {
+              setItineraryError("Failed to generate itinerary.");
+            }
+            if (updatedTrip) setSelectedTrip(updatedTrip);
+          }
+        }, 5000);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to start itinerary generation");
+      }
+    } catch (e: any) {
+      setItineraryError(e.message);
+      setIsGenerating(false);
+    }
+  }
+
+  async function handleSaveItinerary(itineraryId: string, plan: ItineraryPlan) {
+    try {
+      const res = await fetch(`/api/itineraries/${itineraryId}`, {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ generated_plan_json: plan }),
+      });
+      if (!res.ok) throw new Error("Failed to save itinerary");
+      await loadTrips(false);
+    } catch (e: any) {
+      setItineraryError(e.message);
+    }
+  }
 
   async function submitCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -284,6 +355,37 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!selectedTrip} onOpenChange={(isOpen) => !isOpen && setSelectedTrip(null)}>
+        <DialogContent className="max-w-4xl">
+          {selectedTrip && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedTrip.title}</DialogTitle>
+                <DialogDescription>{selectedTrip.destination}</DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                {itineraryError && <div className="text-red-500 mb-4">{itineraryError}</div>}
+                {selectedTrip.itineraries && selectedTrip.itineraries.length > 0 && selectedTrip.itineraries[0].generated_plan_json ? (
+                  <ItineraryView
+                    itineraryId={selectedTrip.itineraries[0].id}
+                    initialPlan={selectedTrip.itineraries[0].generated_plan_json}
+                    onSave={handleSaveItinerary}
+                  />
+                ) : (
+                  <ItineraryPreferencesForm
+                    tripId={selectedTrip.id}
+                    onSubmit={handleGenerateItinerary}
+                    isGenerating={isGenerating}
+                    language={lang}
+                    tripBudget={selectedTrip.budget}
+                  />
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <section aria-labelledby="trips-list-heading">
         <h2 id="trips-list-heading" className="sr-only">
           Existing trips
@@ -309,8 +411,8 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
         {trips && trips.length > 0 && (
           <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {trips.map((t) => (
-              <li key={t.id} className="group">
-                <Card className="h-full flex flex-col transition-all duration-200 group-hover:border-primary/60 group-hover:shadow-lg">
+              <li key={t.id} className="group" onClick={() => setSelectedTrip(t)}>
+                <Card className="h-full flex flex-col transition-all duration-200 group-hover:border-primary/60 group-hover:shadow-lg cursor-pointer">
                   <div className="w-full h-32 bg-secondary/50 rounded-t-lg flex items-center justify-center text-muted-foreground text-sm">
                     [ Image for {t.destination} ]
                   </div>
