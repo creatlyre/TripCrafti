@@ -24,6 +24,10 @@ CREATE TABLE trips (
   end_date DATE NOT NULL,
   budget NUMERIC,
   currency TEXT,
+  -- Optional lodging data (new fields) - run ALTER TABLE if migrating existing DB
+  lodging TEXT,
+  lodging_lat DOUBLE PRECISION,
+  lodging_lon DOUBLE PRECISION,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -38,3 +42,7 @@ CREATE POLICY "Users can view their own trips" ON trips
 -- Users can only create trips for themselves
 CREATE POLICY "Users can create their own trips" ON trips
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Users can delete only their own trips
+CREATE POLICY "Users can delete their own trips" ON trips
+  FOR DELETE USING (auth.uid() = user_id);

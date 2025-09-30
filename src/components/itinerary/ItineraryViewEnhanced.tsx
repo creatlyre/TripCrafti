@@ -56,7 +56,7 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
   return (
     <div className="space-y-8">
       {/* Itinerary Header */}
-      <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+      <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
             <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,8 +64,8 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
             </svg>
           </div>
           <div>
-            <h3 className="font-semibold text-lg text-slate-900 dark:text-slate-100">Plan podróży wygenerowany</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">Plan podróży wygenerowany</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {plan.itinerary.length} dni · {plan.itinerary.reduce((total, day) => total + day.activities.length, 0)} aktywności
             </p>
           </div>
@@ -80,16 +80,16 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
         {plan.itinerary.map((day, dayIndex) => (
           <div key={day.day} className="relative pl-10">
             {/* Timeline line */}
-            <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-700"></div>
+            <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
             
             {/* Day Header */}
             <div className="flex items-center gap-4 mb-4">
-              <div className="absolute left-0 w-10 h-10 rounded-full bg-slate-800 text-slate-100 flex items-center justify-center font-bold z-10 border-4 border-slate-900">
+              <div className="absolute left-0 w-10 h-10 rounded-full bg-gray-800 text-gray-100 flex items-center justify-center font-bold z-10 border-4 border-gray-900">
                 {day.day}
               </div>
-              <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg px-4 py-2 border border-slate-700">
-                <h3 className="text-lg font-semibold text-slate-100">{day.date}</h3>
-                <p className="text-sm text-slate-400 font-medium">{day.theme}</p>
+              <div className="bg-gray-800/80 backdrop-blur-sm rounded-lg px-4 py-2 border border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-100">{day.date}</h3>
+                <p className="text-sm text-gray-400 font-medium">{day.theme}</p>
               </div>
             </div>
 
@@ -101,29 +101,29 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
 
                 return (
                   <Card key={activityIndex} className={`transition-all duration-300 overflow-hidden ${
-                    isCurrentlyEditing ? "bg-slate-800/90 border-indigo-500/50" : "bg-slate-800/50 border-slate-700/50 hover:border-slate-600"
+                    isCurrentlyEditing ? "bg-gray-800/90 border-indigo-500/50" : "bg-gray-800 border-gray-700 hover:border-gray-600"
                   }`}>
                     {isCurrentlyEditing ? (
                       <CardContent className="p-4 space-y-4">
                         <div className="grid md:grid-cols-5 gap-4">
                           <div className="md:col-span-3">
-                            <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+                            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
                               Nazwa aktywności
                             </label>
                             <Input
                               value={activity.activity_name}
                               onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleActivityChange(dayIndex, activityIndex, "activity_name", e.target.value)}
-                              className="mt-1 text-base font-semibold bg-slate-700/50 border-slate-600 text-slate-100"
+                              className="mt-1 text-base font-semibold bg-gray-700/50 border-gray-600 text-gray-100"
                             />
                           </div>
                           <div>
-                            <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+                            <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
                               Godzina
                             </label>
                             <Input
                               value={activity.time}
                               onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleActivityChange(dayIndex, activityIndex, "time", e.target.value)}
-                              className="mt-1 bg-slate-700/50 border-slate-600 text-slate-100"
+                              className="mt-1 bg-gray-700/50 border-gray-600 text-gray-100"
                             />
                           </div>
                           <div className="flex items-end">
@@ -132,27 +132,27 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
                                 type="number"
                                 value={activity.estimated_cost}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleActivityChange(dayIndex, activityIndex, "estimated_cost", parseFloat(e.target.value))}
-                                className="w-24 bg-slate-700/50 border-slate-600 text-slate-100"
+                                className="w-24 bg-gray-700/50 border-gray-600 text-gray-100"
                               />
-                              <span className="text-sm text-slate-400">{activity.currency}</span>
+                              <span className="text-sm text-gray-400">{activity.currency}</span>
                             </div>
                           </div>
                         </div>
                         
                         <div>
-                          <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+                          <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
                             Opis
                           </label>
                           <Textarea
                             value={activity.description}
                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleActivityChange(dayIndex, activityIndex, "description", e.target.value)}
-                            className="mt-1 bg-slate-700/50 border-slate-600 text-slate-300"
+                            className="mt-1 bg-gray-700/50 border-gray-600 text-gray-300"
                             rows={2}
                           />
                         </div>
                         
                         <div className="flex justify-end gap-2">
-                          <Button onClick={() => setIsEditing(null)} size="sm" variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+                          <Button onClick={() => setIsEditing(null)} size="sm" variant="outline" className="border-gray-600 text-gray-300 hover:bg-gray-700">
                             Anuluj
                           </Button>
                           <Button onClick={handleSave} size="sm" className="bg-indigo-600 hover:bg-indigo-500 text-white">
@@ -165,20 +165,20 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-center gap-4">
                             <div className="flex flex-col items-center justify-center w-16">
-                              <div className="text-xl font-bold text-slate-200">{activity.time.split(':')[0]}</div>
-                              <div className="text-sm text-slate-400">:{activity.time.split(':')[1]}</div>
+                              <div className="text-xl font-bold text-gray-200">{activity.time.split(':')[0]}</div>
+                              <div className="text-sm text-gray-400">:{activity.time.split(':')[1]}</div>
                             </div>
-                            <div className="h-16 w-px bg-slate-700"></div>
+                            <div className="h-16 w-px bg-gray-700"></div>
                             <div>
-                              <h4 className="text-base font-semibold text-slate-100">{activity.activity_name}</h4>
-                              <p className="text-slate-400 text-sm leading-relaxed mt-1">
+                              <h4 className="text-base font-semibold text-gray-100">{activity.activity_name}</h4>
+                              <p className="text-gray-300 text-sm leading-relaxed mt-1">
                                 {activity.description}
                               </p>
                             </div>
                           </div>
                           
                           <div className="flex flex-col items-end justify-between h-full gap-2">
-                             <div className="text-sm font-medium text-slate-300 whitespace-nowrap">
+                             <div className="text-sm font-medium text-gray-300 whitespace-nowrap">
                                 {activity.estimated_cost > 0 ? `${activity.estimated_cost} ${activity.currency}` : 'Darmowe'}
                               </div>
                             <div className="flex items-center space-x-2">
@@ -186,7 +186,7 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
                                 onClick={() => setIsEditing(editId)} 
                                 variant="ghost" 
                                 size="icon"
-                                className="text-slate-400 hover:text-white hover:bg-slate-700"
+                                className="text-gray-400 hover:text-white hover:bg-gray-700"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

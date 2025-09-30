@@ -6,6 +6,7 @@
  */
 import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
+import { geocode } from "@/lib/geocoding";
 import { z } from "zod";
 import type { TripInput } from "@/types";
 
@@ -17,6 +18,8 @@ const tripSchema = z.object({
   start_date: z.string().regex(/\d{4}-\d{2}-\d{2}/, "Invalid date"),
   end_date: z.string().regex(/\d{4}-\d{2}-\d{2}/, "Invalid date"),
   budget: z.number().min(0).optional(),
+  currency: z.string().length(3).toUpperCase().optional(),
+  lodging: z.string().min(2).max(300).optional(),
 });
 
 function json(data: any, init: number | ResponseInit = 200) {
@@ -71,9 +74,26 @@ export const POST: APIRoute = async ({ locals, request }) => {
   } catch (e: any) {
     return json({ error: "ValidationError", details: e.issues ?? e.message }, 400);
   }
+  // Attempt geocode if lodging provided
+  let geo: { lat: number; lon: number } | null = null;
+  if (body.lodging) {
+    try {
+      const g = await geocode(`${body.lodging} ${body.destination}`);
+      if (g) geo = { lat: g.lat, lon: g.lon };
+    } catch (e) {
+      console.warn('[api/trips POST] geocode failed', e);
+    }
+  }
+
+  const insertPayload: any = { ...body, user_id: user.id };
+  if (geo) {
+    insertPayload.lodging_lat = geo.lat;
+    insertPayload.lodging_lon = geo.lon;
+  }
+
   const { data, error } = await supabase
     .from("trips")
-    .insert({ ...body, user_id: user.id })
+    .insert(insertPayload)
     .select("*")
     .single();
   if (error) return json({ error: error.message }, 500);

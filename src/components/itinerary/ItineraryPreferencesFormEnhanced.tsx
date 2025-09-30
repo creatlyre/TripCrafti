@@ -61,6 +61,8 @@ interface ItineraryPreferencesFormProps {
   isGenerating: boolean;
   language: string;
   tripBudget?: number | null;
+  /** Lodging already saved on trip entity (prefills hotelNameOrUrl) */
+  tripLodging?: string | null;
 }
 
 export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesFormProps> = ({
@@ -69,6 +71,7 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
   isGenerating,
   language,
   tripBudget,
+  tripLodging,
 }) => {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
 
@@ -84,6 +87,7 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
       interests: [],
       travelStyle: "Balanced",
       budget: tripBudget ? String(tripBudget) : "Mid-Range",
+      hotelNameOrUrl: tripLodging || undefined,
     },
   });
 
@@ -92,7 +96,7 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
       ? selectedInterests.filter(i => i !== interest)
       : [...selectedInterests, interest];
     setSelectedInterests(newInterests);
-    // Update react-hook-form's internal field so Zod validation sees the selected interests
+    // Update react-hook-form so validation sees the selected interests
     setValue("interests", newInterests as any, { shouldValidate: true, shouldDirty: true });
   };
 
@@ -101,9 +105,6 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
     let kidsAges = data.kidsAges;
     if (typeof data.kidsCount === 'number') {
       kidsAges = (kidsAges || []).slice(0, data.kidsCount);
-      if (kidsAges.length < data.kidsCount) {
-        // pad undefined removal by leaving as is (omit shorter)
-      }
     } else {
       kidsAges = undefined;
     }
@@ -140,7 +141,7 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
         <p className="text-slate-600 dark:text-slate-400 text-xs">{dict?.subtitle}</p>
       </CardHeader>
       <CardContent className="p-4">
-  <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
           {/* Interests Section */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
@@ -320,8 +321,14 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
                 {errors.kidsCount && <p className="text-xs text-red-600 dark:text-red-400">{validationMap[errors.kidsCount.message || ''] || errors.kidsCount.message}</p>}
               </div>
             </div>
-            {/* Kids Ages Dynamic */}
-            {watch('kidsCount') && watch('kidsCount')! > 0 && (
+            {/* Kids ages section only renders when kidsCount is a valid positive number.
+                Previous logic could render literal NaN due to JS && operator returning NaN.
+                We guard explicitly against non-number / NaN values. */}
+            {(() => {
+              const kc = watch('kidsCount');
+              const isValidPositive = typeof kc === 'number' && !Number.isNaN(kc) && kc > 0;
+              return isValidPositive;
+            })() && (
               <div className="space-y-2">
                 <p className="text-xs text-slate-600 dark:text-slate-400">{dict?.kidsAgesHint}</p>
                 <div className="flex flex-wrap gap-2">
@@ -349,37 +356,37 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
           </div>
 
           {/* Optional Lodging & Distance */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-100">
-                {dict?.lodgingDistanceLabel}
-                {dict?.tooltip?.lodging && (
-                  <span title={dict.tooltip.lodging} className="cursor-help text-slate-400 dark:text-slate-500">ⓘ</span>
-                )}
-              </label>
-              <div className="space-y-2">
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-100">
+              {dict?.lodgingDistanceLabel}
+              {dict?.tooltip?.lodging && (
+                <span title={dict.tooltip.lodging} className="cursor-help text-slate-400 dark:text-slate-500">ⓘ</span>
+              )}
+            </label>
+            <div className="space-y-2">
+              <Input
+                type="text"
+                placeholder={dict?.lodgingPlaceholder || 'Hotel name / URL / address'}
+                {...register('hotelNameOrUrl')}
+                className="text-sm"
+              />
+              {errors.hotelNameOrUrl && <p className="text-xs text-red-600 dark:text-red-400">{errors.hotelNameOrUrl.message}</p>}
+              <div className="flex items-center gap-2">
                 <Input
-                  type="text"
-                  placeholder={dict?.lodgingPlaceholder || 'Hotel name / URL / address'}
-                  {...register('hotelNameOrUrl')}
+                  type="number"
+                  placeholder={dict?.distancePlaceholder || 'Max travel km'}
+                  min={1}
+                  {...register('maxTravelDistanceKm', { valueAsNumber: true })}
                   className="text-sm"
                 />
-                {errors.hotelNameOrUrl && <p className="text-xs text-red-600 dark:text-red-400">{errors.hotelNameOrUrl.message}</p>}
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    placeholder={dict?.distancePlaceholder || 'Max travel km'}
-                    min={1}
-                    {...register('maxTravelDistanceKm', { valueAsNumber: true })}
-                    className="text-sm"
-                  />
-                  {errors.maxTravelDistanceKm && <p className="text-xs text-red-600 dark:text-red-400">{validationMap[errors.maxTravelDistanceKm.message || ''] || errors.maxTravelDistanceKm.message}</p>}
-                  {dict?.tooltip?.distance && (
-                    <span title={dict.tooltip.distance} className="cursor-help text-slate-400 dark:text-slate-500">ⓘ</span>
-                  )}
-                </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">{dict?.distanceHelper}</p>
+                {errors.maxTravelDistanceKm && <p className="text-xs text-red-600 dark:text-red-400">{validationMap[errors.maxTravelDistanceKm.message || ''] || errors.maxTravelDistanceKm.message}</p>}
+                {dict?.tooltip?.distance && (
+                  <span title={dict.tooltip.distance} className="cursor-help text-slate-400 dark:text-slate-500">ⓘ</span>
+                )}
               </div>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400">{dict?.distanceHelper}</p>
             </div>
+          </div>
 
           {/* Submit Button */}
           <div className="pt-2">

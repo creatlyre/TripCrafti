@@ -47,6 +47,8 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<(Trip & { itineraries: GeneratedItinerary[] }) | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [deletingTrip, setDeletingTrip] = useState<Trip | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   function handleOpenTrip(trip: (Trip & { itineraries: GeneratedItinerary[] }), tab?: string) {
     setSelectedTrip(trip);
@@ -75,6 +77,34 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
       setError(e.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDeleteTrip(trip: Trip) {
+    setDeletingTrip(trip);
+  }
+
+  async function confirmDelete() {
+    if (!deletingTrip) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/trips/${deletingTrip.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(()=>({}));
+        throw new Error(body.error || 'Delete failed');
+      }
+      // If the currently opened trip is deleted, close dialog
+      if (selectedTrip && selectedTrip.id === deletingTrip.id) {
+        setSelectedTrip(null);
+      }
+      setDeletingTrip(null);
+      await loadTrips(false);
+    } catch (e:any) {
+      console.error(e);
+      // reuse generic error state area
+      setError(e.message);
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -155,7 +185,8 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
         start_date: form.start_date,
         end_date: form.end_date,
         budget: form.budget ? Number(form.budget) : undefined,
-        currency: form.currency,
+        currency: form.budget ? form.currency : undefined,
+        lodging: (form as any).lodging?.trim() || undefined,
       };
       const res = await fetch("/api/trips", {
         method: "POST",
@@ -416,14 +447,21 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                       <p className="text-sm text-slate-600 dark:text-slate-400">{selectedTrip.destination}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setSelectedTrip(null)}
-                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                    <div className="flex items-center gap-3">
+                      {selectedTrip?.lodging && (
+                        <span className="text-xs text-slate-500 dark:text-slate-400 max-w-[240px] truncate" title={selectedTrip.lodging || undefined}>
+                          {lang==='pl' ? 'Nocleg:' : 'Lodging:'} {selectedTrip.lodging}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => setSelectedTrip(null)}
+                        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
                 </div>
 
                 {/* Main content area */}
@@ -508,6 +546,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                                   isGenerating={isGenerating}
                                   language={lang}
                                   tripBudget={selectedTrip.budget}
+                                  tripLodging={selectedTrip.lodging}
                                 />
                               </div>
                             </div>
@@ -615,17 +654,47 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                 key={t.id}
                 trip={t}
                 onOpen={(tab) => handleOpenTrip(t, tab)}
+                onDelete={(trip)=> handleDeleteTrip(trip)}
                 dict={{
                   dates: dict.dates,
                   budget: dict.budget,
                   open: dict.open,
                   openPlan: dict.openPlan,
+                  deleteAction: lang==='pl' ? (dict.delete?.confirm || 'Usuń podróż') : (dict.delete?.confirm || 'Delete trip')
                 }}
               />
             ))}
           </ul>
         )}
       </section>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!deletingTrip} onOpenChange={(o)=>{ if(!o) setDeletingTrip(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{lang==='pl' ? 'Usuń podróż' : 'Delete trip'}</DialogTitle>
+            <DialogDescription>
+              {lang==='pl' ? 'Tej operacji nie można cofnąć. Czy na pewno chcesz usunąć tę podróż oraz powiązane wygenerowane plany?' : 'This action cannot be undone. Are you sure you want to delete this trip and its generated itineraries?'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="text-sm space-y-2">
+            {deletingTrip && (
+              <p className="font-medium">{deletingTrip.title} — {deletingTrip.destination}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {lang==='pl' ? 'Powiązane rekordy (np. wygenerowane itineraria) zostaną usunięte kaskadowo.' : 'Related records (e.g. generated itineraries) will be removed via cascade.'}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=>setDeletingTrip(null)} disabled={deleteLoading}>
+              {lang==='pl' ? 'Anuluj' : 'Cancel'}
+            </Button>
+            <Button onClick={confirmDelete} disabled={deleteLoading} className="bg-red-600 hover:bg-red-500 text-white">
+              {deleteLoading ? (lang==='pl' ? 'Usuwanie…' : 'Deleting…') : (lang==='pl' ? 'Usuń' : 'Delete')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

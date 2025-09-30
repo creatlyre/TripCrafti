@@ -9,6 +9,10 @@ export interface Trip {
   end_date: string; // YYYY-MM-DD
   budget: number | null;
   currency: string | null;
+  // Optional lodging metadata (may be null if user did not provide)
+  lodging?: string | null;
+  lodging_lat?: number | null;
+  lodging_lon?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -21,6 +25,7 @@ export interface TripInput {
   end_date: string; // YYYY-MM-DD
   budget?: number; // optional
   currency?: string; // optional
+  lodging?: string; // optional lodging string provided by user (name / URL / address)
 }
 
 export type ItineraryStatus = 'GENERATING' | 'COMPLETED' | 'FAILED';

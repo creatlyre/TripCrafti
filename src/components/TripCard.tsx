@@ -6,15 +6,17 @@ import { TripImage } from "./TripImage";
 interface TripCardProps {
   trip: Trip & { itineraries: GeneratedItinerary[] };
   onOpen: (tab?: string) => void;
+  onDelete?: (trip: Trip) => void;
   dict: {
     dates: string;
     budget: string;
     open: string;
     openPlan: string;
+    deleteAction?: string;
   };
 }
 
-export const TripCard: React.FC<TripCardProps> = ({ trip, onOpen, dict }) => {
+export const TripCard: React.FC<TripCardProps> = ({ trip, onOpen, onDelete, dict }) => {
   const hasItinerary = trip.itineraries && trip.itineraries.length > 0 && trip.itineraries[0].status === 'COMPLETED';
 
   return (
@@ -39,7 +41,16 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onOpen, dict }) => {
             )}
           </CardContent>
         </div>
-        <CardFooter className="flex justify-end p-4 mt-auto">
+        <CardFooter className="flex items-center justify-between gap-2 p-4 mt-auto">
+          {dict.deleteAction && (
+            <button
+              type="button"
+              onClick={() => onDelete && onDelete(trip)}
+              className="text-xs text-red-400 hover:text-red-300 underline decoration-dotted"
+            >
+              {dict.deleteAction}
+            </button>
+          )}
           {hasItinerary ? (
             <Button
               size="sm"

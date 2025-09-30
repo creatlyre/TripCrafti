@@ -66,6 +66,14 @@ interface Dictionary {
     openPlan: string;
     dates: string;
     budget: string;
+    delete?: {
+      heading: string;
+      body: string;
+      confirm: string;
+      cancel: string;
+      cascadingNote: string;
+        action?: string;
+    };
     create: {
       add: string;
       heading: string;
@@ -206,6 +214,14 @@ export const dictionaries: Record<Lang, Dictionary> = {
       openPlan: "Otwórz plan",
       dates: "Daty",
       budget: "Budżet",
+      delete: {
+        heading: "Usuń podróż",
+        body: "Tej operacji nie można cofnąć. Czy na pewno chcesz usunąć tę podróż oraz powiązane wygenerowane plany?",
+        confirm: "Usuń",
+        cancel: "Anuluj",
+        cascadingNote: "Powiązane rekordy zostaną usunięte kaskadowo.",
+        action: "Usuń podróż",
+      },
       create: {
         add: "Dodaj podróż",
         heading: "Utwórz nową podróż",
@@ -363,6 +379,14 @@ export const dictionaries: Record<Lang, Dictionary> = {
       openPlan: "Open Plan",
       dates: "Dates",
       budget: "Budget",
+      delete: {
+        heading: "Delete trip",
+        body: "This action cannot be undone. Are you sure you want to delete this trip and its generated itineraries?",
+        confirm: "Delete",
+        cancel: "Cancel",
+        cascadingNote: "Related records will be removed via cascade.",
+        action: "Delete trip",
+      },
       create: {
         add: "Add Trip",
         heading: "Create a new trip",

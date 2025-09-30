@@ -58,14 +58,14 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
   if (resolvedModel) {
     console.log('[itinerary-ai] Using cached model', resolvedModel);
     const model = genAIInstance.getGenerativeModel({ model: resolvedModel });
-    return { modelName: resolvedModel, result: await withTimeout(model.generateContent(prompt), 60000, 'ModelTimeout') };
+    return { modelName: resolvedModel, result: await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout') };
   }
   let lastError: any = null;
   for (const candidate of MODEL_CANDIDATES) {
     try {
       console.log('[itinerary-ai] Trying model', candidate);
       const model = genAIInstance.getGenerativeModel({ model: candidate });
-      const result = await withTimeout(model.generateContent(prompt), 60000, 'ModelTimeout');
+      const result = await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout');
       resolvedModel = candidate; // cache on first success
       return { modelName: candidate, result };
     } catch (e: any) {
@@ -116,7 +116,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   // 2. Verify trip ownership and get trip details
   const { data: trip, error: tripError } = await supabase
     .from("trips")
-    .select("destination, start_date, end_date, budget")
+    .select("destination, start_date, end_date, budget, lodging, lodging_lat, lodging_lon")
     .eq("id", tripId)
     .eq("user_id", user.id)
     .single();
@@ -141,6 +141,12 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       clearTimeout(timeout);
       if (geo) {
         finalPreferences.lodgingCoords = { lat: geo.lat, lon: geo.lon };
+        // If trip doesn't yet have lodging stored, update it (best-effort, non-blocking)
+        if (!trip.lodging) {
+          supabase.from('trips').update({ lodging: preferences.hotelNameOrUrl, lodging_lat: geo.lat, lodging_lon: geo.lon }).eq('id', tripId).then(r => {
+            if (r.error) console.warn('[itinerary] failed to backfill lodging on trip', r.error.message);
+          });
+        }
       }
     } catch (e) {
       console.warn('[itinerary] geocode failed', e);
