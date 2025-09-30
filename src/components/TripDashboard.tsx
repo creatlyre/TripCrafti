@@ -1,19 +1,36 @@
 /**
  * TripDashboard
- * Authenticated user panel showing:
- *  - Trip creation form (minimal fields; extend later with activities, bookings, expenses)
- *  - List of existing trips with quick metadata
- *  - Accessible semantics (headings, sr-only labels, ARIA where useful)
- *  - Optimistic refresh button & clear empty state
+ * Authenticated user panel with improved UI/UX.
+ * - Trip creation form is in a modal dialog.
+ * - A new, actionable empty state guides new users.
  */
 import React, { useEffect, useState } from "react";
 import type { Trip, TripInput } from "@/types";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "./ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "./ui/dialog";
 import type { Lang } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/hooks/useAuth";
+
+const SuitcaseIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M8 6h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
+    <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+    <path d="M12 20v-8" />
+  </svg>
+);
 
 interface CreateFormState extends TripInput {}
 
@@ -30,24 +47,19 @@ interface TripDashboardProps {
 }
 
 export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
-  const { user, session, loading: authLoading, refresh } = useAuth();
-  console.log("TRIP DASHBOARD", { user, session, authLoading });
+  const { user, session, loading: authLoading } = useAuth();
   const dict = getDictionary(lang).dashboard!;
   const [trips, setTrips] = useState<Trip[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<CreateFormState>(empty);
   const [error, setError] = useState<string | null>(null);
-  const [forceShell, setForceShell] = useState(false);
-  useEffect(() => {
-    if (!authLoading && user) return;
-    const id = setTimeout(() => setForceShell(true), 1500);
-    return () => clearTimeout(id);
-  }, [authLoading, user]);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
 
-  async function loadTrips() {
-    // If we already have trips, treat as background refresh (don't flip full-page loading state)
-    setLoading(trips === null);
+  async function loadTrips(showLoadingSpinner = true) {
+    if (showLoadingSpinner) {
+      setLoading(true);
+    }
     try {
       const res = await fetch("/api/trips", {
         headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
@@ -62,12 +74,11 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
     }
   }
 
-  // Load trips once user session resolved and exists.
   useEffect(() => {
-    if (!authLoading && user && trips === null) {
+    if (!authLoading && user) {
       loadTrips();
     }
-  }, [authLoading, user, trips]);
+  }, [authLoading, user]);
 
   async function submitCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -94,7 +105,8 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
         throw new Error(body.error || "Failed to create trip");
       }
       setForm(empty);
-      await loadTrips();
+      setCreateModalOpen(false);
+      await loadTrips(false); // Refresh list without full loading spinner
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -106,17 +118,20 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
-  if (authLoading && !user && !forceShell) {
+  useEffect(() => {
+    if (!isCreateModalOpen) {
+      setForm(empty);
+      setError(null);
+    }
+  }, [isCreateModalOpen]);
+
+  if (authLoading && !user) {
     return <p className="text-sm text-muted-foreground">{dict.checking}</p>;
   }
   if (!user) {
     return (
       <div className="text-sm text-center space-y-4">
-        <p className="text-muted-foreground">
-          {lang === "pl"
-            ? "Musisz być zalogowany aby zobaczyć swoje podróże."
-            : "You must be signed in to view your trips."}
-        </p>
+        <p className="text-muted-foreground">{lang === "pl" ? "Musisz być zalogowany" : "You must be signed in"}</p>
         <Button asChild>
           <a href={`/login?lang=${lang}`}>{lang === "pl" ? "Przejdź do logowania" : "Go to login"}</a>
         </Button>
@@ -124,206 +139,177 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
     );
   }
 
-  const debug = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("debug");
-
   return (
     <div className="space-y-8">
-      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{dict.heading}</h1>
           <p className="text-sm text-muted-foreground">{dict.sub}</p>
         </div>
-        <Button onClick={loadTrips} variant="secondary" disabled={loading}>
-          {loading ? dict.loading : dict.refresh}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => loadTrips(true)} variant="secondary" disabled={loading && trips !== null}>
+            {loading && trips !== null ? dict.loading : dict.refresh}
+          </Button>
+          <Button onClick={() => setCreateModalOpen(true)}>{dict.create.add}</Button>
+        </div>
       </header>
 
-      {debug && (
-        <Card className="border-yellow-500/40 bg-yellow-500/5 text-xs">
-          <CardHeader>
-            <CardTitle className="text-sm">Auth Debug</CardTitle>
-            <CardDescription>Dev-only panel (remove ?debug to hide)</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-1 font-mono break-all">
-            <p>
-              <strong>User ID:</strong> {user?.id || "null"}
-            </p>
-            <p>
-              <strong>Access token:</strong>{" "}
-              {session?.access_token
-                ? `${session.access_token.slice(0, 12)}…${session.access_token.slice(-6)}`
-                : "null"}
-            </p>
-            <p>
-              <strong>Trips loaded:</strong> {trips ? trips.length : "—"}
-            </p>
-            <div className="pt-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  refresh();
-                  loadTrips();
-                }}
-              >
-                Force Refresh
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <Dialog open={isCreateModalOpen} onOpenChange={setCreateModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{dict.create.heading}</DialogTitle>
+            <DialogDescription>{dict.create.description}</DialogDescription>
+          </DialogHeader>
 
-      <section aria-labelledby="create-trip-heading" className="max-w-2xl">
-        <Card>
-          <CardHeader>
-            <CardTitle id="create-trip-heading" className="text-lg">
-              {dict.create.heading}
-            </CardTitle>
-            <CardDescription>{dict.create.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <div
-                className="mb-4 rounded-md bg-destructive/10 text-destructive text-sm px-3 py-2 border border-destructive/30"
-                role="alert"
+          {error && (
+            <div
+              className="my-4 rounded-md bg-destructive/10 text-destructive text-sm px-3 py-2 border border-destructive/30"
+              role="alert"
+            >
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={submitCreate} className="grid gap-4 py-4 md:grid-cols-2" noValidate>
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label htmlFor="title" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {dict.create.title}
+              </label>
+              <input
+                id="title"
+                required
+                value={form.title}
+                onChange={(e) => onChange("title", e.target.value)}
+                className="h-9 rounded-md border bg-transparent px-3 text-sm"
+                placeholder={lang === "pl" ? "Lato we Włoszech" : "Summer in Italy"}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="destination"
+                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
               >
-                {error}
-              </div>
-            )}
-            <form onSubmit={submitCreate} className="grid gap-4 md:grid-cols-2" aria-describedby="trip-form-hint">
-              <div className="flex flex-col gap-1.5 md:col-span-2">
-                <label htmlFor="title" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {dict.create.title}
-                </label>
-                <input
-                  id="title"
-                  required
-                  value={form.title}
-                  onChange={(e) => onChange("title", e.target.value)}
-                  className="h-9 rounded-md border bg-background/60 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring border-input"
-                  placeholder={lang === "pl" ? "Lato we Włoszech" : "Summer in Italy"}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="destination"
-                  className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                >
-                  {dict.create.destination}
-                </label>
-                <input
-                  id="destination"
-                  required
-                  value={form.destination}
-                  onChange={(e) => onChange("destination", e.target.value)}
-                  className="h-9 rounded-md border bg-background/60 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring border-input"
-                  placeholder={lang === "pl" ? "Toskania" : "Tuscany"}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="budget" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {dict.create.budget}
-                </label>
-                <input
-                  id="budget"
-                  type="number"
-                  min={0}
-                  value={form.budget ?? ""}
-                  onChange={(e) => onChange("budget", e.target.value)}
-                  className="h-9 rounded-md border bg-background/60 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring border-input"
-                  placeholder="1200"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="start_date"
-                  className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                >
-                  {dict.create.start}
-                </label>
-                <input
-                  id="start_date"
-                  type="date"
-                  required
-                  value={form.start_date}
-                  onChange={(e) => onChange("start_date", e.target.value)}
-                  className="h-9 rounded-md border bg-background/60 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring border-input"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="end_date" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {dict.create.end}
-                </label>
-                <input
-                  id="end_date"
-                  type="date"
-                  required
-                  value={form.end_date}
-                  onChange={(e) => onChange("end_date", e.target.value)}
-                  className="h-9 rounded-md border bg-background/60 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring border-input"
-                />
-              </div>
-              <div className="md:col-span-2 flex justify-end">
-                <Button type="submit" disabled={creating}>
-                  {creating ? (lang === "pl" ? "Tworzenie…" : "Creating…") : dict.create.submit}
-                </Button>
-              </div>
-            </form>
-            <p id="trip-form-hint" className="sr-only">
-              {dict.create.requiredHint}
-            </p>
-          </CardContent>
-        </Card>
-      </section>
+                {dict.create.destination}
+              </label>
+              <input
+                id="destination"
+                required
+                value={form.destination}
+                onChange={(e) => onChange("destination", e.target.value)}
+                className="h-9 rounded-md border bg-transparent px-3 text-sm"
+                placeholder={lang === "pl" ? "Toskania" : "Tuscany"}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="budget" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {dict.create.budget}
+              </label>
+              <input
+                id="budget"
+                type="number"
+                min={0}
+                value={form.budget ?? ""}
+                onChange={(e) => onChange("budget", e.target.value)}
+                className="h-9 rounded-md border bg-transparent px-3 text-sm"
+                placeholder="1200"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="start_date" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {dict.create.start}
+              </label>
+              <input
+                id="start_date"
+                type="date"
+                required
+                value={form.start_date}
+                onChange={(e) => onChange("start_date", e.target.value)}
+                className="h-9 rounded-md border bg-transparent px-3 text-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="end_date" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {dict.create.end}
+              </label>
+              <input
+                id="end_date"
+                type="date"
+                required
+                value={form.end_date}
+                onChange={(e) => onChange("end_date", e.target.value)}
+                className="h-9 rounded-md border bg-transparent px-3 text-sm"
+              />
+            </div>
+          </form>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setCreateModalOpen(false)}>
+              {dict.create.cancel}
+            </Button>
+            <Button type="submit" onClick={submitCreate} disabled={creating}>
+              {creating ? (lang === "pl" ? "Tworzenie…" : "Creating…") : dict.create.submit}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <section aria-labelledby="trips-list-heading">
         <h2 id="trips-list-heading" className="sr-only">
           Existing trips
         </h2>
+
         {loading && trips === null && (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" aria-hidden>
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-xl border border-slate-800/60 bg-slate-900/40 animate-pulse h-40" />
+              <div key={i} className="rounded-xl border bg-card/50 animate-pulse h-48" />
             ))}
           </div>
         )}
+
         {!loading && trips && trips.length === 0 && (
-          <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-            {dict.empty}
+          <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/20 py-20 text-center">
+            <SuitcaseIcon className="w-16 h-16 text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-1">{dict.empty.heading}</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-xs">{dict.empty.description}</p>
+            <Button onClick={() => setCreateModalOpen(true)}>{dict.create.add}</Button>
           </div>
         )}
-        <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {trips?.map((t) => (
-            <li key={t.id}>
-              <Card className="h-full flex flex-col">
-                <CardHeader>
-                  <CardTitle className="text-base font-medium flex items-center justify-between">
-                    <span>{t.title}</span>
-                  </CardTitle>
-                  <CardDescription>{t.destination}</CardDescription>
-                </CardHeader>
-                <CardContent className="text-xs text-muted-foreground space-y-1">
-                  <p>
-                    <strong className="font-medium text-foreground">{dict.dates}:</strong> {t.start_date} → {t.end_date}
-                  </p>
-                  {t.budget != null && (
+
+        {trips && trips.length > 0 && (
+          <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {trips.map((t) => (
+              <li key={t.id} className="group">
+                <Card className="h-full flex flex-col transition-all duration-200 group-hover:border-primary/60 group-hover:shadow-lg">
+                  <div className="w-full h-32 bg-secondary/50 rounded-t-lg flex items-center justify-center text-muted-foreground text-sm">
+                    [ Image for {t.destination} ]
+                  </div>
+                  <CardHeader>
+                    <CardTitle className="text-base font-medium">{t.title}</CardTitle>
+                    <CardDescription>{t.destination}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-xs text-muted-foreground space-y-1.5 flex-grow">
                     <p>
-                      <strong className="font-medium text-foreground">{dict.budget}:</strong> {t.budget}
+                      <strong className="font-medium text-foreground">{dict.dates}:</strong> {t.start_date} →{" "}
+                      {t.end_date}
                     </p>
-                  )}
-                </CardContent>
-                <CardFooter className="mt-auto flex justify-end">
-                  <Button size="sm" variant="outline">
-                    {dict.open}
-                  </Button>
-                </CardFooter>
-              </Card>
-            </li>
-          ))}
-        </ul>
+                    {t.budget != null && (
+                      <p>
+                        <strong className="font-medium text-foreground">{dict.budget}:</strong> {t.budget}
+                      </p>
+                    )}
+                  </CardContent>
+                  <CardFooter className="flex justify-end">
+                    <Button size="sm" variant="outline">
+                      {dict.open}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );
 }
-
 export default TripDashboard;

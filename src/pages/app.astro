@@ -1,7 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { getDictionary } from "@/lib/i18n";
-import TripDashboard from "@/components/TripDashboard";
+import { TripDashboard } from "@/components/TripDashboard.tsx";
 export const prerender = false;
 
 const lang = Astro.locals.lang;
