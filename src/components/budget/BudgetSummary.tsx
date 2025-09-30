@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import type { BudgetSummary } from '../../types';
+import { getDictionary, type Lang } from '@/lib/i18n';
 import { Progress } from '../ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
-interface Props { tripId: string; refreshToken?: number; }
+interface Props { tripId: string; refreshToken?: number; lang?: Lang }
 
-export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken }) => {
+export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lang = 'pl' }) => {
+	const dict = getDictionary(lang).budget!;
 	const [summary, setSummary] = useState<BudgetSummary | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -53,36 +55,36 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken }) =
 	return (
 		<div className="space-y-6">
 			<div className="grid gap-4 md:grid-cols-5">
-				{STAT('Total Budget', summary.totalBudget?.toFixed(2) ?? '—', summary.totalPlannedCategories ? `Planned Cat: ${summary.totalPlannedCategories.toFixed(2)}` : undefined)}
-				{STAT('Spent', summary.totalSpent.toFixed(2), summary.totalSpentPrepaid ? `Prepaid ${summary.totalSpentPrepaid.toFixed(2)}` : undefined, 'text-emerald-300')}
-				{STAT('Remaining', summary.remaining != null ? summary.remaining.toFixed(2) : '—', summary.totalBudget ? `${percent.toFixed(0)}% used` : undefined, 'text-amber-300')}
-				{STAT('On-trip', summary.totalSpentOnTrip.toFixed(2), summary.totalSpentPrepaid ? `Excl pre ${summary.totalSpentOnTrip.toFixed(2)}` : undefined)}
-				{STAT('Daily Target', summary.dailySpendTarget != null ? summary.dailySpendTarget.toFixed(2) : '—', summary.remaining != null ? 'Auto calc' : undefined)}
+				{STAT(dict.summary.totalBudget, summary.totalBudget?.toFixed(2) ?? '—', summary.totalPlannedCategories ? `${dict.summary.plannedCategoriesShort} ${summary.totalPlannedCategories.toFixed(2)}` : undefined)}
+				{STAT(dict.summary.spent, summary.totalSpent.toFixed(2), summary.totalSpentPrepaid ? `${dict.summary.spentPrepaidShort} ${summary.totalSpentPrepaid.toFixed(2)}` : undefined, 'text-emerald-300')}
+				{STAT(dict.summary.remaining, summary.remaining != null ? summary.remaining.toFixed(2) : '—', summary.totalBudget ? `${percent.toFixed(0)}${dict.summary.percentUsed}` : undefined, 'text-amber-300')}
+				{STAT(dict.summary.onTrip, summary.totalSpentOnTrip.toFixed(2), summary.totalSpentPrepaid ? `${dict.summary.exclPreShort} ${summary.totalSpentOnTrip.toFixed(2)}` : undefined)}
+				{STAT(dict.summary.dailyTarget, summary.dailySpendTarget != null ? summary.dailySpendTarget.toFixed(2) : '—', summary.remaining != null ? dict.summary.autoCalc : undefined)}
 			</div>
 
 			<Card className="border-slate-700 bg-slate-900/60">
 				<CardHeader className="pb-2">
-					<CardTitle className="text-sm">Budget Progress</CardTitle>
+					<CardTitle className="text-sm">{dict.summary.progress}</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-3">
 					<div className="flex justify-between text-xs text-slate-400">
-						<span>Spent {summary.totalSpent.toFixed(2)}</span>
+						<span>{dict.summary.spent} {summary.totalSpent.toFixed(2)}</span>
 						<span>{summary.totalBudget?.toFixed(2) ?? '—'}</span>
 					</div>
 					<div className="h-3 w-full rounded-full bg-slate-800 overflow-hidden">
 						<div className="h-full bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 transition-all" style={{width: percent + '%'}} />
 					</div>
 					{summary.remaining != null && (
-						<p className="text-[11px] text-slate-500">Remaining {summary.remaining.toFixed(2)}</p>
+						<p className="text-[11px] text-slate-500">{dict.summary.remaining} {summary.remaining.toFixed(2)}</p>
 					)}
 				</CardContent>
 			</Card>
 
 			<Card className="border-slate-700 bg-slate-900/60">
-				<CardHeader className="pb-2"><CardTitle className="text-sm">Categories</CardTitle></CardHeader>
+				<CardHeader className="pb-2"><CardTitle className="text-sm">{dict.summary.categories}</CardTitle></CardHeader>
 				<CardContent>
 					{summary.spentByCategory.length === 0 && (
-						<div className="text-xs text-slate-500">No expenses yet. Add your first expense to see distribution.</div>
+						<div className="text-xs text-slate-500">{dict.summary.categoriesEmpty}</div>
 					)}
 					<ul className="divide-y divide-slate-800">
 						{summary.spentByCategory.slice(0,10).map(cat => {
@@ -90,7 +92,7 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken }) =
 							return (
 								<li key={cat.category_id || cat.category || 'uncat'} className="py-2 text-xs flex items-center gap-3">
 									<div className="flex-1 min-w-0">
-										<p className="font-medium text-slate-200 truncate">{cat.category || 'Uncategorized'}</p>
+										<p className="font-medium text-slate-200 truncate">{cat.category || dict.summary.uncategorized}</p>
 										<p className="text-[10px] text-slate-500">{cat.spent.toFixed(2)}{cat.planned ? ` / ${cat.planned.toFixed(2)}` : ''}</p>
 										{cat.planned && (
 											<div className="mt-1 h-1 w-full bg-slate-800 rounded">

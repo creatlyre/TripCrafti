@@ -13,6 +13,8 @@ interface TripCardProps {
     open: string;
     openPlan: string;
     deleteAction?: string;
+    budgetLink?: string;
+    budgetAria?: string;
   };
 }
 
@@ -55,8 +57,8 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onOpen, onDelete, dict
             href={`/app/budget/${trip.id}`}
             onClick={e => e.stopPropagation()}
             className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-300 hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-colors"
-            aria-label="Open budget dashboard"
-          >Budget</a>
+            aria-label={dict.budgetAria || 'Budget'}
+          >{dict.budgetLink || dict.budget}</a>
           {hasItinerary ? (
             <Button
               size="sm"

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { getDictionary, type Lang } from "@/lib/i18n";
 
 // Auth UI appearance override aligned with app design system
 const appearance = {
@@ -55,6 +56,9 @@ export default function Login() {
   const supabase = useSupabaseClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const langParam = typeof window !== 'undefined' ? (new URL(window.location.href).searchParams.get('lang') || 'pl') : 'pl';
+  const lang = (langParam === 'en' ? 'en' : 'pl') as Lang;
+  const dict = getDictionary(lang);
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -73,8 +77,8 @@ export default function Login() {
   if (user) {
     return (
       <div className="space-y-4 text-center">
-        <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-6 py-6">
-          <p className="text-sm text-slate-300">Signed in as</p>
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-6 py-6" lang={lang}>
+          <p className="text-sm text-slate-300">{dict.auth?.signedInAs}</p>
           <p className="mt-1 text-sm font-medium text-white">{user.email}</p>
           <button
             onClick={async () => {
@@ -84,11 +88,11 @@ export default function Login() {
             }}
             className="mt-6 inline-flex items-center justify-center rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 shadow hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
           >
-            {loading ? "Signing out…" : "Sign Out"}
+            {loading ? (dict.auth?.signingOut || dict.auth?.signOut) : dict.auth?.signOut}
           </button>
           <div className="mt-4 text-xs text-slate-500">
-            <a href="/app" className="underline hover:text-slate-300">
-              Go to dashboard
+            <a href={`/app?lang=${lang}`} className="underline hover:text-slate-300">
+              {dict.auth?.goToDashboard}
             </a>
           </div>
         </div>

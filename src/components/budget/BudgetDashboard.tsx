@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import type { Trip, Expense } from '../../types';
+import { getDictionary, type Lang } from '@/lib/i18n';
 import BudgetSummaryWidget from './BudgetSummary';
 import QuickAddExpense from './QuickAddExpense';
 import CategoryManagement from './CategoryManagement';
 
-interface Props { trip: Trip; }
+interface Props { trip: Trip; lang?: Lang }
 
-const BudgetDashboard: React.FC<Props> = ({ trip }) => {
+const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
+  const dict = getDictionary(lang).budget!;
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +21,7 @@ const BudgetDashboard: React.FC<Props> = ({ trip }) => {
     setError(null);
     try {
       const res = await fetch(`/api/trips/${trip.id}/expenses`);
-      if (!res.ok) throw new Error('Failed to load expenses');
+  if (!res.ok) throw new Error('Failed to load expenses'); // leave internal error English for now
       const data = await res.json();
       setExpenses(data.expenses || []);
     } catch (e: any) { setError(e.message); } finally { if (!opts.silent) setLoading(false); setRefreshing(false); }
@@ -54,22 +56,22 @@ const BudgetDashboard: React.FC<Props> = ({ trip }) => {
     <div className="space-y-10 pb-28">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-lg font-semibold">Budget Dashboard</h1>
+          <h1 className="text-lg font-semibold">{dict.dashboard.title}</h1>
           <p className="text-xs text-muted-foreground">{trip.title} · {trip.destination} · {trip.start_date} → {trip.end_date}</p>
         </div>
         <div className="flex gap-3 items-center flex-wrap">
           <div className="inline-flex rounded-md overflow-hidden border border-slate-700 bg-slate-900/60">
-            {([['all','All'],['exclude','No Prepaid'],['only','Prepaid']] as const).map(([val,label]) => (
+            {([['all',dict.dashboard.filters.all],['exclude',dict.dashboard.filters.excludePrepaid],['only',dict.dashboard.filters.onlyPrepaid]] as const).map(([val,label]) => (
               <button key={val} onClick={()=> setPrepaidMode(val)} className={`px-2 py-1 text-[11px] transition ${prepaidMode===val ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>{label}</button>
             ))}
           </div>
-          <button onClick={manualRefresh} disabled={refreshing} className="text-[11px] px-3 py-1 rounded-md border border-slate-700 hover:bg-slate-800 disabled:opacity-50">{refreshing ? 'Refreshing…' : 'Refresh'}</button>
+          <button onClick={manualRefresh} disabled={refreshing} className="text-[11px] px-3 py-1 rounded-md border border-slate-700 hover:bg-slate-800 disabled:opacity-50">{refreshing ? dict.dashboard.refresh.refreshing : dict.dashboard.refresh.action}</button>
         </div>
       </header>
       <BudgetSummaryWidget tripId={trip.id} refreshToken={summaryRefresh} />
       <div className="grid gap-8 md:grid-cols-3">
         <div className="md:col-span-2 space-y-4">
-          <h2 className="text-sm font-semibold flex items-center justify-between">Expenses <span className="text-[10px] font-normal text-slate-500">{filteredExpenses.length}</span></h2>
+          <h2 className="text-sm font-semibold flex items-center justify-between">{dict.dashboard.expenses.heading} <span className="text-[10px] font-normal text-slate-500">{filteredExpenses.length}</span></h2>
           {loading && (
             <ul className="space-y-2 animate-pulse">
               {Array.from({length:4}).map((_,i)=>(
@@ -78,25 +80,25 @@ const BudgetDashboard: React.FC<Props> = ({ trip }) => {
             </ul>
           )}
             {error && <div className="text-xs text-red-600">{error}</div>}
-            {(!loading && filteredExpenses.length === 0) && <div className="text-xs text-slate-500 border border-dashed border-slate-700 rounded p-6 text-center">No expenses yet. Use the + button to add one.</div>}
+            {(!loading && filteredExpenses.length === 0) && <div className="text-xs text-slate-500 border border-dashed border-slate-700 rounded p-6 text-center">{dict.dashboard.expenses.empty}</div>}
             <div className="space-y-4">
               {groupedByDate.map(group => (
                 <div key={group.day} className="space-y-2">
                   <h3 className="text-[11px] uppercase tracking-wide text-slate-500">{group.day}</h3>
                   <ul className="space-y-2">
                     {group.list.map(e => (
-                      <li key={e.id} className="rounded border border-slate-800 bg-slate-900/50 p-3 text-xs flex justify-between hover:border-indigo-600/50 transition-colors">
+                      <li key={e.id} className="rounded bg-slate-800 p-3 text-xs flex justify-between hover:border-indigo-600/50 transition-colors">
                         <div className="space-y-0.5 pr-4">
-                          <div className="font-medium line-clamp-1">{e.description || e.category?.name || 'Expense'}</div>
+                          <div className="font-medium line-clamp-1">{e.description || e.category?.name || dict.dashboard.expenses.fallbackTitle}</div>
                           <div className="text-muted-foreground flex gap-2 flex-wrap">
                             {e.category?.name && <span className="bg-slate-800/60 px-1 rounded">{e.category.name}</span>}
-                            {e.is_prepaid && <span className="uppercase tracking-wide text-[10px] bg-indigo-600/20 text-indigo-300 px-1 rounded">Prepaid</span>}
+                            {e.is_prepaid && <span className="uppercase tracking-wide text-[10px] bg-indigo-600/20 text-indigo-300 px-1 rounded">{dict.dashboard.expenses.prepaidBadge}</span>}
                           </div>
                         </div>
                         <div className="text-right flex flex-col justify-between">
-                          <div className="font-mono text-[11px]">{e.amount.toFixed(2)} {e.currency}</div>
-                          {e.currency !== trip.currency && <div className="text-[10px] text-muted-foreground">{e.amount_in_home_currency.toFixed(2)} {trip.currency}</div>}
-                          <div className="text-[10px] text-slate-500">{new Date(e.expense_date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                          <div className="font-mono text-sm">{e.amount.toFixed(2)} {e.currency}</div>
+                          {e.currency !== trip.currency && <div className="text-xs text-muted-foreground">{e.amount_in_home_currency.toFixed(2)} {trip.currency}</div>}
+                          <div className="text-xs text-slate-500">{new Date(e.expense_date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
                         </div>
                       </li>
                     ))}
@@ -109,7 +111,7 @@ const BudgetDashboard: React.FC<Props> = ({ trip }) => {
           <CategoryManagement tripId={trip.id} />
         </div>
       </div>
-      <QuickAddExpense tripId={trip.id} onAdded={onAdded} />
+      <QuickAddExpense tripId={trip.id} onAdded={onAdded} lang={lang} />
     </div>
   );
 };

@@ -56,6 +56,88 @@ interface Dictionary {
     back: string;
   };
   langSwitcher: { label: string; english: string; polish: string };
+  navigation?: { home: string; dashboard?: string };
+  auth?: {
+    signedInAs: string;
+    signOut: string;
+    signingOut: string;
+    goToDashboard: string;
+  };
+  tripCard?: {
+    budgetLink: string;
+    budgetAria: string;
+  };
+  budget?: {
+    dashboard: {
+      title: string;
+      filters: { all: string; excludePrepaid: string; onlyPrepaid: string };
+      refresh: { action: string; refreshing: string };
+      expenses: {
+        heading: string;
+        empty: string;
+        prepaidBadge: string;
+        fallbackTitle: string;
+      };
+    };
+    summary: {
+      totalBudget: string;
+      plannedCategoriesShort: string;
+      spent: string;
+      spentPrepaidShort: string;
+      remaining: string;
+      percentUsed: string;
+      onTrip: string;
+      exclPreShort: string;
+      dailyTarget: string;
+      autoCalc: string;
+      progress: string;
+      categories: string;
+      categoriesEmpty: string;
+      uncategorized: string;
+    };
+    categories: {
+      heading: string;
+      add: string;
+      newCategory: string;
+      name: string;
+      plannedAmount: string;
+      iconOptional: string;
+      iconPlaceholder: string;
+      submitCreating: string;
+      submit: string;
+      templates: string;
+      selectTemplate: string;
+      applying: string;
+      apply: string;
+      estPlannedTotal: string;
+      ofTripBudget: string;
+      budgetNotLoaded: string;
+      loading: string;
+      empty: string;
+      confirmApplyTemplate: string;
+    };
+    quickAdd: {
+      fabAria: string;
+      title: string;
+      amount: string;
+      currency: string;
+      category: string;
+      loadingCats: string;
+      selectCategory: string;
+      description: string;
+      prepaid: string;
+      adding: string;
+      submit: string;
+    };
+    page: {
+      titleBase: string;
+      titleForTrip: string; // use {title}
+      breadcrumb: { dashboard: string; budget: string };
+      overview: string;
+      baseCurrency: string; // label prefix
+      notFound: { heading: string; body: string; back: string };
+    };
+  };
   dashboard?: {
     checking: string;
     heading: string;
@@ -91,6 +173,46 @@ interface Dictionary {
     empty: {
       heading: string;
       description: string;
+    };
+    authGate?: {
+      mustBeSignedIn: string;
+      goToLogin: string;
+    };
+    form?: {
+      placeholders: {
+        titleExample: string;
+        destinationExample: string;
+        durationExample: string;
+        lodgingPlaceholder: string;
+      };
+      lodging: {
+        label: string;
+        tooltip: string;
+      };
+      currency: {
+        label: string;
+        selectPlaceholder: string;
+      };
+    };
+    tabs?: {
+      overview: string;
+      itinerary: string;
+      budget: string;
+      packing: string;
+      settings: string;
+    };
+    status?: {
+      creating: string;
+      deleting: string;
+    };
+    itinerary?: {
+      generated: string;
+      errorLabel: string;
+    };
+    placeholders?: {
+      budget: { title: string; body: string };
+      packing: { title: string; body: string };
+      settings: { title: string; body: string };
     };
   };
   itineraryPreferences?: {
@@ -204,6 +326,88 @@ export const dictionaries: Record<Lang, Dictionary> = {
       back: "Powrót",
     },
     langSwitcher: { label: "Język", english: "Angielski", polish: "Polski" },
+  navigation: { home: "Strona główna", dashboard: "Panel" },
+    auth: {
+      signedInAs: "Zalogowany jako",
+      signOut: "Wyloguj",
+      signingOut: "Wylogowywanie…",
+      goToDashboard: "Przejdź do panelu",
+    },
+    tripCard: {
+      budgetLink: "Budżet",
+      budgetAria: "Otwórz panel budżetu",
+    },
+    budget: {
+      dashboard: {
+        title: "Panel budżetu",
+        filters: { all: "Wszystkie", excludePrepaid: "Bez przedpłat", onlyPrepaid: "Przedpłacone" },
+        refresh: { action: "Odśwież", refreshing: "Odświeżanie…" },
+        expenses: {
+          heading: "Wydatki",
+          empty: "Brak wydatków. Użyj przycisku + aby dodać.",
+          prepaidBadge: "Przedpłata",
+          fallbackTitle: "Wydatek",
+        },
+      },
+      summary: {
+        totalBudget: "Całkowity budżet",
+        plannedCategoriesShort: "Plan kat:",
+        spent: "Wydano",
+        spentPrepaidShort: "Przedpłaty",
+        remaining: "Pozostało",
+        percentUsed: "% użyto",
+        onTrip: "Na wyjeździe",
+        exclPreShort: "Bez przedpł.",
+        dailyTarget: "Dzienny cel",
+        autoCalc: "Auto oblicz",
+        progress: "Postęp budżetu",
+        categories: "Kategorie",
+        categoriesEmpty: "Brak wydatków. Dodaj pierwszy, aby zobaczyć podział.",
+        uncategorized: "Bez kategorii",
+      },
+      categories: {
+        heading: "Kategorie budżetu",
+        add: "Dodaj",
+        newCategory: "Nowa kategoria",
+        name: "Nazwa",
+        plannedAmount: "Kwota planowana",
+        iconOptional: "Ikona (opcjonalnie)",
+        iconPlaceholder: "np. food",
+        submitCreating: "Dodawanie…",
+        submit: "Utwórz kategorię",
+        templates: "Szablony",
+        selectTemplate: "Wybierz szablon",
+        applying: "Stosowanie…",
+        apply: "Zastosuj",
+        estPlannedTotal: "Szac. suma plan:",
+        ofTripBudget: "% budżetu podróży",
+        budgetNotLoaded: "Budżet podróży niezaładowany; proporcje tylko jako %.",
+        loading: "Ładowanie…",
+        empty: "Brak kategorii. Kliknij Dodaj aby stworzyć pierwszą.",
+        confirmApplyTemplate: "To doda kategorie do istniejącej listy. Kontynuować?",
+      },
+      quickAdd: {
+        fabAria: "Dodaj wydatek",
+        title: "Szybkie dodanie wydatku",
+        amount: "Kwota",
+        currency: "Waluta",
+        category: "Kategoria",
+        loadingCats: "Ładowanie…",
+        selectCategory: "Wybierz kategorię",
+        description: "Opis",
+        prepaid: "Przedpłata",
+        adding: "Dodawanie…",
+        submit: "Dodaj wydatek",
+      },
+      page: {
+        titleBase: "Budżet",
+        titleForTrip: "Budżet dla {title}",
+        breadcrumb: { dashboard: "Panel", budget: "Budżet" },
+        overview: "Przegląd budżetu",
+        baseCurrency: "Waluta bazowa:",
+        notFound: { heading: "Podróż nie znaleziona", body: "Ta podróż nie istnieje lub brak uprawnień.", back: "Powrót do panelu" },
+      },
+    },
     dashboard: {
       checking: "Sprawdzanie statusu...",
       heading: "Twoje Podróże",
@@ -239,6 +443,46 @@ export const dictionaries: Record<Lang, Dictionary> = {
       empty: {
         heading: "Nie masz jeszcze żadnych podróży",
         description: "Zacznij planować swoją następną przygodę, tworząc pierwszą podróż.",
+      },
+      authGate: {
+        mustBeSignedIn: "Musisz być zalogowany",
+        goToLogin: "Przejdź do logowania",
+      },
+      form: {
+        placeholders: {
+          titleExample: "Lato we Włoszech",
+          destinationExample: "Toskania",
+          durationExample: "np. 7",
+          lodgingPlaceholder: "Nazwa / URL / adres",
+        },
+        lodging: {
+          label: "Hotel / nocleg (opcjonalnie)",
+          tooltip: "Wykorzystane aby dostosować plan do lokalizacji noclegu",
+        },
+        currency: {
+          label: "Waluta",
+          selectPlaceholder: "Wybierz",
+        },
+      },
+      tabs: {
+        overview: "Przegląd",
+        itinerary: "Plan podróży",
+        budget: "Budżet",
+        packing: "Pakowanie",
+        settings: "Ustawienia",
+      },
+      status: {
+        creating: "Tworzenie…",
+        deleting: "Usuwanie…",
+      },
+      itinerary: {
+        generated: "Plan podróży został wygenerowany",
+        errorLabel: "Błąd",
+      },
+      placeholders: {
+        budget: { title: "Zarządzanie budżetem", body: "Funkcja zarządzania budżetem będzie dostępna wkrótce." },
+        packing: { title: "Asystent Pakowania", body: "Pozwól AI stworzyć idealną listę rzeczy do spakowania. Funkcja w przygotowaniu." },
+        settings: { title: "Ustawienia podróży", body: "Opcje edycji i zarządzania podróżą będą dostępne wkrótce." },
       },
     },
     itineraryPreferences: {
@@ -369,6 +613,88 @@ export const dictionaries: Record<Lang, Dictionary> = {
       back: "Back",
     },
     langSwitcher: { label: "Language", english: "English", polish: "Polish" },
+  navigation: { home: "Home", dashboard: "Dashboard" },
+    auth: {
+      signedInAs: "Signed in as",
+      signOut: "Sign Out",
+      signingOut: "Signing out…",
+      goToDashboard: "Go to dashboard",
+    },
+    tripCard: {
+      budgetLink: "Budget",
+      budgetAria: "Open budget dashboard",
+    },
+    budget: {
+      dashboard: {
+        title: "Budget Dashboard",
+        filters: { all: "All", excludePrepaid: "No Prepaid", onlyPrepaid: "Prepaid" },
+        refresh: { action: "Refresh", refreshing: "Refreshing…" },
+        expenses: {
+          heading: "Expenses",
+          empty: "No expenses yet. Use the + button to add one.",
+          prepaidBadge: "Prepaid",
+          fallbackTitle: "Expense",
+        },
+      },
+      summary: {
+        totalBudget: "Total Budget",
+        plannedCategoriesShort: "Planned Cat:",
+        spent: "Spent",
+        spentPrepaidShort: "Prepaid",
+        remaining: "Remaining",
+        percentUsed: "% used",
+        onTrip: "On-trip",
+        exclPreShort: "Excl pre",
+        dailyTarget: "Daily Target",
+        autoCalc: "Auto calc",
+        progress: "Budget Progress",
+        categories: "Categories",
+        categoriesEmpty: "No expenses yet. Add your first expense to see distribution.",
+        uncategorized: "Uncategorized",
+      },
+      categories: {
+        heading: "Budget Categories",
+        add: "Add",
+        newCategory: "New Category",
+        name: "Name",
+        plannedAmount: "Planned Amount",
+        iconOptional: "Icon Name (optional)",
+        iconPlaceholder: "e.g. food",
+        submitCreating: "Adding...",
+        submit: "Create Category",
+        templates: "Templates",
+        selectTemplate: "Select Template",
+        applying: "Applying...",
+        apply: "Apply",
+        estPlannedTotal: "Est. planned total:",
+        ofTripBudget: "% of trip budget",
+        budgetNotLoaded: "Trip budget not loaded yet; ratio-based allocations will show as percentages only.",
+        loading: "Loading...",
+        empty: "No categories yet. Click Add to create your first.",
+        confirmApplyTemplate: "This will add additional categories to your existing list. Continue?",
+      },
+      quickAdd: {
+        fabAria: "Add expense",
+        title: "Quick Add Expense",
+        amount: "Amount",
+        currency: "Currency",
+        category: "Category",
+        loadingCats: "Loading...",
+        selectCategory: "Select category",
+        description: "Description",
+        prepaid: "Prepaid",
+        adding: "Adding...",
+        submit: "Add Expense",
+      },
+      page: {
+        titleBase: "Budget",
+        titleForTrip: "Budget for {title}",
+        breadcrumb: { dashboard: "Dashboard", budget: "Budget" },
+        overview: "Budget Overview",
+        baseCurrency: "Base Currency:",
+        notFound: { heading: "Trip not found", body: "The trip you are trying to access does not exist or you do not have permission.", back: "Back to dashboard" },
+      },
+    },
     dashboard: {
       checking: "Checking status...",
       heading: "Your Trips",
@@ -404,6 +730,46 @@ export const dictionaries: Record<Lang, Dictionary> = {
       empty: {
         heading: "You don't have any trips yet",
         description: "Start planning your next adventure by creating your first trip.",
+      },
+      authGate: {
+        mustBeSignedIn: "You must be signed in",
+        goToLogin: "Go to login",
+      },
+      form: {
+        placeholders: {
+          titleExample: "Summer in Italy",
+          destinationExample: "Tuscany",
+          durationExample: "e.g. 7",
+          lodgingPlaceholder: "Name / URL / address",
+        },
+        lodging: {
+          label: "Lodging (optional)",
+          tooltip: "Used to tailor plan around lodging location",
+        },
+        currency: {
+          label: "Currency",
+          selectPlaceholder: "Select",
+        },
+      },
+      tabs: {
+        overview: "Overview",
+        itinerary: "Itinerary",
+        budget: "Budget",
+        packing: "Packing",
+        settings: "Settings",
+      },
+      status: {
+        creating: "Creating…",
+        deleting: "Deleting…",
+      },
+      itinerary: {
+        generated: "Itinerary has been generated",
+        errorLabel: "Error",
+      },
+      placeholders: {
+        budget: { title: "Budget Management", body: "Budget management features coming soon." },
+        packing: { title: "Packing Assistant", body: "Let AI create the perfect packing list. Feature on its way." },
+        settings: { title: "Trip Settings", body: "Trip editing and management options coming soon." },
       },
     },
     itineraryPreferences: {

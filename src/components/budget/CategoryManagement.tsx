@@ -5,10 +5,12 @@ import { Input } from '../ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Card, CardContent } from '../ui/card';
 import { BUDGET_CATEGORY_TEMPLATES, isRatio } from '../../lib/budget.templates';
+import { getDictionary, type Lang } from '@/lib/i18n';
 
-interface Props { tripId: string; onCategoryAdded?: (c: BudgetCategory)=>void }
+interface Props { tripId: string; onCategoryAdded?: (c: BudgetCategory)=>void; lang?: Lang }
 
-const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded }) => {
+const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = 'pl' }) => {
+  const dict = getDictionary(lang).budget!;
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +66,7 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded }) => {
   async function applyTemplate(templateId: string) {
     const template = BUDGET_CATEGORY_TEMPLATES.find(t => t.id === templateId);
     if (!template) return;
-    if (categories.length > 0 && !confirm('This will add additional categories to your existing list. Continue?')) return;
+  if (categories.length > 0 && !confirm(dict.categories.confirmApplyTemplate)) return;
     setApplyingTemplateId(templateId);
     setError(null);
     try {
@@ -93,40 +95,40 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Budget Categories</h3>
+        <h3 className="text-sm font-semibold">{dict.categories.heading}</h3>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" variant="outline">Add</Button>
+            <Button size="sm" variant="outline">{dict.categories.add}</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-sm">
-            <DialogHeader><DialogTitle>New Category</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{dict.categories.newCategory}</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-medium">Name</label>
+                <label className="text-xs font-medium">{dict.categories.name}</label>
                 <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div>
-                <label className="text-xs font-medium">Planned Amount</label>
+                <label className="text-xs font-medium">{dict.categories.plannedAmount}</label>
                 <Input type="number" value={form.planned_amount} onChange={e => setForm(f => ({ ...f, planned_amount: e.target.value }))} />
               </div>
               <div>
-                <label className="text-xs font-medium">Icon Name (optional)</label>
-                <Input value={form.icon_name} onChange={e => setForm(f => ({ ...f, icon_name: e.target.value }))} placeholder="e.g. food" />
+                <label className="text-xs font-medium">{dict.categories.iconOptional}</label>
+                <Input value={form.icon_name} onChange={e => setForm(f => ({ ...f, icon_name: e.target.value }))} placeholder={dict.categories.iconPlaceholder} />
               </div>
               {error && <div className="text-xs text-red-600">{error}</div>}
               <Button disabled={submitting || !form.name || !form.planned_amount} onClick={addCategory} className="w-full">
-                {submitting ? 'Adding...' : 'Create Category'}
+                {submitting ? dict.categories.submitCreating : dict.categories.submit}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
         <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" variant="secondary">Templates</Button>
+            <Button size="sm" variant="secondary">{dict.categories.templates}</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Select Template</DialogTitle>
+              <DialogTitle>{dict.categories.selectTemplate}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 text-xs">
               {BUDGET_CATEGORY_TEMPLATES.map(t => {
@@ -140,7 +142,7 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded }) => {
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium text-slate-200">{t.label}</span>
                       <Button size="sm" disabled={applyingTemplateId === t.id} onClick={() => applyTemplate(t.id)}>
-                        {applyingTemplateId === t.id ? 'Applying...' : 'Apply'}
+                        {applyingTemplateId === t.id ? dict.categories.applying : dict.categories.apply}
                       </Button>
                     </div>
                     <p className="text-slate-400 mb-2 leading-snug">{t.description}</p>
@@ -152,16 +154,16 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded }) => {
                         </div>
                       ))}
                     </div>
-                    {tripBudget && <div className="mt-2 text-[10px] text-slate-500">Est. planned total: {totalPlanned.toFixed(2)} ({tripBudget > 0 ? ((totalPlanned / tripBudget) * 100).toFixed(0) : 0}% of trip budget)</div>}
+                    {tripBudget && <div className="mt-2 text-[10px] text-slate-500">{dict.categories.estPlannedTotal} {totalPlanned.toFixed(2)} ({tripBudget > 0 ? ((totalPlanned / tripBudget) * 100).toFixed(0) : 0}{dict.categories.ofTripBudget})</div>}
                   </div>
                 );
               })}
-              {tripBudget === null && <div className="text-[10px] text-amber-500">Trip budget not loaded yet; ratio-based allocations will show as percentages only.</div>}
+              {tripBudget === null && <div className="text-[10px] text-amber-500">{dict.categories.budgetNotLoaded}</div>}
             </div>
           </DialogContent>
         </Dialog>
       </div>
-      {loading && <div className="text-xs text-muted-foreground">Loading...</div>}
+      {loading && <div className="text-xs text-muted-foreground">{dict.categories.loading}</div>}
       {error && !open && <div className="text-xs text-red-600">{error}</div>}
       <div className="space-y-2 max-h-64 overflow-auto pr-1">
         {categories.map(c => (
@@ -173,7 +175,7 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded }) => {
           </Card>
         ))}
         {!loading && categories.length === 0 && <div className="text-xs text-slate-500 border border-dashed border-slate-700 rounded p-4 text-center">
-          No categories yet. Click <span className="font-medium">Add</span> to create your first.
+          {dict.categories.empty.replace('Add', dict.categories.add)}
         </div>}
       </div>
     </div>
