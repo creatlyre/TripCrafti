@@ -55,6 +55,8 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
   const [form, setForm] = useState<CreateFormState>(empty);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [dateInputMode, setDateInputMode] = useState<"end_date" | "duration">("end_date");
+  const [duration, setDuration] = useState<number | undefined>(undefined);
 
   async function loadTrips(showLoadingSpinner = true) {
     if (showLoadingSpinner) {
@@ -122,8 +124,18 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
     if (!isCreateModalOpen) {
       setForm(empty);
       setError(null);
+      setDuration(undefined);
     }
   }, [isCreateModalOpen]);
+
+  useEffect(() => {
+    if (form.start_date && duration) {
+      const startDate = new Date(form.start_date);
+      startDate.setDate(startDate.getDate() + duration);
+      const newEndDate = startDate.toISOString().split("T")[0];
+      onChange("end_date", newEndDate);
+    }
+  }, [form.start_date, duration]);
 
   if (authLoading && !user) {
     return <p className="text-sm text-muted-foreground">{dict.checking}</p>;
@@ -238,6 +250,25 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                 value={form.end_date}
                 onChange={(e) => onChange("end_date", e.target.value)}
                 className="h-9 rounded-md border bg-transparent px-3 text-sm"
+              />
+            </div>
+            <div className="md:col-span-2 flex items-center justify-center gap-2">
+              <div className="flex-1 border-t border-muted-foreground/20"></div>
+              <span className="text-xs text-muted-foreground">{dict.create.or}</span>
+              <div className="flex-1 border-t border-muted-foreground/20"></div>
+            </div>
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label htmlFor="duration" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {dict.create.duration}
+              </label>
+              <input
+                id="duration"
+                type="number"
+                min={1}
+                value={duration ?? ""}
+                onChange={(e) => setDuration(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                className="h-9 rounded-md border bg-transparent px-3 text-sm"
+                placeholder={lang === "pl" ? "np. 7" : "e.g. 7"}
               />
             </div>
           </form>

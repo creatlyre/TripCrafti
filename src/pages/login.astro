@@ -14,12 +14,12 @@ function switchUrl(target: string) {
   return url.pathname + '?' + url.searchParams.toString();
 }
 ---
-<Layout title={(lang === 'pl' ? 'Logowanie' : 'Log in') + ' – TripCraft'}>
+<Layout title={(lang === 'pl' ? 'Logowanie' : 'Log in') + ' – TripCrafti'}>
   <main class="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
     <header class="flex items-center justify-between px-6 py-5">
       <a href={switchUrl(lang)} class="flex items-center gap-3 text-slate-200 hover:text-white transition">
         <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 font-bold text-white shadow">TC</span>
-        <span class="text-sm font-semibold tracking-tight">TripCraft</span>
+        <span class="text-sm font-semibold tracking-tight">TripCrafti</span>
       </a>
       <nav aria-label="Secondary" class="flex items-center gap-2">
         <div class="flex items-center gap-1" aria-label={dict.langSwitcher.label}>

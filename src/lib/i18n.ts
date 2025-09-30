@@ -35,6 +35,8 @@ interface Dictionary {
       destination: string;
       start: string;
       end: string;
+      duration: string;
+      or: string;
       budget: string;
       submit: string;
       cancel: string;
@@ -53,7 +55,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
     hero: {
       badge: "Wszechstronne AI narzędzie podróżne",
       heading: "Planuj mądrze. Pakuj szybciej. Podróżuj wygodniej.",
-      sub: "TripCraft łączy manualną kontrolę z inteligencją AI abyś mógł bez wysiłku tworzyć niezapomniane wyjazdy – od wizji i budżetu po spakowaną torbę.",
+      sub: "TripCrafti łączy manualną kontrolę z inteligencją AI abyś mógł bez wysiłku tworzyć niezapomniane wyjazdy – od wizji i budżetu po spakowaną torbę.",
       cta: "Zacznij – Zaloguj się",
     },
     features: [
@@ -73,7 +75,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
       },
       { title: "Bezstresowe przygotowania", desc: "Od inspiracji do spakowania – mniej tarcia na każdym etapie." },
     ],
-    footer: { copyright: `© ${year} TripCraft. Wszelkie prawa zastrzeżone.` },
+    footer: { copyright: `© ${year} TripCrafti. Wszelkie prawa zastrzeżone.` },
     login: {
       heading: "Logowanie",
       sub: "Logowanie poprzez Supabase zostanie wkrótce dodane.",
@@ -100,6 +102,8 @@ export const dictionaries: Record<Lang, Dictionary> = {
         destination: "Cel podróży",
         start: "Data startu",
         end: "Data końca",
+        duration: "Liczba dni",
+        or: "lub",
         budget: "Budżet (opcjonalnie)",
         submit: "Utwórz podróż",
         cancel: "Anuluj",
@@ -114,7 +118,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
     hero: {
       badge: "All-in-one AI travel workspace",
       heading: "Plan smarter. Pack better. Travel lighter.",
-      sub: "TripCraft unifies manual precision with intelligent automation so you can design unforgettable journeys effortlessly — from vision and budgeting to the final packed bag.",
+      sub: "TripCrafti unifies manual precision with intelligent automation so you can design unforgettable journeys effortlessly — from vision and budgeting to the final packed bag.",
       cta: "Get Started – Log In",
     },
     features: [
@@ -128,7 +132,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
       { title: "Hybrid Control", desc: "Blend manual precision with AI suggestions—accept, tweak, refine." },
       { title: "Stress-Free Prep", desc: "From inspiration to packed bag—reduce planning friction at every step." },
     ],
-    footer: { copyright: `© ${year} TripCraft. All rights reserved.` },
+    footer: { copyright: `© ${year} TripCrafti. All rights reserved.` },
     login: {
       heading: "Log in",
       sub: "Authentication flow will be implemented with Supabase.",
@@ -155,6 +159,8 @@ export const dictionaries: Record<Lang, Dictionary> = {
         destination: "Destination",
         start: "Start Date",
         end: "End Date",
+        duration: "Number of days",
+        or: "or",
         budget: "Budget (optional)",
         submit: "Create Trip",
         cancel: "Cancel",
