@@ -7,6 +7,43 @@ interface Dictionary {
     sub: string;
     cta: string;
   };
+  section2: {
+    heading: string;
+    body: string;
+  };
+  detailedFeatures: {
+    feature1: {
+      headline: string;
+      body: string;
+    };
+    feature2: {
+      headline: string;
+      body: string;
+    };
+    feature3: {
+      headline: string;
+      body: string;
+    };
+  };
+  testimonials: {
+    heading: string;
+    t1: {
+      text: string;
+      author: string;
+    };
+    t2: {
+      text: string;
+      author: string;
+    };
+    t3: {
+      text: string;
+      author: string;
+    };
+  };
+  cta: {
+    headline: string;
+    body: string;
+  };
   features: { title: string; desc: string }[];
   footer: { copyright: string };
   login: {
@@ -54,9 +91,46 @@ export const dictionaries: Record<Lang, Dictionary> = {
   pl: {
     hero: {
       badge: "Wszechstronne AI narzędzie podróżne",
-      heading: "Planuj mądrze. Pakuj szybciej. Podróżuj wygodniej.",
-      sub: "TripCrafti łączy manualną kontrolę z inteligencją AI abyś mógł bez wysiłku tworzyć niezapomniane wyjazdy – od wizji i budżetu po spakowaną torbę.",
-      cta: "Zacznij – Zaloguj się",
+      heading: "Planuj mądrze. Podróżuj lżej.",
+      sub: "Twoje centrum dowodzenia podróżą. Połącz precyzyjną kontrolę z inteligentnym wsparciem AI i ciesz się każdą chwilą.",
+      cta: "Zacznij Planować",
+    },
+    section2: {
+      heading: "Twoja Podróż, Twoje Zasady",
+      body: "TripCrafti to kompleksowe narzędzie, które towarzyszy Ci od inspiracji, przez planowanie i budżetowanie, aż po pakowanie. Skup się na doświadczaniu świata – my zajmiemy się resztą.",
+    },
+    detailedFeatures: {
+      feature1: {
+        headline: "Błyskawiczne Itineraria AI",
+        body: "Podaj cel, daty i zainteresowania, a nasza AI w minutę stworzy spersonalizowany plan podróży, który możesz dowolnie modyfikować.",
+      },
+      feature2: {
+        headline: "Inteligentne Listy Pakowania",
+        body: "Nasz asystent AI na podstawie danych o Twojej podróży stworzy idealną listę rzeczy do zabrania. Nigdy więcej nie zapomnisz o niczym ważnym.",
+      },
+      feature3: {
+        headline: "Świadomy Budżet",
+        body: "Śledź wydatki w czasie rzeczywistym. Ustaw budżet i kontroluj finanse, ciesząc się podróżą bez stresu.",
+      },
+    },
+    testimonials: {
+      heading: "Zaufały nam tysiące podróżników",
+      t1: {
+        text: "TripCrafti zrewolucjonizowało moje podróże. Planowanie stało się proste i przyjemne, a ja mam więcej czasu na odkrywanie!",
+        author: "Ania, Podróżniczka",
+      },
+      t2: {
+        text: "Dzięki tej aplikacji oszczędzam godziny na planowaniu. Funkcja list pakowania to absolutny game-changer!",
+        author: "Marek, Fotograf",
+      },
+      t3: {
+        text: "Kontrola budżetu wreszcie stała się intuicyjna. Polecam każdemu, kto chce podróżować mądrze i bez stresu.",
+        author: "Kasia, Digital Nomad",
+      },
+    },
+    cta: {
+      headline: "Gotowy na Nowy Wymiar Podróżowania?",
+      body: "Dołącz do społeczności TripCrafti i zacznij swoją przygodę z inteligentnym planowaniem już dziś!",
     },
     features: [
       { title: "Planuj każdy detal", desc: "Organizuj wyjazdy, rezerwacje, aktywności i notatki w jednym miejscu." },
@@ -117,9 +191,46 @@ export const dictionaries: Record<Lang, Dictionary> = {
   en: {
     hero: {
       badge: "All-in-one AI travel workspace",
-      heading: "Plan smarter. Pack better. Travel lighter.",
-      sub: "TripCrafti unifies manual precision with intelligent automation so you can design unforgettable journeys effortlessly — from vision and budgeting to the final packed bag.",
-      cta: "Get Started – Log In",
+      heading: "Plan smarter. Travel lighter.",
+      sub: "Your travel command center. Combine precise control with intelligent AI support and enjoy every moment.",
+      cta: "Start Planning",
+    },
+    section2: {
+      heading: "Your Trip, Your Rules",
+      body: "TripCrafti is a comprehensive tool that accompanies you from inspiration, through planning and budgeting, to packing. Focus on experiencing the world – we'll handle the rest.",
+    },
+    detailedFeatures: {
+      feature1: {
+        headline: "Instant AI Itineraries",
+        body: "Provide your destination, dates, and interests, and our AI will create a personalized travel plan in a minute, which you can freely modify.",
+      },
+      feature2: {
+        headline: "Smart AI Packing Lists",
+        body: "Our AI assistant will create the perfect packing list based on your trip data. Never forget anything important again.",
+      },
+      feature3: {
+        headline: "Conscious Budgeting",
+        body: "Track your expenses in real-time. Set a budget and control your finances, enjoying a stress-free trip.",
+      },
+    },
+    testimonials: {
+      heading: "Trusted by thousands of travelers",
+      t1: {
+        text: "TripCrafti has revolutionized my travels. Planning has become simple and enjoyable, and I have more time for exploring!",
+        author: "Anna, Traveler",
+      },
+      t2: {
+        text: "Thanks to this app, I save hours on planning. The packing list feature is an absolute game-changer!",
+        author: "Mark, Photographer",
+      },
+      t3: {
+        text: "Budget control has finally become intuitive. I recommend it to anyone who wants to travel smart and stress-free.",
+        author: "Kate, Digital Nomad",
+      },
+    },
+    cta: {
+      headline: "Ready for a New Dimension of Travel?",
+      body: "Join the TripCrafti community and start your adventure with smart planning today!",
     },
     features: [
       { title: "Plan Every Detail", desc: "Organize trips, bookings, activities and notes in one clear workspace." },

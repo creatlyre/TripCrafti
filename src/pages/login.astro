@@ -10,23 +10,40 @@ const dict = getDictionary(lang);
 
 function switchUrl(target: string) {
   const url = new URL(Astro.request.url);
-  url.searchParams.set('lang', target);
-  return url.pathname + '?' + url.searchParams.toString();
+  url.searchParams.set("lang", target);
+  return url.pathname + "?" + url.searchParams.toString();
 }
 ---
-<Layout title={(lang === 'pl' ? 'Logowanie' : 'Log in') + ' – TripCrafti'}>
+
+<Layout title={(lang === "pl" ? "Logowanie" : "Log in") + " – TripCrafti"}>
   <main class="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
     <header class="flex items-center justify-between px-6 py-5">
       <a href={switchUrl(lang)} class="flex items-center gap-3 text-slate-200 hover:text-white transition">
-        <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 font-bold text-white shadow">TC</span>
+        <img src="/Logo_TripCrafti.png" alt="TripCrafti Logo" class="h-9" />
         <span class="text-sm font-semibold tracking-tight">TripCrafti</span>
       </a>
       <nav aria-label="Secondary" class="flex items-center gap-2">
         <div class="flex items-center gap-1" aria-label={dict.langSwitcher.label}>
-          <a href={switchUrl('pl')} lang="pl" hreflang="pl" class={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium border transition ${lang==='pl' ? 'border-indigo-400/60 text-white bg-slate-800/60' : 'border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50'}`}>🇵🇱 <span class="hidden sm:inline">PL</span></a>
-          <a href={switchUrl('en')} lang="en" hreflang="en" class={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium border transition ${lang==='en' ? 'border-indigo-400/60 text-white bg-slate-800/60' : 'border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50'}`}>🇬🇧 <span class="hidden sm:inline">EN</span></a>
+          <a
+            href={switchUrl("pl")}
+            lang="pl"
+            hreflang="pl"
+            class={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium border transition ${lang === "pl" ? "border-indigo-400/60 text-white bg-slate-800/60" : "border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50"}`}
+            >🇵🇱 <span class="hidden sm:inline">PL</span></a
+          >
+          <a
+            href={switchUrl("en")}
+            lang="en"
+            hreflang="en"
+            class={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium border transition ${lang === "en" ? "border-indigo-400/60 text-white bg-slate-800/60" : "border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50"}`}
+            >🇬🇧 <span class="hidden sm:inline">EN</span></a
+          >
         </div>
-        <a href={switchUrl(lang === 'pl' ? 'pl' : 'en')} class="text-xs font-medium text-slate-400 hover:text-slate-200 transition">{lang === 'pl' ? 'Strona główna' : 'Home'}</a>
+        <a
+          href={switchUrl(lang === "pl" ? "pl" : "en")}
+          class="text-xs font-medium text-slate-400 hover:text-slate-200 transition"
+          >{lang === "pl" ? "Strona główna" : "Home"}</a
+        >
       </nav>
     </header>
 
@@ -35,7 +52,7 @@ function switchUrl(target: string) {
         <h1 class="text-xl font-semibold tracking-tight">{dict.login.heading}</h1>
         <p class="mt-2 text-sm text-slate-400 leading-relaxed">{dict.login.sub}</p>
         <div class="mt-8">
-            <Auth client:load />
+          <Auth client:load />
         </div>
       </div>
     </div>

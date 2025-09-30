@@ -6,7 +6,7 @@ export interface Trip {
   title: string;
   destination: string;
   start_date: string; // YYYY-MM-DD
-  end_date: string;   // YYYY-MM-DD
+  end_date: string; // YYYY-MM-DD
   budget: number | null;
   created_at?: string;
   updated_at?: string;
@@ -17,6 +17,6 @@ export interface TripInput {
   title: string;
   destination: string;
   start_date: string; // YYYY-MM-DD
-  end_date: string;   // YYYY-MM-DD
+  end_date: string; // YYYY-MM-DD
   budget?: number; // optional
 }
