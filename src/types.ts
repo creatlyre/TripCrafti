@@ -55,6 +55,8 @@ export interface GeneratedItinerary {
   preferences_json: ItineraryPreferences;
   generated_plan_json: Itinerary;
   status: ItineraryStatus;
+  input_tokens?: number | null;
+  thought_tokens?: number | null;
   created_at: string;
   updated_at: string;
 }

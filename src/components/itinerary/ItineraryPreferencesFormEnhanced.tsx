@@ -7,20 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { ItineraryPreferences } from "@/types";
 import { Input } from "../ui/input";
-
-const interests = ["Sztuka", "Historia", "Przyroda", "Jedzenie", "Rozrywka"];
-
-const travelStyleOptions: { label: string; value: ItineraryPreferences["travelStyle"] }[] = [
-  { label: "Relaksacyjny", value: "Relaxed" },
-  { label: "Zrównoważony", value: "Balanced" },
-  { label: "Intensywny", value: "Intense" },
-];
-
-const budgetOptions: { label: string; value: string }[] = [
-  { label: "Niski", value: "Budget-Friendly" },
-  { label: "Średni", value: "Mid-Range" },
-  { label: "Wysoki", value: "Luxury" },
-];
+import { getDictionary } from "@/lib/i18n";
 
 const preferencesSchema = z.object({
   interests: z.array(z.string()).min(1, "Wybierz co najmniej jedną kategorię"),
@@ -75,6 +62,12 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
     onSubmit({ ...data, interests: selectedInterests, language });
   };
 
+  // Ensure language conforms to supported Lang union; fallback handled in getDictionary
+  const dict = getDictionary(language as any).itineraryPreferences;
+  const interests = dict?.interests ?? [];
+  const travelStyleOptions = dict?.travelStyles ?? [];
+  const budgetOptions = dict?.budgetOptions ?? [];
+
   return (
     <Card className="max-w-2xl mx-auto bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-xl">
       <CardHeader className="text-center pb-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 rounded-t-lg">
@@ -83,25 +76,26 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
           </svg>
         </div>
-        <CardTitle className="text-lg text-slate-900 dark:text-slate-100">Wygeneruj inteligentny plan podróży</CardTitle>
-        <p className="text-slate-600 dark:text-slate-400 text-xs">
-          Dostosuj preferencje, a my stworzymy dla Ciebie spersonalizowany plan aktywności
-        </p>
+        <CardTitle className="text-lg text-slate-900 dark:text-slate-100">{dict?.title}</CardTitle>
+        <p className="text-slate-600 dark:text-slate-400 text-xs">{dict?.subtitle}</p>
       </CardHeader>
       <CardContent className="p-4">
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
           {/* Interests Section */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
-              Zainteresowania
-              <span className="text-xs text-slate-500 dark:text-slate-400 ml-2">(wybierz co najmniej jedno)</span>
+              {dict?.interestsLabel}
+              {dict?.interestsHint && (
+                <span className="text-xs text-slate-500 dark:text-slate-400 ml-2">{dict.interestsHint}</span>
+              )}
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {interests.map((interest) => {
+              {interests.map((interestObj) => {
+                const interest = interestObj.label;
                 const isSelected = selectedInterests.includes(interest);
                 return (
                   <div
-                    key={interest}
+                    key={interestObj.key}
                     onClick={() => toggleInterest(interest)}
                     className={`p-2 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
                       isSelected
@@ -123,9 +117,7 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
                           </svg>
                         )}
                       </div>
-                      <span className={`text-xs font-medium ${isSelected ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"}`}>
-                        {interest}
-                      </span>
+                      <span className={`text-xs font-medium ${isSelected ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"}`}>{interestObj.label}</span>
                     </div>
                   </div>
                 );
@@ -145,7 +137,7 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
 
           {/* Travel Style Section */}
           <div className="space-y-3">
-            <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Styl podróży</label>
+            <label className="text-sm font-medium text-slate-900 dark:text-slate-100">{dict?.travelStyleLabel}</label>
             <div className="space-y-2">
               {travelStyleOptions.map((style) => (
                 <label
@@ -174,16 +166,10 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
                     )}
                   </div>
                   <div className="flex-1">
-                    <span className={`font-medium text-sm ${
-                      watch("travelStyle") === style.value ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"
-                    }`}>
-                      {style.label}
-                    </span>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      {style.value === "Relaxed" && "Spokojne tempo, dużo czasu na relaks"}
-                      {style.value === "Balanced" && "Idealna równowaga między zwiedzaniem a odpoczynkiem"}
-                      {style.value === "Intense" && "Maksimum atrakcji, dynamiczne zwiedzanie"}
-                    </p>
+                    <span className={`font-medium text-sm ${watch("travelStyle") === style.value ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"}`}>{style.label}</span>
+                    {style.description && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{style.description}</p>
+                    )}
                   </div>
                 </label>
               ))}
@@ -192,7 +178,7 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
 
           {/* Budget Section */}
           <div className="space-y-3">
-            <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Budżet</label>
+            <label className="text-sm font-medium text-slate-900 dark:text-slate-100">{dict?.budgetLabel}</label>
             {tripBudget ? (
               <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
                 <div className="flex items-center gap-3">
@@ -202,9 +188,9 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
                     </svg>
                   </div>
                   <div>
-                    <p className="font-medium text-sm text-green-800 dark:text-green-200">Budżet został już zdefiniowany</p>
+                    <p className="font-medium text-sm text-green-800 dark:text-green-200">{dict?.budgetAlreadySet}</p>
                     <p className="text-xs text-green-600 dark:text-green-400">
-                      Kwota: <span className="font-medium">{tripBudget}</span>
+                      {dict?.budgetAmountLabel} <span className="font-medium">{tripBudget}</span>
                     </p>
                   </div>
                 </div>
@@ -237,11 +223,7 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                       )}
                     </div>
-                    <span className={`font-medium text-sm ${
-                      watch("budget") === budget.value ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"
-                    }`}>
-                      {budget.label}
-                    </span>
+                    <span className={`font-medium text-sm ${watch("budget") === budget.value ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"}`}>{budget.label}</span>
                   </label>
                 ))}
               </div>
@@ -250,22 +232,22 @@ export const ItineraryPreferencesFormEnhanced: React.FC<ItineraryPreferencesForm
 
           {/* Submit Button */}
           <div className="pt-2">
-            <Button 
-              type="submit" 
-              disabled={isGenerating} 
+            <Button
+              type="submit"
+              disabled={isGenerating}
               className="w-full h-11 text-sm font-medium bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
             >
               {isGenerating ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Generowanie planu...
+                  {dict?.generating}
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  Wygeneruj plan
+                  {dict?.submit}
                 </div>
               )}
             </Button>

@@ -84,6 +84,24 @@ interface Dictionary {
       description: string;
     };
   };
+  itineraryPreferences?: {
+    title: string;
+    subtitle: string;
+    interestsLabel: string;
+    interestsHint: string;
+    travelStyleLabel: string;
+    budgetLabel: string;
+    budgetAlreadySet?: string;
+    budgetAmountLabel?: string;
+    submit: string;
+    generating: string;
+    generated: string;
+    noItineraryTitle: string;
+    noItineraryBody: string;
+    travelStyles: { value: string; label: string; description: string }[];
+    budgetOptions: { value: string; label: string }[];
+    interests: { key: string; label: string }[];
+  };
 }
 
 const year = new Date().getFullYear();
@@ -189,6 +207,48 @@ export const dictionaries: Record<Lang, Dictionary> = {
         description: "Zacznij planować swoją następną przygodę, tworząc pierwszą podróż.",
       },
     },
+    itineraryPreferences: {
+      title: "Wygeneruj inteligentny plan podróży",
+      subtitle: "Dostosuj preferencje, a my stworzymy dla Ciebie spersonalizowany plan aktywności",
+      interestsLabel: "Zainteresowania",
+      interestsHint: "(wybierz co najmniej jedno)",
+      travelStyleLabel: "Styl podróży",
+      budgetLabel: "Budżet",
+  budgetAlreadySet: "Budżet został już zdefiniowany",
+  budgetAmountLabel: "Kwota:",
+      submit: "Wygeneruj plan",
+      generating: "Generowanie planu...",
+      generated: "Plan podróży wygenerowany",
+      noItineraryTitle: "Brak planu podróży",
+      noItineraryBody: "Wygeneruj inteligentny plan podróży na podstawie swoich preferencji i zainteresowań.",
+      travelStyles: [
+        { value: "Relaxed", label: "Relaksacyjny", description: "Spokojne tempo, dużo czasu na relaks" },
+        { value: "Balanced", label: "Zrównoważony", description: "Idealna równowaga między zwiedzaniem a odpoczynkiem" },
+        { value: "Intense", label: "Intensywny", description: "Maksimum atrakcji, dynamiczne zwiedzanie" },
+      ],
+      budgetOptions: [
+        { value: "Budget-Friendly", label: "Niski" },
+        { value: "Mid-Range", label: "Średni" },
+        { value: "Luxury", label: "Wysoki" },
+      ],
+      interests: [
+        { key: "art", label: "Sztuka" },
+        { key: "history", label: "Historia" },
+        { key: "nature", label: "Przyroda" },
+        { key: "food", label: "Jedzenie" },
+        { key: "entertainment", label: "Rozrywka" },
+        { key: "architecture", label: "Architektura" },
+        { key: "adventure", label: "Przygoda / Adrenalina" },
+        { key: "wildlife", label: "Fauna / Zoo" },
+        { key: "beach", label: "Plaża" },
+        { key: "shopping", label: "Zakupy" },
+        { key: "wellness", label: "Wellness & Spa" },
+        { key: "nightlife", label: "Życie nocne" },
+        { key: "family", label: "Rodzinne" },
+        { key: "photography", label: "Fotografia" },
+        { key: "technology", label: "Technologia / Nauka" },
+      ],
+    },
   },
   en: {
     hero: {
@@ -283,6 +343,48 @@ export const dictionaries: Record<Lang, Dictionary> = {
         heading: "You don't have any trips yet",
         description: "Start planning your next adventure by creating your first trip.",
       },
+    },
+    itineraryPreferences: {
+      title: "Generate an intelligent travel plan",
+      subtitle: "Adjust your preferences and we'll create a personalized activity plan for you",
+      interestsLabel: "Interests",
+      interestsHint: "(select at least one)",
+      travelStyleLabel: "Travel style",
+      budgetLabel: "Budget",
+  budgetAlreadySet: "Budget already defined",
+  budgetAmountLabel: "Amount:",
+      submit: "Generate plan",
+      generating: "Generating plan...",
+      generated: "Itinerary generated",
+      noItineraryTitle: "No itinerary yet",
+      noItineraryBody: "Generate an intelligent travel plan based on your preferences and interests.",
+      travelStyles: [
+        { value: "Relaxed", label: "Relaxed", description: "Slower pace with more downtime" },
+        { value: "Balanced", label: "Balanced", description: "Ideal mix of sightseeing and rest" },
+        { value: "Intense", label: "Intense", description: "Maximum attractions, dynamic pacing" },
+      ],
+      budgetOptions: [
+        { value: "Budget-Friendly", label: "Low" },
+        { value: "Mid-Range", label: "Medium" },
+        { value: "Luxury", label: "High" },
+      ],
+      interests: [
+        { key: "art", label: "Art" },
+        { key: "history", label: "History" },
+        { key: "nature", label: "Nature" },
+        { key: "food", label: "Food" },
+        { key: "entertainment", label: "Entertainment" },
+        { key: "architecture", label: "Architecture" },
+        { key: "adventure", label: "Adventure / Thrill" },
+        { key: "wildlife", label: "Wildlife / Zoo" },
+        { key: "beach", label: "Beach" },
+        { key: "shopping", label: "Shopping" },
+        { key: "wellness", label: "Wellness & Spa" },
+        { key: "nightlife", label: "Nightlife" },
+        { key: "family", label: "Family" },
+        { key: "photography", label: "Photography" },
+        { key: "technology", label: "Technology / Science" },
+      ],
     },
   },
 };

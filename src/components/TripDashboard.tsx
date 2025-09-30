@@ -15,6 +15,7 @@ import { useAuth } from "@/components/hooks/useAuth";
 import { ItineraryPreferencesFormEnhanced as ItineraryPreferencesForm } from "./itinerary/ItineraryPreferencesFormEnhanced";
 import { ItineraryViewEnhanced as ItineraryView } from "./itinerary/ItineraryViewEnhanced";
 import { TripOverviewPanel } from "./TripOverviewPanel";
+import { TripImage } from "./TripImage";
 
 const SuitcaseIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -571,9 +572,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
             {trips.map((t) => (
               <li key={t.id} className="group" onClick={() => setSelectedTrip(t)}>
                 <Card className="h-full flex flex-col transition-all duration-200 group-hover:border-primary/60 group-hover:shadow-lg cursor-pointer">
-                  <div className="w-full h-32 bg-secondary/50 rounded-t-lg flex items-center justify-center text-muted-foreground text-sm">
-                    [ Image for {t.destination} ]
-                  </div>
+                  <TripImage destination={t.destination} />
                   <CardHeader>
                     <CardTitle className="text-base font-medium">{t.title}</CardTitle>
                     <CardDescription>{t.destination}</CardDescription>

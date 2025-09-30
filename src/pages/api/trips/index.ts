@@ -34,11 +34,25 @@ export const GET: APIRoute = async ({ locals }) => {
   } = await supabase.auth.getUser();
   if (!user) return json({ error: "Unauthorized" }, 401);
 
-  const { data, error } = await supabase
+  // Include related generated itineraries so UI can show plan without an extra fetch.
+  // Table names are folded to lowercase in Postgres unless quoted, so use lowercase for relationship.
+  let { data, error } = await supabase
     .from("trips")
-    .select("*")
+    .select(`*, itineraries:generateditineraries (id, trip_id, preferences_json, generated_plan_json, status, input_tokens, thought_tokens, created_at, updated_at)`)
     .eq("user_id", user.id)
     .order("start_date", { ascending: true });
+
+  // Fallback if token columns not yet migrated (avoid 500 for missing column)
+  if (error && /input_tokens|thought_tokens|column/.test(error.message)) {
+    console.warn('[api/trips] Falling back select without token columns:', error.message);
+    const retry = await supabase
+      .from("trips")
+      .select(`*, itineraries:generateditineraries (id, trip_id, preferences_json, generated_plan_json, status, created_at, updated_at)`)
+      .eq("user_id", user.id)
+      .order("start_date", { ascending: true });
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) return json({ error: error.message }, 500);
   return json(data);

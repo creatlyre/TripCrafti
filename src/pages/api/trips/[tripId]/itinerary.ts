@@ -198,11 +198,18 @@ async function generateItinerary({ itineraryId, trip, preferences, supabase, lan
       throw new Error("ModelReturnedInvalidJSON");
     }
 
+    // Basic token estimation (SDK may expose usage metrics in future; placeholder logic)
+    // We'll approximate: input tokens ~ prompt length / 4, output tokens ~ response text length / 4
+    const inputTokens = Math.round(prompt.length / 4);
+    const thoughtTokens = Math.round(text.length / 4);
+
     const updateOk = await supabase
       .from(tableName)
       .update({
         generated_plan_json: generatedPlan,
         status: "COMPLETED",
+        input_tokens: inputTokens,
+        thought_tokens: thoughtTokens,
         updated_at: new Date().toISOString(),
       })
       .eq("id", itineraryId);
