@@ -1,27 +1,30 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient, createServerClient, type CookieOptions } from "@supabase/ssr";
+import type { AstroCookies } from "astro";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-// Prefer new PUBLIC_ prefixed variables (Astro exposes those to client). Fallback to legacy names if present.
-// In test / Node environments where import.meta.env might not be populated, also fallback to process.env values.
-const supabaseUrl = (import.meta.env.PUBLIC_SUPABASE_URL
-  || import.meta.env.SUPABASE_URL
-  || (typeof process !== 'undefined' ? (process.env.PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL) : undefined)) as string | undefined;
-const supabaseAnonKey = (import.meta.env.PUBLIC_SUPABASE_ANON_KEY
-  || import.meta.env.SUPABASE_KEY
-  || (typeof process !== 'undefined' ? (process.env.PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_KEY) : undefined)) as string | undefined;
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl) {
-  console.warn('[supabase] Missing PUBLIC_SUPABASE_URL environment variable');
-}
-if (!supabaseAnonKey) {
-  console.warn('[supabase] Missing PUBLIC_SUPABASE_ANON_KEY environment variable');
-}
+export const createSupabaseServer = (cookies: AstroCookies) => {
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      get(key: string) {
+        return cookies.get(key)?.value;
+      },
+      set(key: string, value: string, options: CookieOptions) {
+        cookies.set(key, value, options);
+      },
+      remove(key: string, options: CookieOptions) {
+        cookies.delete(key, options);
+      },
+    },
+  });
+};
 
-export const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
-export type SupabaseClientType = typeof supabase;
+export const createSupabase = () => {
+  return createClient(supabaseUrl, supabaseAnonKey);
+};
+
+export type SupabaseClientType = SupabaseClient;

@@ -1,6 +1,6 @@
-# AI Rules for TripCraft
+# AI Rules for TripCrafti
 
-TripCraft is an advanced web application designed to revolutionize how users plan their travels by combining precise, manual management with the power of AI-driven assistants. The app is meant to be a comprehensive tool that supports the traveler at every stage—from initial inspiration, through detailed planning and budgeting, to the final packing process.
+TripCrafti is an advanced web application designed to revolutionize how users plan their travels by combining precise, manual management with the power of AI-driven assistants. The app is meant to be a comprehensive tool that supports the traveler at every stage—from initial inspiration, through detailed planning and budgeting, to the final packing process.
 
 Key Application Modules
 

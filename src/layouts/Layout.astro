@@ -1,7 +1,7 @@
 ---
 import "../styles/global.css";
 import SupabaseProvider from "../components/auth/SupabaseProvider.tsx";
-const lang = (Astro.locals?.lang as 'pl' | 'en') ?? 'pl';
+const lang = (Astro.locals?.lang as "pl" | "en") ?? "pl";
 
 interface Props {
   title?: string;
@@ -15,12 +15,12 @@ const { title = "10x Astro Starter" } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/png" href="/Logo_TripCrafti.png" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
   </head>
   <body>
-    <SupabaseProvider client:load>
+    <SupabaseProvider>
       <slot />
     </SupabaseProvider>
   </body>
