@@ -91,7 +91,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
   pl: {
     hero: {
       badge: "Wszechstronne AI narzędzie podróżne",
-      heading: "Planuj mądrze. Podróżuj lżej.",
+      heading: "Planuj mądrze. Pakuj szybciej. Podróżuj wygodniej.",
       sub: "Twoje centrum dowodzenia podróżą. Połącz precyzyjną kontrolę z inteligentnym wsparciem AI i ciesz się każdą chwilą.",
       cta: "Zacznij Planować",
     },
@@ -101,7 +101,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
     },
     detailedFeatures: {
       feature1: {
-        headline: "Błyskawiczne Itineraria AI",
+        headline: "Błyskawiczny Plan Podróży",
         body: "Podaj cel, daty i zainteresowania, a nasza AI w minutę stworzy spersonalizowany plan podróży, który możesz dowolnie modyfikować.",
       },
       feature2: {
@@ -191,7 +191,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
   en: {
     hero: {
       badge: "All-in-one AI travel workspace",
-      heading: "Plan smarter. Travel lighter.",
+      heading: "Plan smarter. Pack faster. Travel easier.",
       sub: "Your travel command center. Combine precise control with intelligent AI support and enjoy every moment.",
       cta: "Start Planning",
     },
@@ -201,7 +201,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
     },
     detailedFeatures: {
       feature1: {
-        headline: "Instant AI Itineraries",
+        headline: "Instant Trip Plans",
         body: "Provide your destination, dates, and interests, and our AI will create a personalized travel plan in a minute, which you can freely modify.",
       },
       feature2: {
