@@ -40,6 +40,7 @@ const authMiddleware: MiddlewareHandler = async (context, next) => {
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  console.log("SESSION IN MIDDLEWARE", session);
   context.locals.session = session;
 
   return next();
