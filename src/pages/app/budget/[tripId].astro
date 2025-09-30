@@ -1,0 +1,65 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+import BudgetDashboard from "../../../components/budget/BudgetDashboard.tsx";
+
+export const prerender = false;
+
+const { tripId } = Astro.params;
+let trip = null;
+if (tripId && Astro.locals.supabase) {
+    const { data } = await Astro.locals.supabase.from('trips').select('*').eq('id', tripId).single();
+    trip = data;
+}
+---
+
+<Layout title={trip ? `Budget for ${trip.title}` : "Budget"}>
+    <div class="relative">
+        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(56,189,248,0.12),transparent_60%),radial-gradient(circle_at_80%_70%,rgba(167,139,250,0.10),transparent_65%)]"></div>
+        <div class="container mx-auto px-4 py-8 space-y-6 relative">
+        <nav class="text-xs text-slate-400 flex items-center gap-2" aria-label="Breadcrumb">
+            <a href="/app" class="hover:text-slate-200">Dashboard</a>
+            <span>/</span>
+            <span class="text-slate-300">Budget</span>
+        </nav>
+                {trip ? (
+                    <>
+                        <div class="rounded-xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-sm shadow-inner shadow-slate-950/40 p-4 md:p-6">
+                          <div class="flex items-center justify-between mb-4">
+                             <h1 class="text-lg font-semibold tracking-tight bg-gradient-to-r from-sky-300 via-indigo-300 to-fuchsia-300 bg-clip-text text-transparent">Budget Overview</h1>
+                             {trip?.currency && <span class="text-[10px] px-2 py-1 rounded bg-slate-800/70 border border-slate-700 text-slate-300">Base Currency: {trip.currency}</span>}
+                          </div>
+                          <div id="budget-dashboard-root" class="relative">
+                            <div class="animate-pulse space-y-6 md:hidden" id="budget-skeleton">
+                                <div class="h-5 w-40 bg-slate-800/60 rounded"/>
+                                <div class="h-32 bg-slate-800/40 rounded"/>
+                                <div class="h-32 bg-slate-800/40 rounded"/>
+                            </div>
+                            <BudgetDashboard client:load trip={trip} />
+                          </div>
+                        </div>
+                        <script is:inline>
+                            // Remove skeleton once React mounts (rudimentary hydration hook)
+                            window.addEventListener('DOMContentLoaded', () => {
+                                queueMicrotask(()=>{
+                                    const sk = document.getElementById('budget-skeleton');
+                                    if (sk) sk.remove();
+                                });
+                            });
+                        </script>
+                    </>
+                ) : (
+                <div class="max-w-md mx-auto mt-12 text-center border border-red-500/30 bg-red-900/20 rounded-xl p-8 backdrop-blur-sm">
+                    <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <h2 class="text-lg font-semibold mb-2 text-red-200">Trip not found</h2>
+                    <p class="text-sm text-red-300/80 mb-6">The trip you are trying to access does not exist or you do not have permission.</p>
+                    <a href="/app" class="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-md border border-red-400/40 text-red-200 hover:bg-red-500/20 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        Back to dashboard
+                    </a>
+                </div>
+            )}
+        </div>
+    </div>
+</Layout>

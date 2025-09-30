@@ -51,6 +51,12 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onOpen, onDelete, dict
               {dict.deleteAction}
             </button>
           )}
+          <a
+            href={`/app/budget/${trip.id}`}
+            onClick={e => e.stopPropagation()}
+            className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-300 hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-colors"
+            aria-label="Open budget dashboard"
+          >Budget</a>
           {hasItinerary ? (
             <Button
               size="sm"
