@@ -84,23 +84,22 @@ Projekt rozwijany jest iteracyjnie. Poniżej znajdują się kluczowe etapy wdro�
 
         [x] Konfiguracja infrastruktury (DB, CI/CD).
 
-    [ ] Etap 2: Integracja z Asystentem Pakowania AI
+    [x] Etap 2: Integracja z Inteligentnym Planerem Podróży AI
+
+        [x] Formularz preferencji użytkownika (zainteresowania, styl podróży).
+
+        [x] Implementacja zaawansowanych promptów dla Gemini.
+
+        [ ] Wizualizacja planu podróży (np. w formie osi czasu).
+
+        [x] Możliwość ręcznej edycji planu (np. metodą "przeciągnij i upuść").
+	[ ] Etap 3: Integracja z Asystentem Pakowania AI
 
         [ ] Interfejs do generowania listy rzeczy do spakowania.
 
         [ ] Integracja backendu z Gemini API.
 
         [ ] Wyświetlanie i zarządzanie wygenerowaną listą (CRUD).
-
-    [ ] Etap 3: Integracja z Inteligentnym Planerem Podróży AI
-
-        [ ] Formularz preferencji użytkownika (zainteresowania, styl podróży).
-
-        [ ] Implementacja zaawansowanych promptów dla Gemini.
-
-        [ ] Wizualizacja planu podróży (np. w formie osi czasu).
-
-        [ ] Możliwość ręcznej edycji planu (np. metodą "przeciągnij i upuść").
 
     [ ] Etap 4: Udoskonalenia i Funkcje Społecznościowe
 
