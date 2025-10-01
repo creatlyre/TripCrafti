@@ -134,7 +134,7 @@ interface Dictionary {
       adding: string;
       submit: string;
     };
-    itineraryAdd?: { button: string; added?: string; error?: string };
+  itineraryAdd?: { button: string; added?: string; error?: string; adding?: string };
     page: {
       titleBase: string;
       titleForTrip: string; // use {title}
@@ -418,7 +418,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         adding: "Dodawanie…",
         submit: "Dodaj wydatek",
       },
-      itineraryAdd: { button: "Dodaj do wydatków", added: "Dodano", error: "Błąd dodawania" },
+  itineraryAdd: { button: "Dodaj do wydatków", added: "Dodano", error: "Błąd dodawania", adding: "Dodawanie..." },
       page: {
         titleBase: "Budżet",
         titleForTrip: "Budżet dla {title}",
@@ -718,7 +718,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         adding: "Adding...",
         submit: "Add Expense",
       },
-      itineraryAdd: { button: "Add to expenses", added: "Added", error: "Add failed" },
+  itineraryAdd: { button: "Add to expenses", added: "Added", error: "Add failed", adding: "Adding..." },
       page: {
         titleBase: "Budget",
         titleForTrip: "Budget for {title}",

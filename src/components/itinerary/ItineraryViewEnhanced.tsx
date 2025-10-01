@@ -64,31 +64,41 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
     return `${dayIndex}-${activityIndex}-${act.activity_name}-${act.estimated_cost}`;
   }
 
+  const [addingKey, setAddingKey] = useState<string | null>(null);
+  const [announce, setAnnounce] = useState<string>("");
+
   async function addActivityAsExpense(dayIndex: number, activityIndex: number) {
     if (!tripId) return;
     const act = plan.itinerary[dayIndex].activities[activityIndex];
     if (!act) return;
-    // Basic validation only if cost > 0; allow zero? We skip if no estimated cost.
     if (!(act.estimated_cost > 0)) return;
     const key = activityKey(dayIndex, activityIndex, act);
-    if (added.has(key)) return; // already added
+    if (added.has(key) || addingKey === key) return;
+    setAddingKey(key);
+    setAnnounce((dict.budget?.itineraryAdd?.adding) || 'Dodawanie...');
     const payload = {
       amount: act.estimated_cost,
       currency: act.currency || tripCurrency || 'EUR',
       description: `${act.activity_name}`.slice(0, 140),
-      // category_id omitted: user can re-categorize later
       is_prepaid: false,
     };
+    let success = false;
     try {
       const res = await fetch(`/api/trips/${tripId}/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      if (!res.ok) {
-        // Non-intrusive feedback; could integrate toast system later
-        console.warn('[Itinerary] addActivityAsExpense failed', await res.text());
-      } else {
+      if (res.ok) {
         setAdded(prev => new Set(prev).add(key));
+        success = true;
+        setAnnounce((dict.budget?.itineraryAdd?.added) || 'Dodano');
+      } else {
+        console.warn('[Itinerary] addActivityAsExpense failed', await res.text());
+        setAnnounce((dict.budget?.itineraryAdd?.error) || 'Błąd dodawania');
       }
     } catch (e) {
       console.warn('[Itinerary] addActivityAsExpense error', e);
+      setAnnounce((dict.budget?.itineraryAdd?.error) || 'Błąd dodawania');
+    } finally {
+      // Briefly hold spinner if too fast (<150ms) for better perceived feedback
+      setTimeout(() => { setAddingKey(null); if (!success) { /* keep message */ } }, 150);
     }
   }
 
@@ -235,16 +245,36 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
                               {tripId && actHasCost(activity) && (() => {
                                 const key = activityKey(dayIndex, activityIndex, activity);
                                 const already = added.has(key);
+                                const isAdding = addingKey === key && !already;
+                                const labelIdle = dict.budget?.itineraryAdd?.button || 'Dodaj do wydatków';
+                                const labelAdding = dict.budget?.itineraryAdd?.adding || 'Dodawanie...';
+                                const labelAdded = dict.budget?.itineraryAdd?.added || 'Dodano';
                                 return (
                                   <Button
                                     onClick={() => addActivityAsExpense(dayIndex, activityIndex)}
-                                    variant={already ? 'outline' : 'ghost'}
+                                    variant={already ? 'outline' : (isAdding ? 'outline' : 'ghost')}
                                     size="sm"
-                                    disabled={already}
-                                    className={already ? 'text-gray-500 border-gray-600 hover:bg-gray-700/40' : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30'}
-                                    title={already ? (dict.budget?.itineraryAdd?.added || 'Dodano') : (dict.budget?.itineraryAdd?.button || 'Dodaj do wydatków')}
+                                    disabled={already || isAdding}
+                                    className={`relative overflow-hidden group ${already ? 'text-emerald-400 border-emerald-600 bg-emerald-900/30' : isAdding ? 'border-emerald-500 text-emerald-300' : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30'} transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none`}
+                                    title={already ? labelAdded : (isAdding ? labelAdding : labelIdle)}
+                                    aria-live="polite"
                                   >
-                                    {already ? (dict.budget?.itineraryAdd?.added || 'Dodano') : (dict.budget?.itineraryAdd?.button || 'Dodaj do wydatków')}
+                                    {isAdding && (
+                                      <span className="absolute inset-0 flex items-center justify-center">
+                                        <svg className="animate-spin h-4 w-4 text-emerald-300" viewBox="0 0 24 24" fill="none">
+                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                        </svg>
+                                      </span>
+                                    )}
+                                    {!isAdding && already && (
+                                      <span className="flex items-center gap-1">
+                                        <svg className="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                        {labelAdded}
+                                      </span>
+                                    )}
+                                    {!isAdding && !already && labelIdle}
+                                    <span className="sr-only">{already ? labelAdded : (isAdding ? labelAdding : labelIdle)}</span>
                                   </Button>
                                 );
                               })()}
@@ -270,6 +300,7 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
           </div>
         ))}
       </div>
+    <div className="sr-only" aria-live="polite">{announce}</div>
     </div>
   );
 };
