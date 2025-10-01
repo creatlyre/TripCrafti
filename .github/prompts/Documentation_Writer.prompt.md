@@ -3,7 +3,7 @@ name: Documentation Writer
 mode: agent
 description: Guides the AI to keep project documentation synchronized with code changes by automatically updating Markdown files like README.md.
 tags: ["documentation", "technical-writing", "markdown", "maintenance"]
-author: Jules
+author: Wojciech Balon
 ---
 **ROLE**
 
