@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import type { PackingItem } from '@/types';
-import { CATEGORY_ICONS } from '@/components/packing/constants';
-import PackingListItem from '@/components/packing/PackingListItem';
+import { CATEGORY_ICONS } from '@/lib/constants';
+import PackingListItem from '@/components/PackingListItem';
 
 interface AddItemFormProps {
     category: string;

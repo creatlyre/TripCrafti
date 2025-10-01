@@ -109,7 +109,7 @@ interface ChecklistProps {
     onDeleteItem: (itemId: number) => void;
 }
 
-const Checklist: React.FC<ChecklistProps> = ({ items, onToggleItem, onAddItem, onUpdateItem, onDeleteItem }) => {
+const PackingChecklist: React.FC<ChecklistProps> = ({ items, onToggleItem, onAddItem, onUpdateItem, onDeleteItem }) => {
     const doneCount = items.filter(item => item.done).length;
     const totalCount = items.length;
     const progress = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
@@ -150,4 +150,4 @@ const Checklist: React.FC<ChecklistProps> = ({ items, onToggleItem, onAddItem, o
     );
 };
 
-export default Checklist;
+export default PackingChecklist;

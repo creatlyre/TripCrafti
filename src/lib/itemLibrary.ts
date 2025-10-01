@@ -1,4 +1,4 @@
-import type { ItemDefinition, ItemLibraryCategory } from '@/types';
+import type { ItemDefinition, ItemLibraryCategory, ChecklistItem, PackingItem } from '@/types';
 
 export const ITEM_LIBRARY: Record<string, ItemDefinition> = {
     // Dokumenty i Finanse
@@ -196,3 +196,132 @@ export const ITEM_LIBRARY_CATEGORIES: ItemLibraryCategory[] = [
         itemIds: ['doc_drivers_license', 'elec_phone_charger', 'acc_sunglasses', 'kid_car_seat'],
     },
 ];
+
+export const DEFAULT_CHECKLIST: ChecklistItem[] = [
+  { id: 401, task: 'Naładować power bank', done: false },
+  { id: 402, task: 'Spakować ładowarkę do power banku', done: false },
+  { id: 403, task: 'Spakować prezenty', done: false },
+  { id: 404, task: 'Wyrzucić śmieci', done: false },
+  { id: 405, task: 'Uruchomić zmywarkę', done: false },
+  { id: 406, task: 'Opróżnić lodówkę z psujących się rzeczy', done: false },
+  { id: 407, task: 'Zamknąć okna', done: false },
+  { id: 408, task: 'Ustawić alarm', done: false },
+  { id: 409, task: 'Ustawić piec na tryb eko/wakacyjny', done: false },
+  { id: 410, task: 'Zmniejszyć temperaturę ogrzewania', done: false },
+  { id: 411, task: 'Opróżnić nawilżacz powietrza', done: false },
+  { id: 412, task: 'Wylać wodę z czajnika i dzbanka', done: false },
+  { id: 413, task: 'Wylać wodę z ekspresu do kawy', done: false },
+];
+
+// Converted to the new flat structure
+export const DEFAULT_PACKING_LIST: PackingItem[] = [
+  { "id": 1, "name": "Leki na sraczke", "qty": "1", "category": "Apteczka", "packed": false },
+  { "id": 2, "name": "Sól fizjologiczna", "qty": "1", "category": "Apteczka", "packed": false },
+  { "id": 3, "name": "Sól morska do nosa", "qty": "1", "category": "Apteczka", "packed": false },
+  { "id": 4, "name": "Plastry na skaleczenia", "qty": "1 zestaw", "category": "Apteczka", "packed": false },
+  { "id": 5, "name": "Plastry na blizne", "qty": "1", "category": "Apteczka", "packed": false },
+  { "id": 6, "name": "Waciki dezynfekujące", "qty": "1 op.", "category": "Apteczka", "packed": false },
+  { "id": 7, "name": "Octanisept", "qty": "1", "category": "Apteczka", "packed": false },
+  { "id": 8, "name": "Leki przeciwgorączkowe", "qty": "1", "category": "Apteczka", "packed": false },
+  { "id": 9, "name": "Aromactiv", "qty": "2", "category": "Apteczka", "packed": false },
+  { "id": 10, "name": "Probiotyki", "qty": "1", "category": "Apteczka", "packed": false },
+  { "id": 11, "name": "Penthanol na oparzenia", "qty": "1", "category": "Apteczka", "packed": false },
+  { "id": 12, "name": "Bepanthen", "qty": "1", "category": "Apteczka", "packed": false },
+  { "id": 13, "name": "Nożyczki do blizny", "qty": "1", "category": "Apteczka", "packed": false },
+  { "id": 14, "name": "Paszporty", "qty": "Wg potrzeb", "category": "Dokumenty i Finanse", "packed": false },
+  { "id": 15, "name": "Portfele", "qty": "Wg potrzeb", "category": "Dokumenty i Finanse", "packed": false },
+  { "id": 16, "name": "Euro", "qty": "Wg potrzeb", "category": "Dokumenty i Finanse", "packed": false },
+  { "id": 17, "name": "Bilety lotnicze", "qty": "Wg potrzeb", "category": "Dokumenty i Finanse", "packed": false },
+  { "id": 18, "name": "Duszek i krakacz", "qty": "1", "category": "Dzieci", "packed": false },
+  { "id": 19, "name": "Deska dla julki", "qty": "1", "category": "Dzieci", "packed": false },
+  { "id": 20, "name": "Makaron do pluwania", "qty": "1", "category": "Dzieci", "packed": false },
+  { "id": 21, "name": "Koc dla Julki", "qty": "1", "category": "Dzieci", "packed": false, "notes": "Do leżenia w pokoju" },
+  { "id": 22, "name": "Wiaderko i foremki do piasku", "qty": "1 zestaw", "category": "Dzieci", "packed": false },
+  { "id": 23, "name": "Zabawki do samolotu", "qty": "Kilka", "category": "Dzieci", "packed": false },
+  { "id": 24, "name": "Puzzle", "qty": "1", "category": "Dzieci", "packed": false },
+  { "id": 25, "name": "Zabawki dla julki", "qty": "Kilka", "category": "Dzieci", "packed": false },
+  { "id": 26, "name": "Pampersy do plywania", "qty": "1 op.", "category": "Dzieci", "packed": false },
+  { "id": 27, "name": "Pampersy zwykle", "qty": "Zapas", "category": "Dzieci", "packed": false },
+  { "id": 28, "name": "Chusteczki nawilzajace", "qty": "1 op.", "category": "Dzieci", "packed": false },
+  { "id": 29, "name": "Ręczniki dla dziewczyn", "qty": "2", "category": "Dzieci", "packed": false },
+  { "id": 30, "name": "Pieluchy tetrowe", "qty": "Kilka", "category": "Dzieci", "packed": false },
+  { "id": 31, "name": "Wózek", "qty": "1", "category": "Dzieci", "packed": false },
+  { "id": 32, "name": "Chusta", "qty": "1", "category": "Dzieci", "packed": false },
+  { "id": 33, "name": "Lampka nocna", "qty": "2", "category": "Dzieci", "packed": false },
+  { "id": 34, "name": "Niania", "qty": "2", "category": "Dzieci", "packed": false },
+  { "id": 35, "name": "Ładowarki do telefonów", "qty": "2", "category": "Elektronika", "packed": false },
+  { "id": 36, "name": "Ładowarka do zegarka", "qty": "1", "category": "Elektronika", "packed": false },
+  { "id": 37, "name": "Telefony", "qty": "2", "category": "Elektronika", "packed": false },
+  { "id": 38, "name": "Kamerka go pro + ladowarka", "qty": "1", "category": "Elektronika", "packed": false },
+  { "id": 39, "name": "Waciki i patyczki do uszu", "qty": "1 op.", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 40, "name": "Szczoteczki do zębów", "qty": "Wg potrzeb", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 41, "name": "Pasty do zębów", "qty": "1", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 42, "name": "Szczotka do włosów", "qty": "1", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 43, "name": "Maszynka do golenia jednorazowa", "qty": "1", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 44, "name": "Kosmetyki do kapieli", "qty": "1 zestaw", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 45, "name": "Kremy przeciwsłoneczne", "qty": "1", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 46, "name": "Kremy nawilżające", "qty": "1", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 47, "name": "Nożyczki do paznokci", "qty": "1", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 48, "name": "Cążki do paznokci", "qty": "1", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 49, "name": "Pilnik do paznokci", "qty": "1", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 50, "name": "Pomadka do ust", "qty": "1", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 51, "name": "Dezodoranty", "qty": "1", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 52, "name": "Perfumy", "qty": "1", "category": "Higiena i Kosmetyki", "packed": false },
+  { "id": 53, "name": "Okulary przeciwsloneczne", "qty": "Wg potrzeb", "category": "Inne", "packed": false },
+  { "id": 54, "name": "Kilka ksiazek", "qty": "2-3", "category": "Inne", "packed": false },
+  { "id": 55, "name": "Torba plażowa", "qty": "1", "category": "Inne", "packed": false },
+  { "id": 56, "name": "Klapki", "qty": "1 para", "category": "Obuwie", "packed": false },
+  { "id": 57, "name": "Sandaly", "qty": "1 para", "category": "Obuwie", "packed": false },
+  { "id": 58, "name": "Zabudowane buty", "qty": "1 para", "category": "Obuwie", "packed": false, "notes": "Na powrót" },
+  { "id": 59, "name": "Stroje kapielowe", "qty": "2", "category": "Ubrania", "packed": false },
+  { "id": 60, "name": "Czapki od slonca", "qty": "Wg potrzeb", "category": "Ubrania", "packed": false },
+  { "id": 61, "name": "Ubrania", "qty": "Zestawy", "category": "Ubrania", "packed": false },
+  { "id": 62, "name": "Bielizna", "qty": "Zapas", "category": "Ubrania", "packed": false },
+  { "id": 63, "name": "Ubrania na powrót", "qty": "1 zestaw", "category": "Ubrania", "packed": false, "notes": "kurtki, dlugie rekawy, skarpety, czapki, szaliki" },
+  { "id": 64, "name": "Bidon z wodą", "qty": "1", "category": "W Podróży (Podręczne)", "packed": false },
+  { "id": 66, "name": "Laktator", "qty": "1", "category": "Elektronika", "packed": false },
+  { "id": 65, "name": "Namiot plażowy", "qty": "1", "category": "Aktywności Specjalne", "packed": false, "optional": true }
+];
+
+/**
+ * Get item from library by ID
+ */
+export function getItemById(id: string): ItemDefinition | undefined {
+  return ITEM_LIBRARY[id];
+}
+
+/**
+ * Get items by category
+ */
+export function getItemsByCategory(category: string): ItemDefinition[] {
+  return Object.values(ITEM_LIBRARY).filter(item => item.category === category);
+}
+
+/**
+ * Search items by query
+ */
+export function searchItems(query: string): ItemDefinition[] {
+  const lowercaseQuery = query.toLowerCase();
+  return Object.values(ITEM_LIBRARY).filter(item =>
+    item.name.toLowerCase().includes(lowercaseQuery) ||
+    item.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery)) ||
+    (item.notes && item.notes.toLowerCase().includes(lowercaseQuery))
+  );
+}
+
+/**
+ * Get items by tags
+ */
+export function getItemsByTags(tags: string[]): ItemDefinition[] {
+  const lowercaseTags = tags.map(tag => tag.toLowerCase());
+  return Object.values(ITEM_LIBRARY).filter(item =>
+    item.tags.some(tag => lowercaseTags.includes(tag.toLowerCase()))
+  );
+}
+
+/**
+ * Get category items by ID list
+ */
+export function getCategoryItems(itemIds: string[]): ItemDefinition[] {
+  return itemIds.map(id => ITEM_LIBRARY[id]).filter(Boolean);
+}

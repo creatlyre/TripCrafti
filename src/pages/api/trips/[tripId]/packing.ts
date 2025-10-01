@@ -1,39 +1,57 @@
 import type { APIContext } from 'astro';
-import { createSupabaseClient, createSupabaseAdminClient } from '@/lib/supabase';
+import { z } from 'zod';
 import type { PackingItem, ChecklistItem, SavedList } from '@/types';
+import { SavedListSchema } from '@/lib/schemas/packingSchemas';
+
+export const prerender = false;
 
 // GET /api/trips/[tripId]/packing
 // Fetches the entire packing list for a given trip.
-export async function GET({ params, request }: APIContext) {
-    const { tripId } = params;
-    if (!tripId) {
-        return new Response(JSON.stringify({ error: 'Trip ID is required' }), { status: 400 });
-    }
-
-    const supabase = createSupabaseClient(request);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-    }
-
+export async function GET({ params, locals }: APIContext) {
     try {
+        const { tripId } = params;
+        
+        if (!tripId) {
+            return new Response(
+                JSON.stringify({ error: 'Trip ID is required' }), 
+                { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
+
+        // Validate tripId is a valid UUID
+        const uuidSchema = z.string().uuid();
+        const validatedTripId = uuidSchema.parse(tripId);
+
+        const { supabase } = locals;
+
+        // Get the current user
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized' }), 
+                { status: 401, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
+
         // First, get the packing list record to get its ID
         const { data: listData, error: listError } = await supabase
             .from('packing_lists')
             .select('id, categories, list_meta')
-            .eq('trip_id', tripId)
-            .eq('user_id', user.id)
-            .single();
+            .eq('trip_id', validatedTripId)
+            .maybeSingle();
 
         // If no list exists yet, return a default empty state
         if (listError || !listData) {
-            return new Response(JSON.stringify({
+            const emptyResult: SavedList = {
                 packingItems: [],
                 checklistItems: [],
                 categories: [],
                 listMeta: null,
-            }), { status: 200 });
+            };
+            return new Response(
+                JSON.stringify(emptyResult), 
+                { status: 200, headers: { 'Content-Type': 'application/json' } }
+            );
         }
 
         const listId = listData.id;
@@ -54,45 +72,71 @@ export async function GET({ params, request }: APIContext) {
             listMeta: listData.list_meta || null,
         };
 
-        return new Response(JSON.stringify(responsePayload), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-        });
+        return new Response(
+            JSON.stringify(responsePayload), 
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
 
     } catch (error: any) {
         console.error('Error fetching packing list:', error);
-        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        
+        if (error instanceof z.ZodError) {
+            return new Response(
+                JSON.stringify({ 
+                    error: 'Invalid trip ID format', 
+                    details: error.errors 
+                }), 
+                { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
+        
+        return new Response(
+            JSON.stringify({ 
+                error: error.message || 'An internal server error occurred.' 
+            }), 
+            { status: 500, headers: { 'Content-Type': 'application/json' } }
+        );
     }
 }
 
-
 // PUT /api/trips/[tripId]/packing
 // Saves the entire state of the packing list for a given trip.
-export async function PUT({ params, request }: APIContext) {
-    const { tripId } = params;
-    if (!tripId) {
-        return new Response(JSON.stringify({ error: 'Trip ID is required' }), { status: 400 });
-    }
-
-    const supabase = createSupabaseClient(request);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-    }
-
-    const body: SavedList = await request.json();
-    const { packingItems, checklistItems, categories, listMeta } = body;
-
-    // Use the admin client to perform a transaction-like operation
-    const supabaseAdmin = createSupabaseAdminClient();
-
+export async function PUT({ params, request, locals }: APIContext) {
     try {
+        const { tripId } = params;
+        
+        if (!tripId) {
+            return new Response(
+                JSON.stringify({ error: 'Trip ID is required' }), 
+                { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
+
+        // Validate tripId is a valid UUID
+        const uuidSchema = z.string().uuid();
+        const validatedTripId = uuidSchema.parse(tripId);
+
+        const { supabase } = locals;
+
+        // Get the current user
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized' }), 
+                { status: 401, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
+
+        // Parse and validate request body
+        const body = await request.json();
+        const validatedData = SavedListSchema.parse(body);
+        const { packingItems, checklistItems, categories, listMeta } = validatedData;
+
         // Step 1: Upsert the main packing list record to get a stable ID
-        const { data: listData, error: listError } = await supabaseAdmin
+        const { data: listData, error: listError } = await supabase
             .from('packing_lists')
             .upsert({
-                trip_id: tripId,
+                trip_id: validatedTripId,
                 user_id: user.id,
                 categories: categories,
                 list_meta: listMeta,
@@ -110,24 +154,28 @@ export async function PUT({ params, request }: APIContext) {
 
         // Step 2: Delete old items for this list
         await Promise.all([
-            supabaseAdmin.from('packing_items').delete().eq('list_id', listId),
-            supabaseAdmin.from('checklist_items').delete().eq('list_id', listId)
+            supabase.from('packing_items').delete().eq('list_id', listId),
+            supabase.from('checklist_items').delete().eq('list_id', listId)
         ]);
 
         // Step 3: Insert new items if they exist
+        const insertPromises = [];
+
         if (packingItems && packingItems.length > 0) {
             const itemsToInsert = packingItems.map(item => ({
                 list_id: listId,
                 user_id: user.id,
                 name: item.name,
-                qty: item.qty,
+                qty: String(item.qty), // Ensure qty is a string
                 category: item.category,
                 packed: item.packed,
                 notes: item.notes,
-                optional: item.optional,
+                optional: item.optional || false,
             }));
-            const { error: itemsError } = await supabaseAdmin.from('packing_items').insert(itemsToInsert);
-            if (itemsError) throw itemsError;
+            
+            insertPromises.push(
+                supabase.from('packing_items').insert(itemsToInsert)
+            );
         }
 
         if (checklistItems && checklistItems.length > 0) {
@@ -137,14 +185,42 @@ export async function PUT({ params, request }: APIContext) {
                 task: item.task,
                 done: item.done,
             }));
-            const { error: checklistError } = await supabaseAdmin.from('checklist_items').insert(checklistToInsert);
-            if (checklistError) throw checklistError;
+            
+            insertPromises.push(
+                supabase.from('checklist_items').insert(checklistToInsert)
+            );
         }
 
-        return new Response(JSON.stringify({ success: true, listId }), { status: 200 });
+        if (insertPromises.length > 0) {
+            const results = await Promise.all(insertPromises);
+            for (const result of results) {
+                if (result.error) throw result.error;
+            }
+        }
+
+        return new Response(
+            JSON.stringify({ success: true, listId }), 
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
 
     } catch (error: any) {
         console.error('Error saving packing list:', error);
-        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+        
+        if (error instanceof z.ZodError) {
+            return new Response(
+                JSON.stringify({ 
+                    error: 'Invalid request data', 
+                    details: error.errors 
+                }), 
+                { status: 400, headers: { 'Content-Type': 'application/json' } }
+            );
+        }
+        
+        return new Response(
+            JSON.stringify({ 
+                error: error.message || 'An internal server error occurred.' 
+            }), 
+            { status: 500, headers: { 'Content-Type': 'application/json' } }
+        );
     }
 }

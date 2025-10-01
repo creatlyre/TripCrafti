@@ -1,5 +1,5 @@
 import React from 'react';
-import { ITEM_LIBRARY, ITEM_LIBRARY_CATEGORIES } from '@/components/packing/data/itemLibrary';
+import { ITEM_LIBRARY, ITEM_LIBRARY_CATEGORIES } from '@/lib/itemLibrary';
 import type { ItemDefinition } from '@/types';
 
 interface QuickAddItemProps {

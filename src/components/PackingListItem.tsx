@@ -47,14 +47,17 @@ const PackingListItem: React.FC<PackingListItemProps> = ({
                     value={editedName}
                     onChange={(e) => setEditedName(e.target.value)}
                     className="flex-grow px-2 py-1 bg-white border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-600 dark:border-slate-500 dark:text-slate-200"
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel(); }}
                 />
                 <input
                     type="text"
                     value={editedQty}
                     onChange={(e) => setEditedQty(e.target.value)}
-                    className="w-20 px-2 py-1 bg-white border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-600 dark:border-slate-500 dark:text-slate-200"
+                    className="w-16 px-2 py-1 bg-white border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-600 dark:border-slate-500 dark:text-slate-200"
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') handleCancel(); }}
                 />
-                <button onClick={handleSave} className="p-1 text-green-600 hover:text-green-800" aria-label="Zapisz zmiany">
+                <button onClick={handleSave} className="p-1 text-green-600 hover:text-green-800" aria-label="Zapisz zmianę">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                 </button>
                 <button onClick={handleCancel} className="p-1 text-red-600 hover:text-red-800" aria-label="Anuluj edycję">
@@ -66,9 +69,8 @@ const PackingListItem: React.FC<PackingListItemProps> = ({
 
     return (
         <li
-            className={`group flex items-center bg-slate-50 dark:bg-slate-700/50 p-2 rounded-md transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 ${isDragged ? 'opacity-30' : 'opacity-100'}`}
+            className={`group flex items-center bg-slate-50 dark:bg-slate-700/50 p-3 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${isDragged ? 'opacity-50' : ''} ${isDraggable ? 'cursor-move' : ''}`}
             draggable={isDraggable}
-            data-item-id={item.id}
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             onDrop={(e) => onDrop(e, item)}
@@ -76,19 +78,22 @@ const PackingListItem: React.FC<PackingListItemProps> = ({
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
+            data-item-id={item.id}
         >
             <input
                 type="checkbox"
-                id={`item-${item.id}`}
+                id={`packing-${item.id}`}
                 checked={item.packed}
                 onChange={() => onToggleItem(item.id)}
-                className="h-4 w-4 rounded border-slate-300 dark:border-slate-500 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-600 dark:focus:ring-indigo-600 dark:focus:ring-offset-slate-800 cursor-pointer"
+                className="h-5 w-5 rounded border-slate-300 dark:border-slate-500 text-indigo-600 focus:ring-indigo-500 dark:bg-slate-600 dark:focus:ring-indigo-600 dark:focus:ring-offset-slate-800 cursor-pointer"
             />
-            <label htmlFor={`item-${item.id}`} className={`ml-3 flex-grow text-sm font-medium ${item.packed ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-700 dark:text-slate-200'} cursor-pointer`}>
+            <label
+                htmlFor={`packing-${item.id}`}
+                className={`ml-4 flex-grow text-sm font-medium ${item.packed ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-700 dark:text-slate-200'} cursor-pointer`}
+            >
                 {item.name}
-                {item.notes && <span className="text-xs text-slate-500 dark:text-slate-400 block">{item.notes}</span>}
             </label>
-            <span className={`text-sm font-light px-2 py-0.5 rounded ${item.packed ? 'text-slate-400 dark:text-slate-500' : 'text-slate-600 dark:text-slate-300'}`}>
+            <span className={`px-2 py-1 bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 text-xs rounded-full ${item.packed ? 'opacity-50' : ''}`}>
                 {item.qty}
             </span>
             <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity no-print">

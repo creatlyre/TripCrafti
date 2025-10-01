@@ -1,23 +1,28 @@
 import React from 'react';
+import TemplateLoader from './TemplateLoader';
+import type { PackingItem, ChecklistItem } from '@/types';
 
-interface ListActionsProps {
+interface PackingListActionsProps {
   onCheckList: () => void;
   onClearList: () => void;
   onCategorizeList: () => void;
+  onLoadTemplate: (items: PackingItem[], checklist: ChecklistItem[], templateName: string) => void;
   isLoading: boolean;
   isListEmpty: boolean;
 }
 
-const ListActions: React.FC<ListActionsProps> = ({
+const PackingListActions: React.FC<PackingListActionsProps> = ({
   onCheckList, onClearList, isLoading, isListEmpty,
-  onCategorizeList
+  onCategorizeList, onLoadTemplate
 }) => {
 
   return (
     <div className="space-y-4">
-      <p className="text-slate-500 dark:text-slate-400 text-sm">Użyj AI do weryfikacji listy, automatycznie ją kategoryzuj, lub wyczyść wszystko.</p>
+      <p className="text-slate-500 dark:text-slate-400 text-sm">Załaduj gotowy szablon, użyj AI do weryfikacji, kategoryzuj lub wyczyść listę.</p>
 
       <div className="flex flex-col space-y-3">
+        <TemplateLoader onLoadTemplate={onLoadTemplate} isLoading={isLoading} />
+        
         <button
           onClick={onCheckList}
           disabled={isLoading || isListEmpty}
@@ -44,4 +49,4 @@ const ListActions: React.FC<ListActionsProps> = ({
   );
 };
 
-export default ListActions;
+export default PackingListActions;

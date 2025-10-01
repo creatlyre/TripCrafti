@@ -1,5 +1,5 @@
 import type { PackingItem, ChecklistItem } from '@/types';
-import { PassportIcon, TShirtIcon, ShoeIcon, CosmeticIcon, PillIcon, PlugIcon, BabyIcon, ActivityIcon, BagIcon, DefaultIcon } from '@/components/packing/CategoryIcons';
+import { PassportIcon, TShirtIcon, ShoeIcon, CosmeticIcon, PillIcon, PlugIcon, BabyIcon, ActivityIcon, BagIcon, DefaultIcon } from '@/components/icons/CategoryIcons';
 import React from 'react';
 
 export const DEFAULT_CATEGORIES: string[] = [

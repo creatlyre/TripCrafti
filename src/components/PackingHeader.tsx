@@ -1,11 +1,11 @@
 import React from 'react';
 
-interface HeaderProps {
+interface PackingHeaderProps {
     theme: string;
     toggleTheme: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
+const PackingHeader: React.FC<PackingHeaderProps> = ({ theme, toggleTheme }) => {
     return (
         <header className="bg-white shadow-md dark:bg-slate-800 dark:shadow-slate-700/50 no-print">
             <div className="container mx-auto px-4 py-5 md:px-8 flex justify-between items-center">
@@ -43,4 +43,4 @@ const Header: React.FC<HeaderProps> = ({ theme, toggleTheme }) => {
     );
 };
 
-export default Header;
+export default PackingHeader;
