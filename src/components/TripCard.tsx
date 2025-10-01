@@ -13,6 +13,8 @@ interface TripCardProps {
     open: string;
     openPlan: string;
     deleteAction?: string;
+    budgetLink?: string;
+    budgetAria?: string;
   };
 }
 
@@ -39,6 +41,11 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onOpen, onDelete, dict
                 <strong className="font-medium text-slate-300">{dict.budget}:</strong> {trip.budget.toLocaleString()} {trip.currency}
               </p>
             )}
+            <p>
+              <a href={`/app/${trip.id}`} onClick={e=>e.stopPropagation()} className="text-[11px] uppercase tracking-wide text-indigo-400 hover:text-indigo-300 font-medium">
+                {dict.open} {"→"}
+              </a>
+            </p>
           </CardContent>
         </div>
         <CardFooter className="flex items-center justify-between gap-2 p-4 mt-auto">
@@ -51,6 +58,12 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onOpen, onDelete, dict
               {dict.deleteAction}
             </button>
           )}
+          <a
+            href={`/app/budget/${trip.id}`}
+            onClick={e => e.stopPropagation()}
+            className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-300 hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-colors"
+            aria-label={dict.budgetAria || 'Budget'}
+          >{dict.budgetLink || dict.budget}</a>
           {hasItinerary ? (
             <Button
               size="sm"

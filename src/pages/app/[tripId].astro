@@ -1,0 +1,49 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { TripOverviewPanel } from '@/components/TripOverviewPanel';
+import TripBudgetWidget from '@/components/TripBudgetWidget';
+import type { APIRoute } from 'astro';
+import type { Trip, GeneratedItinerary } from '@/types';
+
+export const prerender = false;
+
+const { params, locals } = Astro; 
+const tripId = params.tripId as string;
+const lang = locals.lang || 'pl';
+
+// Fetch trip with itineraries server-side (reuse API shape)
+let trip: (Trip & { itineraries: GeneratedItinerary[] }) | null = null;
+try {
+  const res = await fetch(`${Astro.site?.origin || ''}/api/trips/${tripId}`);
+  if (res.ok) {
+    trip = await res.json();
+  }
+} catch {}
+---
+<Layout title={trip ? trip.title : 'Trip'}>
+  <main class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    {trip ? (
+      <>
+        <section class="grid gap-8 md:grid-cols-3 items-start">
+          <div class="md:col-span-2">
+            <TripOverviewPanel trip={trip} itineraries={trip.itineraries || []} lang={lang} />
+          </div>
+          <div class="space-y-4">
+            <TripBudgetWidget tripId={trip.id} lang={lang} />
+            <a href={`/app/budget/${trip.id}`} class="block text-center text-[11px] uppercase tracking-wide text-indigo-400 hover:text-indigo-300 transition-colors">{lang === 'pl' ? 'Pełny budżet' : 'Full budget'}</a>
+            <a href={`#itinerary`} class="block text-center text-[11px] uppercase tracking-wide text-slate-400 hover:text-slate-300 transition-colors">{lang === 'pl' ? 'Plan podróży' : 'Itinerary'}</a>
+          </div>
+        </section>
+        <section id="itinerary" class="pt-4">
+          {trip.itineraries && trip.itineraries.length > 0 && trip.itineraries[0].generated_plan_json ? (
+            <div class="text-sm text-slate-500 dark:text-slate-400">{lang === 'pl' ? 'Podgląd planu wkrótce.' : 'Itinerary preview coming soon.'}</div>
+          ) : (
+            <div class="text-sm text-slate-500 dark:text-slate-400">{lang === 'pl' ? 'Brak zapisanego planu podróży.' : 'No itinerary yet.'}</div>
+          )}
+        </section>
+      </>
+    ) : (
+      <p class="text-sm text-slate-500 dark:text-slate-400">{lang === 'pl' ? 'Nie znaleziono wyjazdu.' : 'Trip not found.'}</p>
+    )}
+  </main>
+</Layout>

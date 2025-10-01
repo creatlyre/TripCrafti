@@ -42,9 +42,11 @@ describe("Login component", () => {
   it("renders user info and sign out button when user present", () => {
     useUserMock.mockReturnValue({ email: "user@example.com" });
     render(<Login />);
-    expect(screen.getByText("Signed in as")).toBeVisible();
+    // Match either English or Polish translation
+    const signedInText = screen.getByText((content) => /Signed in as|Zalogowany jako/i.test(content));
+    expect(signedInText).toBeVisible();
     expect(screen.getByText("user@example.com")).toBeVisible();
-    const button = screen.getByRole("button", { name: /sign out/i });
+    const button = screen.getByRole("button", { name: /sign out|wyloguj/i });
     fireEvent.click(button);
     expect(signOutMock).toHaveBeenCalled();
   });

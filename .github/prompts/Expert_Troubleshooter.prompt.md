@@ -2,8 +2,9 @@
 name: Expert Troubleshooter
 mode: agent
 description: Invokes a systematic and methodical troubleshooting expert to diagnose technical issues based on provided context.
-author: github.com/wojciechbalon
 tags: [troubleshooting, diagnostics, technical support, systematic approach, debugging, expert system]
+author: Wojciech Balon
+---
 
 ROLE
 
