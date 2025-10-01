@@ -1,16 +1,16 @@
-TripCraft - Twój Inteligentny Asystent Podróży
+TripCrafti - Twój Inteligentny Asystent Podróży
 🌟 Wizja Projektu
 
-TripCraft to inteligentny asystent podróży, którego misją jest zrewolucjonizowanie sposobu, w jaki planujemy i przeżywamy wyjazdy. Naszym celem jest zredukowanie stresu związanego z organizacją do minimum, pozwalając podróżnikom czerpać czystą radość z odkrywania świata.
+TripCrafti to inteligentny asystent podróży, którego misją jest zrewolucjonizowanie sposobu, w jaki planujemy i przeżywamy wyjazdy. Naszym celem jest zredukowanie stresu związanego z organizacją do minimum, pozwalając podróżnikom czerpać czystą radość z odkrywania świata.
 
 Aplikacja kompleksowo wspiera użytkownika na każdym etapie: od inspiracji i automatycznego planowania, przez precyzyjne zarządzanie budżetem i rezerwacjami, aż po inteligentne spakowanie walizki z pomocą AI.
 ✨ Główne Funkcjonalności
 
-TripCraft to nie tylko planer, to zintegrowany ekosystem, który dba o każdy detal Twojej podróży.
+TripCrafti to nie tylko planer, to zintegrowany ekosystem, który dba o każdy detal Twojej podróży.
 
     ✈️ Centralne Zarządzanie Podróżą (CRUD): Stanowi serce aplikacji. Twórz, przeglądaj, edytuj i usuwaj swoje wyjazdy. Zarządzaj rezerwacjami, kluczowymi dokumentami i notatkami w jednym miejscu.
 
-    💰 Precyzyjne Śledzenie Budżetu: Ustaw ogólny budżet dla podróży i na bieżąco dodawaj wydatki. TripCraft automatycznie podsumuje koszty i pokaże, jak Twoje wydatki mają się do założonego planu.
+    💰 Precyzyjne Śledzenie Budżetu: Ustaw ogólny budżet dla podróży i na bieżąco dodawaj wydatki. TripCrafti automatycznie podsumuje koszty i pokaże, jak Twoje wydatki mają się do założonego planu.
 
     🗺️ Inteligentny Kreator Planu Podróży (AI): Opisz swoje zainteresowania, styl podróży i budżet, a Google Gemini stworzy dla Ciebie spersonalizowany, edytowalny plan zwiedzania na każdy dzień.
 
@@ -60,7 +60,7 @@ CI/CD
 GitHub Actions do automatyzacji procesów testowania, budowania i wdrażania aplikacji.
 🏗️ Architektura Aplikacji
 
-TripCraft wykorzystuje architekturę zorientowaną na usługi. Aplikacja kliencka (frontend) komunikuje się z serwerem (backend) poprzez bezpieczne API REST. Backend zarządza całą logiką biznesową, danymi oraz integracją z usługami zewnętrznymi, takimi jak Google Gemini.
+TripCrafti wykorzystuje architekturę zorientowaną na usługi. Aplikacja kliencka (frontend) komunikuje się z serwerem (backend) poprzez bezpieczne API REST. Backend zarządza całą logiką biznesową, danymi oraz integracją z usługami zewnętrznymi, takimi jak Google Gemini.
 
 [Frontend: React] <--- (API REST) ---> [Backend: NestJS] <--- (Integracja) ---> [Baza Danych: PostgreSQL]
                                               ^
@@ -129,8 +129,8 @@ Backend (NestJS)
 
     Sklonuj repozytorium:
 
-    git clone [https://github.com/twoja-nazwa-uzytkownika/tripcraft.git](https://github.com/twoja-nazwa-uzytkownika/tripcraft.git)
-    cd tripcraft/backend
+    git clone [https://github.com/twoja-nazwa-uzytkownika/TripCrafti.git](https://github.com/twoja-nazwa-uzytkownika/TripCrafti.git)
+    cd TripCrafti/backend
 
     Zainstaluj zależności:
 
@@ -172,7 +172,7 @@ Frontend (React)
 
 🤝 Współtworzenie
 
-Jesteś pasjonatem podróży i kodowania? Chcesz pomóc w rozwoju TripCraft? Twoja pomoc jest mile widziana!
+Jesteś pasjonatem podróży i kodowania? Chcesz pomóc w rozwoju TripCrafti? Twoja pomoc jest mile widziana!
 
     Sforkuj repozytorium.
 
