@@ -1,190 +1,191 @@
-# 10x Astro Starter
+TripCraft - Twój Inteligentny Asystent Podróży
+🌟 Wizja Projektu
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+TripCraft to inteligentny asystent podróży, którego misją jest zrewolucjonizowanie sposobu, w jaki planujemy i przeżywamy wyjazdy. Naszym celem jest zredukowanie stresu związanego z organizacją do minimum, pozwalając podróżnikom czerpać czystą radość z odkrywania świata.
 
-## Tech Stack
+Aplikacja kompleksowo wspiera użytkownika na każdym etapie: od inspiracji i automatycznego planowania, przez precyzyjne zarządzanie budżetem i rezerwacjami, aż po inteligentne spakowanie walizki z pomocą AI.
+✨ Główne Funkcjonalności
 
-- [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
-- [React](https://react.dev/) v19.0.0 - UI library for building interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
+TripCraft to nie tylko planer, to zintegrowany ekosystem, który dba o każdy detal Twojej podróży.
 
-## Prerequisites
+    ✈️ Centralne Zarządzanie Podróżą (CRUD): Stanowi serce aplikacji. Twórz, przeglądaj, edytuj i usuwaj swoje wyjazdy. Zarządzaj rezerwacjami, kluczowymi dokumentami i notatkami w jednym miejscu.
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
-- npm (comes with Node.js)
+    💰 Precyzyjne Śledzenie Budżetu: Ustaw ogólny budżet dla podróży i na bieżąco dodawaj wydatki. TripCraft automatycznie podsumuje koszty i pokaże, jak Twoje wydatki mają się do założonego planu.
 
-## Getting Started
+    🗺️ Inteligentny Kreator Planu Podróży (AI): Opisz swoje zainteresowania, styl podróży i budżet, a Google Gemini stworzy dla Ciebie spersonalizowany, edytowalny plan zwiedzania na każdy dzień.
 
-1. Clone the repository:
+    🧳 Asystent Pakowania (AI): Na podstawie celu, długości wyjazdu i zaplanowanych aktywności, AI wygeneruje idealną listę rzeczy do spakowania, abyś nigdy więcej o niczym nie zapomniał(a).
 
-```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
-```
+    🔒 Bezpieczne Uwierzytelnianie: Pełne bezpieczeństwo i izolacja danych dzięki systemowi rejestracji i logowania. Każda podróż i jej dane należą tylko do Ciebie.
 
-2. Install dependencies:
+    📱 Pełna Responsywność: Korzystaj z aplikacji wygodnie na komputerze, tablecie i smartfonie.
 
-```bash
-npm install
-```
+🛠️ Stos Technologiczny
 
-3. Run the development server:
+Aplikacja zbudowana jest w oparciu o nowoczesny i skalowalny stos technologiczny, zapewniający wydajność i bezpieczeństwo.
 
-```bash
-npm run dev
-```
+Kategoria
+	
 
-4. Build for production:
+Technologia
 
-```bash
-npm run build
-```
+Frontend
+	
 
-## Available Scripts
+React z TypeScriptem dla interaktywnego i bezpiecznego UI.
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues
+Styling
+	
 
-## Project Structure
+Tailwind CSS dla szybkiego budowania nowoczesnych i responsywnych interfejsów.
 
-```md
-.
-├── src/
-│   ├── layouts/    # Astro layouts
-│   ├── pages/      # Astro pages
-│   │   └── api/    # API endpoints
-│   ├── components/ # UI components (Astro & React)
-│   └── assets/     # Static assets
-├── public/         # Public assets
-```
+Backend
+	
 
-## AI Development Support
+Node.js z frameworkiem NestJS, zapewniającym modułową i uporządkowaną architekturę.
 
-This project is configured with AI development tools to enhance the development experience, providing guidelines for:
+Baza Danych
+	
 
-- Project structure
-- Coding practices
-- Frontend development
-- Styling with Tailwind
-- Accessibility best practices
-- Astro and React guidelines
+PostgreSQL – potężna, relacyjna baza danych, idealna do przechowywania złożonych, powiązanych ze sobą danych.
 
-### Cursor IDE
+AI
+	
 
-The project includes AI rules in `.cursor/rules/` directory that help Cursor IDE understand the project structure and provide better code suggestions.
+Google Gemini API do napędzania inteligentnych funkcji planowania i pakowania.
 
-### GitHub Copilot
+CI/CD
+	
 
-AI instructions for GitHub Copilot are available in `.github/copilot-instructions.md`
+GitHub Actions do automatyzacji procesów testowania, budowania i wdrażania aplikacji.
+🏗️ Architektura Aplikacji
 
-### Windsurf
+TripCraft wykorzystuje architekturę zorientowaną na usługi. Aplikacja kliencka (frontend) komunikuje się z serwerem (backend) poprzez bezpieczne API REST. Backend zarządza całą logiką biznesową, danymi oraz integracją z usługami zewnętrznymi, takimi jak Google Gemini.
 
-The `.windsurfrules` file contains AI configuration for Windsurf.
+[Frontend: React] <--- (API REST) ---> [Backend: NestJS] <--- (Integracja) ---> [Baza Danych: PostgreSQL]
+                                              ^
+                                              |
+                                              v
+                                      [Google Gemini API]
 
-## Contributing
+🚀 Plan Rozwoju (Roadmap)
 
-Please follow the AI guidelines and coding practices defined in the AI configuration files when contributing to this project.
+Projekt rozwijany jest iteracyjnie. Poniżej znajdują się kluczowe etapy wdrożenia:
 
-## License
+    [x] Etap 1: MVP - Rdzeń Planera Podróży
 
-MIT
+        [x] System uwierzytelniania użytkowników.
 
-## Internationalization (i18n)
+        [x] Pełny CRUD dla podróży (Trips).
 
-The project includes a very lightweight internationalization setup for Polish (`pl`) and English (`en`).
+        [x] Zarządzanie elementami podróży (TripItems) - wydatki, rezerwacje.
 
-How it works:
+        [x] Podstawowe podsumowanie budżetu.
 
-1. A middleware (`src/middleware.ts`) runs on every request and determines the active language in this order:
-	- `?lang=` query parameter (e.g. `/?lang=en`)
-	- Cookie `tc_lang`
-	- First value from the `Accept-Language` request header (2‑letter code)
-	- Fallback: `pl`
-2. The resolved language is stored on `Astro.locals.lang` and consumed in pages/layouts.
-3. Dictionaries live in `src/lib/i18n.ts` – extend the `dictionaries` object to add more languages.
-4. Changing the language sets/updates the `tc_lang` cookie so subsequent navigations keep the choice.
+        [x] Konfiguracja infrastruktury (DB, CI/CD).
 
-Adding a new language:
+    [x] Etap 2: Integracja z Inteligentnym Planerem Podróży AI
 
-1. Extend the `Lang` union and `dictionaries` map in `src/lib/i18n.ts`.
-2. Add the new language code to `SUPPORTED` in `src/middleware.ts`.
-3. Update any hard‑coded language conditionals (e.g. small inline ternaries) if needed.
-4. Restart the dev server if types are not picked up.
+        [x] Formularz preferencji użytkownika (zainteresowania, styl podróży).
 
-Troubleshooting:
+        [x] Implementacja zaawansowanych promptów dla Gemini.
 
-- If `?lang=en` in the URL does not change content, ensure the middleware file is named `src/middleware.ts` (Astro only auto-loads that path) and that `export const prerender = false;` is set on pages that must stay dynamic.
-- Clear the `tc_lang` cookie or open a private window to test Accept-Language detection.
+        [ ] Wizualizacja planu podróży (np. w formie osi czasu).
 
-## Authentication (Supabase)
+        [x] Możliwość ręcznej edycji planu (np. metodą "przeciągnij i upuść").
+	[ ] Etap 3: Integracja z Asystentem Pakowania AI
 
-The project ships with a ready-to-use Supabase authentication setup (email + optional OAuth providers).
+        [ ] Interfejs do generowania listy rzeczy do spakowania.
 
-### Files Added
+        [ ] Integracja backendu z Gemini API.
 
-- `src/lib/supabase.ts` – central client created with `createClient()`
-- `src/components/auth/SupabaseProvider.tsx` – wraps the app in `SessionContextProvider`
-- `src/components/auth/Login.tsx` – React component rendering the Supabase Auth UI (with custom styling to match the existing slate / indigo aesthetic)
-- `src/pages/login.astro` – Uses the React component (`<AuthLogin client:load />`)
+        [ ] Wyświetlanie i zarządzanie wygenerowaną listą (CRUD).
 
-### Environment Variables
+    [ ] Etap 4: Udoskonalenia i Funkcje Społecznościowe
 
-Add these to your `.env` (or copy `.env.example`):
+        [ ] Udostępnianie planów podróży za pomocą linku.
 
-```
-PUBLIC_SUPABASE_URL=YOUR_PROJECT_URL
-PUBLIC_SUPABASE_ANON_KEY=YOUR_ANON_KEY
-```
+        [ ] Powiadomienia (np. o nadchodzącym locie).
 
-Only use the public (anon) key client-side. Never expose the `service_role` key in the browser or commit it to the repo.
+        [ ] Możliwość dodawania zdjęć i notatek do podróży.
 
-Legacy fallback variables `SUPABASE_URL` / `SUPABASE_KEY` are still supported if already present in your deployment environment.
+        [ ] Tryb offline.
 
-### Adding OAuth Providers
+⚙️ Instalacja i Uruchomienie
 
-In `src/components/auth/Login.tsx` adjust:
+Projekt składa się z dwóch głównych części: aplikacji backendowej i frontendowej.
+Wymagania
 
-```ts
-<Auth
-	providers={['google', 'github']}
-	...
-/>
-```
+    Node.js (wersja 20.x lub wyższa)
 
-Enable and configure each provider in your Supabase dashboard (Authentication → Providers) and add the required callback URL, typically:
+    NPM lub Yarn
 
-```
-http://localhost:3000
-```
+    Działająca instancja PostgreSQL
 
-### Session Availability
+    Klucz API do Google Gemini
 
-All React islands inside the layout can access the session via `useUser()` and the client via `useSupabaseClient()` thanks to the provider added in `src/layouts/Layout.astro`.
+Backend (NestJS)
 
-### Redirects After Auth
+    Sklonuj repozytorium:
 
-The Auth UI currently uses `redirectTo={window.location.origin}`. Adjust this if you want to send users somewhere else post-login (e.g. `/app`). For protected pages you can add server-side guards later using Astro middleware or server load functions.
+    git clone [https://github.com/twoja-nazwa-uzytkownika/tripcraft.git](https://github.com/twoja-nazwa-uzytkownika/tripcraft.git)
+    cd tripcraft/backend
 
-### Styling Overrides
+    Zainstaluj zależności:
 
-Custom appearance overrides live inside `Login.tsx` (gradient buttons, slate backgrounds). Adjust or remove if you prefer the default ThemeSupa styles.
+    npm install
 
-### Common Issues
+    Skonfiguruj zmienne środowiskowe:
 
-- Blank auth form: ensure the env vars are loaded (restart dev server after adding `.env`).
-- 400 errors on OAuth: verify provider callback URL matches exactly (no trailing slash mismatch).
-- Session not persisting: check that cookies are not blocked and that `persistSession: true` is set in `supabase.ts`.
+        Stwórz plik .env na podstawie .env.example.
 
-### React Version Compatibility
+        Uzupełnij dane dostępowe do bazy danych (DATABASE_URL) oraz klucz API (GEMINI_API_KEY).
 
-`@supabase/auth-ui-react@0.4.x` currently declares React 18 in its dependencies. Running the project on React 19 caused a duplicated React copy and the runtime error `Cannot read properties of null (reading 'useState')` (invalid hooks dispatcher during SSR). The project pins React to 18.3.x to ensure a single reconciler instance. If/when the auth UI library updates to React 19 peer dependency only, you can upgrade React again. Until then keep React 18.
+    Uruchom migracje bazy danych (jeśli używasz ORM np. Prisma/TypeORM):
 
-Additionally the login island uses `client:only="react"` to avoid server-rendering the auth widget (which relies on browser-only APIs and hooks initialization). Remove that directive if you prefer SSR once upstream fully supports it.
+    npm run migrate:dev
+    
+    Uruchom serwer deweloperski:
 
+    npm run start:dev
+
+Frontend (React)
+
+    Przejdź do katalogu frontend:
+
+    cd ../frontend
+
+    Zainstaluj zależności:
+
+    npm install
+
+    Skonfiguruj zmienne środowiskowe:
+
+        Stwórz plik .env.local na podstawie .env.example.
+
+        Wskaż adres URL działającego backendu (VITE_API_BASE_URL).
+
+    Uruchom aplikację kliencką:
+
+    npm run dev
+
+🤝 Współtworzenie
+
+Jesteś pasjonatem podróży i kodowania? Chcesz pomóc w rozwoju TripCraft? Twoja pomoc jest mile widziana!
+
+    Sforkuj repozytorium.
+
+    Utwórz nową gałąź (git checkout -b feature/twoja-funkcja).
+
+    Wprowadź swoje zmiany.
+
+    Zacommituj zmiany (git commit -m 'feat: Dodaj nową, wspaniałą funkcję').
+
+    Wypchnij zmiany do swojej gałęzi (git push origin feature/twoja-funkcja).
+
+    Otwórz Pull Request, opisując wprowadzone zmiany.
+
+Stworzone z ❤️ dla wszystkich podróżników.
 ## BudgetCraft Phase 3 Additions
 
 The project now includes foreign exchange (FX) conversion, post-trip budget reports, and CSV export.
@@ -262,4 +263,4 @@ npm test
 * Reconciliation & revaluation tool.
 * Multi-currency reporting (group by source currency).
 
-
+=======
