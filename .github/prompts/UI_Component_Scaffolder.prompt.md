@@ -3,7 +3,7 @@ name: UI Component Scaffolder
 mode: agent
 description: Guides the AI to rapidly create new, accessible UI components consistent with the project's design system (shadcn/ui, Tailwind CSS).
 tags: ["ui", "react", "shadcn-ui", "tailwind-css", "component", "scaffolding"]
-author: Jules
+author: Wojciech Balon
 ---
 **ROLE**
 
