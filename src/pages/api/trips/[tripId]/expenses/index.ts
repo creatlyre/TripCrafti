@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
 import { convertAmount } from '@/lib/fx';
+import { convertUsingDailyCache } from '@/lib/fxDaily';
 
 export const prerender = false;
 
@@ -79,9 +80,21 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
 	let amountInHome = payload.amount;
 	let fxMeta: { rate: number; source: string; warning?: string } | null = null;
 	if (trip.currency && payload.currency !== trip.currency) {
-		const { value, meta } = await convertAmount(payload.amount, payload.currency, trip.currency);
-		amountInHome = value;
-		fxMeta = meta;
+		// First try daily cache pivot (USD/EUR) to avoid repeated external calls
+		let usedCache = false;
+		try {
+			const cached = await convertUsingDailyCache(supabase, payload.currency, trip.currency, ['USD']);
+			if (cached && isFinite(cached.rate) && cached.rate > 0) {
+				amountInHome = Number((payload.amount * cached.rate).toFixed(2));
+				fxMeta = { rate: cached.rate, source: 'daily-cache' } as any;
+				usedCache = true;
+			}
+		} catch {/* ignore cache errors */}
+		if (!usedCache) {
+			const { value, meta } = await convertAmount(payload.amount, payload.currency, trip.currency);
+			amountInHome = value;
+			fxMeta = meta;
+		}
 	}
 
 	const insertPayload: any = {

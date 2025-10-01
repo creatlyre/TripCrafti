@@ -100,3 +100,19 @@ CREATE POLICY "Update own expenses" ON expenses
   FOR UPDATE USING (EXISTS (SELECT 1 FROM trips t WHERE t.id = trip_id AND t.user_id = auth.uid()));
 CREATE POLICY "Delete own expenses" ON expenses
   FOR DELETE USING (EXISTS (SELECT 1 FROM trips t WHERE t.id = trip_id AND t.user_id = auth.uid()));
+
+-- =============================================
+-- FX Daily Cache (stores one JSON blob of quotes per base & date)
+-- =============================================
+CREATE TABLE IF NOT EXISTS fx_daily_cache (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  base_currency TEXT NOT NULL,           -- e.g. 'USD'
+  rate_date DATE NOT NULL,               -- UTC date the quotes represent
+  provider TEXT NOT NULL DEFAULT 'exchangerate.host',
+  quotes JSONB NOT NULL,                 -- raw quotes object { "USDPLN": 3.73, ... }
+  source_api TEXT,                       -- endpoint used (live/timeframe/etc)
+  fetched_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(base_currency, rate_date, provider)
+);
+
+-- For now no RLS (server-side only usage via endpoints). Enable and add policies if exposing to clients later.

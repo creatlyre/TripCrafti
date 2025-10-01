@@ -58,6 +58,9 @@ Below are recommended providers, pros/cons, example URLs, and configuration appr
 2. Add a second provider fallback (e.g., Frankfurter) if primary fails:
    - Extend `getFxRate` to attempt primary, then secondary
 3. For production with volume, move to a keyed provider (CurrencyFreaks or OpenExchangeRates) and cache results in a DB table for traceability.
+4. Use `fx_daily_cache` (implemented) to store daily quotes once (base=USD) and derive cross rates via pivot formula to minimize external calls.
+5. Auto-seed: First conversion for a (from,to) pair without cache will now fetch the needed USD legs and persist them, enabling fast subsequent pivots.
+6. Full snapshot: If no USD row exists for today, the first conversion triggers a one-time `/live` snapshot storing all USD quotes; later conversions reuse it.
 
 ## Implementation Patterns
 ### A. Multiple Provider Fallback
@@ -69,7 +72,8 @@ catch -> fallback { rate:1, source:'fallback', warning:'both_failed' }
 ```
 
 ### B. Persisting Historical Rates
-Add a `fx_daily_rates` table storing (base, quote, rate, date_fetched). Use it before hitting network if same UTC date.
+Add a `fx_daily_rates` table storing (base, quote, rate, date_fetched). (Implemented variant: `fx_daily_cache` storing a quotes JSON blob.) Use it before hitting network if same UTC date.
+Full snapshot seeding now occurs automatically once per UTC day (on first conversion request) capturing all returned USD pairs; further missing pairs fallback to minimal leg seeding only if snapshot failed.
 
 ### C. Handling Weekend / Missing Rates
 If provider only gives business days (ECB/Frankfurter):
@@ -108,6 +112,8 @@ PUBLIC_FX_API_BASE=https://api.exchangerate.host
 - Add date-based historical conversion (store `fx_rate_date`)
 - Include inverse rate check to detect anomalies
 - Provide admin endpoint to seed/cache key currency pairs
+- Add scheduled job to refresh `fx_daily_cache` at first request each day and optionally for base EUR to improve pivot accuracy when EUR trips dominate.
+ - Expand auto-seed to EUR base if many EUR trips.
 
 ---
 This document should be updated whenever a new provider is integrated or fallback logic changes.
