@@ -70,6 +70,17 @@ export const GET: APIRoute = async ({ params, locals }) => {
   // Daily spend target: remaining / number of days left incl today
   const dailySpendTarget = computeDailySpendTarget(remaining, trip.start_date, trip.end_date);
 
+  // Compute spent today (excluding prepaid for on-trip variable spending)
+  const todayIso = new Date().toISOString().split('T')[0];
+  let spentToday = 0;
+  (expenses || []).forEach((e: any) => {
+    const d = new Date(e.expense_date).toISOString().split('T')[0];
+    if (d === todayIso && !e.is_prepaid) {
+      spentToday += Number(e.amount_in_home_currency || 0);
+    }
+  });
+  const safeToSpendToday = dailySpendTarget != null ? Math.max(0, dailySpendTarget - spentToday) : null;
+
   const summary = {
     trip_id: trip.id,
     totalBudget: trip.budget != null ? Number(trip.budget) : null,
@@ -79,6 +90,9 @@ export const GET: APIRoute = async ({ params, locals }) => {
     totalSpentOnTrip,
     remaining,
     dailySpendTarget,
+    // Phase 2 enhancements
+    spentTodayOnTrip: spentToday,
+    safeToSpendToday,
     spentByCategory,
   };
 

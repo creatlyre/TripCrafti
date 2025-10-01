@@ -17,7 +17,7 @@ if (tripId && Astro.locals.supabase) {
 
 <Layout title={trip ? dict.page.titleForTrip.replace('{title}', trip.title) : dict.page.titleBase}>
     <div class="relative">
-        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(56,189,248,0.12),transparent_60%),radial-gradient(circle_at_80%_70%,rgba(167,139,250,0.10),transparent_65%)]"></div>
+        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(56,189,248,0.12),rgba(15,23,42,0)_60%),radial-gradient(circle_at_80%_70%,rgba(167,139,250,0.10),rgba(15,23,42,0)_65%)]"></div>
         <div class="container mx-auto px-4 py-8 space-y-6 relative">
         <nav class="text-xs text-slate-400 flex items-center gap-2" aria-label="Breadcrumb">
             <a href="/app" class="hover:text-slate-200">{dict.page.breadcrumb.dashboard}</a>
@@ -31,7 +31,7 @@ if (tripId && Astro.locals.supabase) {
                                       <h1 class="text-lg font-semibold tracking-tight bg-gradient-to-r from-sky-300 via-indigo-300 to-fuchsia-300 bg-clip-text text-transparent">{dict.page.overview}</h1>
                                       {trip?.currency && <span class="text-[10px] px-2 py-1 rounded bg-slate-800/70 border border-slate-700 text-slate-300">{dict.page.baseCurrency} {trip.currency}</span>}
                           </div>
-                          <div id="budget-dashboard-root" class="relative">
+                          <div class="relative">
                             <div class="animate-pulse space-y-6 md:hidden" id="budget-skeleton">
                                 <div class="h-5 w-40 bg-slate-800/60 rounded"/>
                                 <div class="h-32 bg-slate-800/40 rounded"/>

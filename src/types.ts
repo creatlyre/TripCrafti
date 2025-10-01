@@ -107,6 +107,8 @@ export interface BudgetSummary {
   totalSpentOnTrip: number; // totalSpent - totalSpentPrepaid
   remaining: number | null; // totalBudget - totalSpent
   dailySpendTarget: number | null; // remaining / remainingDays (server calc)
+  spentTodayOnTrip?: number; // Phase 2: variable spending today (excludes prepaid)
+  safeToSpendToday?: number | null; // Phase 2: dailySpendTarget - spentTodayOnTrip (>=0)
   spentByCategory: {
     category_id: string | null;
     category: string | null;
@@ -114,3 +116,6 @@ export interface BudgetSummary {
     spent: number; // sum of expenses
   }[];
 }
+
+// Budget display mode for UI (purely front-end, does not affect API responses)
+export type BudgetMode = 'simple' | 'full';

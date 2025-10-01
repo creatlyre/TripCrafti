@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import type { BudgetSummary } from '../../types';
+import type { BudgetSummary, BudgetMode } from '../../types';
 import { getDictionary, type Lang } from '@/lib/i18n';
 import { Progress } from '../ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import CategorySpendChart from './CategorySpendChart';
 
-interface Props { tripId: string; refreshToken?: number; lang?: Lang }
+interface Props { tripId: string; refreshToken?: number; lang?: Lang; budgetMode?: BudgetMode }
 
-export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lang = 'pl' }) => {
+export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lang = 'pl', budgetMode = 'simple' }) => {
 	const dict = getDictionary(lang).budget!;
 	const [summary, setSummary] = useState<BudgetSummary | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -16,7 +17,7 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lan
 		setLoading(true); setError(null);
 		try {
 			const res = await fetch(`/api/trips/${tripId}/budget/summary`);
-			if (!res.ok) throw new Error(`Failed to load summary (${res.status})`);
+			if (!res.ok) throw new Error(dict.errors?.summaryFailed || `Failed to load summary (${res.status})`);
 			const data = await res.json();
 			setSummary(data);
 		} catch (e:any) { setError(e.message); } finally { setLoading(false); }
@@ -35,7 +36,10 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lan
 	if (error) return <div className="text-sm text-red-600">{error}</div>;
 	if (!summary) return null;
 
-	const percent = summary.totalBudget ? Math.min(100, (summary.totalSpent / summary.totalBudget) * 100) : 0;
+	// In simple mode we reinterpret stats to emphasize on-trip variable spend.
+	const effectiveSpent = budgetMode === 'simple' ? summary.totalSpentOnTrip : summary.totalSpent;
+	const effectiveRemaining = summary.totalBudget != null ? (summary.totalBudget - (budgetMode === 'simple' ? summary.totalSpentOnTrip : summary.totalSpent)) : null;
+	const percent = summary.totalBudget ? Math.min(100, (effectiveSpent / summary.totalBudget) * 100) : 0;
 
 	const STAT = (
 		title: string,
@@ -56,13 +60,13 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lan
 		<div className="space-y-6">
 			<div className="grid gap-4 md:grid-cols-5">
 				{STAT(dict.summary.totalBudget, summary.totalBudget?.toFixed(2) ?? '—', summary.totalPlannedCategories ? `${dict.summary.plannedCategoriesShort} ${summary.totalPlannedCategories.toFixed(2)}` : undefined)}
-				{STAT(dict.summary.spent, summary.totalSpent.toFixed(2), summary.totalSpentPrepaid ? `${dict.summary.spentPrepaidShort} ${summary.totalSpentPrepaid.toFixed(2)}` : undefined, 'text-emerald-300')}
-				{STAT(dict.summary.remaining, summary.remaining != null ? summary.remaining.toFixed(2) : '—', summary.totalBudget ? `${percent.toFixed(0)}${dict.summary.percentUsed}` : undefined, 'text-amber-300')}
-				{STAT(dict.summary.onTrip, summary.totalSpentOnTrip.toFixed(2), summary.totalSpentPrepaid ? `${dict.summary.exclPreShort} ${summary.totalSpentOnTrip.toFixed(2)}` : undefined)}
-				{STAT(dict.summary.dailyTarget, summary.dailySpendTarget != null ? summary.dailySpendTarget.toFixed(2) : '—', summary.remaining != null ? dict.summary.autoCalc : undefined)}
+				{STAT(budgetMode === 'simple' ? dict.summary.spent : dict.summary.spent, effectiveSpent.toFixed(2), budgetMode === 'simple' ? `${dict.summary.exclPreShort}${summary.totalSpentOnTrip.toFixed(2)}` : (summary.totalSpentPrepaid ? `${dict.summary.spentPrepaidShort} ${summary.totalSpentPrepaid.toFixed(2)}` : undefined), 'text-emerald-300')}
+				{STAT(dict.summary.remaining, effectiveRemaining != null ? effectiveRemaining.toFixed(2) : '—', summary.totalBudget ? `${percent.toFixed(0)}${dict.summary.percentUsed}` : undefined, 'text-amber-300')}
+				{STAT(dict.summary.onTrip, summary.totalSpentOnTrip.toFixed(2), summary.totalSpentPrepaid ? `${dict.summary.spentPrepaidShort} ${summary.totalSpentPrepaid.toFixed(2)}` : undefined)}
+				{STAT(dict.summary.dailyTarget, summary.dailySpendTarget != null ? summary.dailySpendTarget.toFixed(2) : '—', summary.safeToSpendToday != null ? `Safe: ${summary.safeToSpendToday.toFixed(2)}` : undefined)}
 			</div>
 
-			<Card className="border-slate-700 bg-slate-900/60">
+			<Card className="border-slate-700 bg-slate-900/60 shadow-inner">
 				<CardHeader className="pb-2">
 					<CardTitle className="text-sm">{dict.summary.progress}</CardTitle>
 				</CardHeader>
@@ -80,31 +84,14 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lan
 				</CardContent>
 			</Card>
 
-			<Card className="border-slate-700 bg-slate-900/60">
+			<Card className="border-slate-700 bg-slate-900/60 shadow-inner">
 				<CardHeader className="pb-2"><CardTitle className="text-sm">{dict.summary.categories}</CardTitle></CardHeader>
 				<CardContent>
-					{summary.spentByCategory.length === 0 && (
+					{summary.spentByCategory.length === 0 ? (
 						<div className="text-xs text-slate-500">{dict.summary.categoriesEmpty}</div>
+					) : (
+						<CategorySpendChart summary={summary} />
 					)}
-					<ul className="divide-y divide-slate-800">
-						{summary.spentByCategory.slice(0,10).map(cat => {
-							const pct = cat.planned ? Math.min(100, (cat.spent / (cat.planned||1)) * 100) : undefined;
-							return (
-								<li key={cat.category_id || cat.category || 'uncat'} className="py-2 text-xs flex items-center gap-3">
-									<div className="flex-1 min-w-0">
-										<p className="font-medium text-slate-200 truncate">{cat.category || dict.summary.uncategorized}</p>
-										<p className="text-[10px] text-slate-500">{cat.spent.toFixed(2)}{cat.planned ? ` / ${cat.planned.toFixed(2)}` : ''}</p>
-										{cat.planned && (
-											<div className="mt-1 h-1 w-full bg-slate-800 rounded">
-												<div className="h-1 rounded bg-indigo-500" style={{width: pct + '%'}} />
-											</div>
-										)}
-									</div>
-									<span className="font-mono text-[11px] text-slate-300">{cat.spent.toFixed(0)}</span>
-								</li>
-							);
-						})}
-					</ul>
 				</CardContent>
 			</Card>
 		</div>

@@ -71,6 +71,8 @@ interface Dictionary {
     dashboard: {
       title: string;
       filters: { all: string; excludePrepaid: string; onlyPrepaid: string };
+      modes?: { simple: string; full: string };
+      confirmDeleteExpense?: string;
       refresh: { action: string; refreshing: string };
       expenses: {
         heading: string;
@@ -115,7 +117,10 @@ interface Dictionary {
       loading: string;
       empty: string;
       confirmApplyTemplate: string;
+      confirmDeleteCategory?: string;
+      simpleModeHint?: string;
     };
+    categoryTemplates?: Record<string, { label: string; description: string; categories: { name: string; icon?: string; portion?: number; }[] }>; 
     quickAdd: {
       fabAria: string;
       title: string;
@@ -136,6 +141,13 @@ interface Dictionary {
       overview: string;
       baseCurrency: string; // label prefix
       notFound: { heading: string; body: string; back: string };
+    };
+    errors?: {
+      loadExpenses?: string;
+      loadCategories?: string;
+      createCategory?: string;
+      deleteFailed?: string;
+      summaryFailed?: string;
     };
   };
   dashboard?: {
@@ -341,6 +353,8 @@ export const dictionaries: Record<Lang, Dictionary> = {
       dashboard: {
         title: "Panel budżetu",
         filters: { all: "Wszystkie", excludePrepaid: "Bez przedpłat", onlyPrepaid: "Przedpłacone" },
+        modes: { simple: "Wydatki w trakcie", full: "Pełny" },
+        confirmDeleteExpense: "Usunąć ten wydatek?",
         refresh: { action: "Odśwież", refreshing: "Odświeżanie…" },
         expenses: {
           heading: "Wydatki",
@@ -385,6 +399,8 @@ export const dictionaries: Record<Lang, Dictionary> = {
         loading: "Ładowanie…",
         empty: "Brak kategorii. Kliknij Dodaj aby stworzyć pierwszą.",
         confirmApplyTemplate: "To doda kategorie do istniejącej listy. Kontynuować?",
+        confirmDeleteCategory: "Usunąć tę kategorię?",
+        simpleModeHint: "Skup się na zmiennych wydatkach w trakcie podróży (noclegi/bilety opłacone z góry oznacz jako przedpłaty).",
       },
       quickAdd: {
         fabAria: "Dodaj wydatek",
@@ -406,6 +422,13 @@ export const dictionaries: Record<Lang, Dictionary> = {
         overview: "Przegląd budżetu",
         baseCurrency: "Waluta bazowa:",
         notFound: { heading: "Podróż nie znaleziona", body: "Ta podróż nie istnieje lub brak uprawnień.", back: "Powrót do panelu" },
+      },
+      errors: {
+        loadExpenses: "Nie udało się załadować wydatków",
+        loadCategories: "Nie udało się załadować kategorii",
+        createCategory: "Nie udało się utworzyć kategorii",
+        deleteFailed: "Usunięcie nie powiodło się",
+        summaryFailed: "Nie udało się załadować podsumowania",
       },
     },
     dashboard: {
@@ -628,6 +651,8 @@ export const dictionaries: Record<Lang, Dictionary> = {
       dashboard: {
         title: "Budget Dashboard",
         filters: { all: "All", excludePrepaid: "No Prepaid", onlyPrepaid: "Prepaid" },
+        modes: { simple: "On-Trip", full: "Full" },
+        confirmDeleteExpense: "Delete this expense?",
         refresh: { action: "Refresh", refreshing: "Refreshing…" },
         expenses: {
           heading: "Expenses",
@@ -672,6 +697,8 @@ export const dictionaries: Record<Lang, Dictionary> = {
         loading: "Loading...",
         empty: "No categories yet. Click Add to create your first.",
         confirmApplyTemplate: "This will add additional categories to your existing list. Continue?",
+        confirmDeleteCategory: "Delete this category?",
+        simpleModeHint: "Focus on variable on-trip spending (lodging / tickets paid upfront can be marked prepaid).",
       },
       quickAdd: {
         fabAria: "Add expense",
@@ -693,6 +720,13 @@ export const dictionaries: Record<Lang, Dictionary> = {
         overview: "Budget Overview",
         baseCurrency: "Base Currency:",
         notFound: { heading: "Trip not found", body: "The trip you are trying to access does not exist or you do not have permission.", back: "Back to dashboard" },
+      },
+      errors: {
+        loadExpenses: "Failed to load expenses",
+        loadCategories: "Failed to load categories",
+        createCategory: "Failed to create category",
+        deleteFailed: "Delete failed",
+        summaryFailed: "Failed to load summary",
       },
     },
     dashboard: {
