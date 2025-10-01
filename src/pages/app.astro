@@ -6,7 +6,7 @@ export const prerender = false;
 
 const lang = Astro.locals.lang;
 const dict = getDictionary(lang);
-console.log("SESSION IN APP.ASTRO", Astro.locals.session);
+// console.log("SESSION IN APP.ASTRO", Astro.locals.session);
 function switchUrl(target: string) {
   const url = new URL(Astro.request.url);
   url.searchParams.set("lang", target);

@@ -74,6 +74,93 @@ export interface GeneratedItinerary {
   updated_at: string;
 }
 
+export interface PackingItem {
+  id: number; // For client-side keying and state updates
+  name: string;
+  qty: number | string;
+  category: string;
+  notes?: string;
+  optional?: boolean;
+  packed: boolean; // For client-side state management
+}
+
+export interface PackingListMeta {
+  destination: string;
+  days: number;
+  people: { adults: number; children: number };
+  season: string;
+  transport?: string;
+  accommodation?: string;
+  activities?: string[];
+  archetype?: string;
+}
+
+// The direct response from the AI
+export interface AIPackingListResponse {
+  meta: PackingListMeta;
+  checklist: { task: string; done: boolean }[];
+  items: Omit<PackingItem, 'id' | 'packed'>[];
+}
+
+export interface GenerateDetails {
+  destination: string;
+  days: string;
+  adults: string;
+  childrenAges: string;
+  season: string;
+  transport: string;
+  accommodation: string;
+  activities: string;
+  special: string;
+  region?: string;
+  travelStyle?: string;
+}
+
+export interface ValidationResult {
+  missing: { name: string; category: string; reason: string }[];
+  remove: { name: string; reason: string }[];
+  adjust: { name: string; field: string; current: any; suggested: any; reason: string }[];
+  replace: {
+    items_to_remove: string[];
+    suggested_item: { name: string; category: string };
+    reason: string;
+  }[];
+  error?: string;
+}
+
+export interface ChecklistItem {
+  id: number;
+  task: string;
+  done: boolean;
+}
+
+export interface ItemDefinition {
+  id: string; // e.g. 'doc_passport'
+  name: string; // 'Paszport'
+  category: string; // 'Dokumenty i Finanse'
+  defaultQty: string;
+  tags: string[]; // e.g. ['essential', 'documents', 'international']
+  relevance: number; // 1-10, 10 is most important
+  notes?: string; // e.g. 'Sprawdź datę ważności!'
+}
+
+export interface ItemLibraryCategory {
+    title: string;
+    itemIds: string[];
+}
+
+export interface SavedList {
+    packingItems: PackingItem[];
+    checklistItems: ChecklistItem[];
+    categories: string[];
+    listMeta: PackingListMeta | null;
+}
+
+export interface CategorizationResult {
+  id: number;
+  category: string;
+}
+
 // ========================= Budget & Expenses =========================
 export interface BudgetCategory {
   id: string;

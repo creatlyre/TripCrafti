@@ -3,7 +3,7 @@
  * - Trip creation form is in a modal dialog.
  * - A new, actionable empty state guides new users.
  */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import type { Trip, TripInput, GeneratedItinerary, Itinerary, ItineraryPreferences } from "@/types";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "./ui/card";
@@ -22,6 +22,7 @@ import { TripImage } from "./TripImage";
 import { EmptyState } from "./EmptyState";
 import { TripCard } from "./TripCard";
 import { TripCardSkeleton } from "./TripCardSkeleton";
+import PackingAssistant from "./PackingAssistant";
 
 interface CreateFormState extends TripInput {}
 
@@ -54,6 +55,11 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   function handleOpenTrip(trip: (Trip & { itineraries: GeneratedItinerary[] }), tab?: string) {
+    // Clean up any existing polling when switching trips
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
     setSelectedTrip(trip);
     if (tab) {
       setActiveTab(tab);
@@ -64,6 +70,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [itineraryError, setItineraryError] = useState<string | null>(null);
   const [duration, setDuration] = useState<number | undefined>(undefined);
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
   async function loadTrips(showLoadingSpinner = true) {
     if (showLoadingSpinner) {
@@ -117,6 +124,25 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
     }
   }, [authLoading, user]);
 
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [pollingInterval]);
+
+  // Function to handle tab changes with polling cleanup
+  const handleTabChange = useCallback((newTab: string) => {
+    // If switching away from itinerary tab, clean up polling unless we're generating
+    if (activeTab === 'itinerary' && newTab !== 'itinerary' && pollingInterval && !isGenerating) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+    setActiveTab(newTab);
+  }, [activeTab, pollingInterval, isGenerating]);
+
   async function handleGenerateItinerary(preferences: ItineraryPreferences) {
     if (!selectedTrip) return;
     setIsGenerating(true);
@@ -133,20 +159,47 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
       });
 
       if (res.status === 202) {
-        // Poll for completion
+        // Clean up any existing polling first
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+        }
+        
+        // Poll for completion, but only check the specific trip's itinerary status
         const poll = setInterval(async () => {
-          await loadTrips(false);
-          const updatedTrip = trips?.find(t => t.id === selectedTrip.id);
-          const latestItinerary = updatedTrip?.itineraries?.[0];
-          if (latestItinerary?.status === 'COMPLETED' || latestItinerary?.status === 'FAILED') {
-            setIsGenerating(false);
+          // Only poll if we're still on the itinerary tab and the dialog is open
+          if (activeTab !== 'itinerary' || !selectedTrip) {
             clearInterval(poll);
-            if (latestItinerary.status === 'FAILED') {
-              setItineraryError("Failed to generate itinerary. Check server logs for details.");
+            setPollingInterval(null);
+            return;
+          }
+          
+          try {
+            // Only fetch the specific trip's itineraries, not all trips
+            const checkRes = await fetch(`/api/trips/${selectedTrip.id}`, {
+              headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+            });
+            if (checkRes.ok) {
+              const updatedTripData = await checkRes.json();
+              const latestItinerary = updatedTripData.itineraries?.[0];
+              
+              if (latestItinerary?.status === 'COMPLETED' || latestItinerary?.status === 'FAILED') {
+                setIsGenerating(false);
+                clearInterval(poll);
+                setPollingInterval(null);
+                if (latestItinerary.status === 'FAILED') {
+                  setItineraryError("Failed to generate itinerary. Check server logs for details.");
+                }
+                // Update only the selected trip and refresh the trips list once at the end
+                setSelectedTrip(updatedTripData);
+                await loadTrips(false);
+              }
             }
-            if (updatedTrip) setSelectedTrip(updatedTrip);
+          } catch (pollError) {
+            console.error('Error polling itinerary status:', pollError);
           }
         }, 5000);
+        
+        setPollingInterval(poll);
       } else {
         let body: any = {};
         try { body = await res.json(); } catch {}
@@ -422,8 +475,14 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
 
       <Dialog open={!!selectedTrip} onOpenChange={(isOpen) => {
         if (!isOpen) {
+          // Clean up polling when closing dialog
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+          }
           setSelectedTrip(null);
           setActiveTab("overview");
+          setIsGenerating(false);
         }
       }}>
         <DialogContent
@@ -470,7 +529,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
 
                 {/* Main content area */}
                 <div>
-                  <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col">
+                  <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col">
                     <TabsList className="mx-6 mt-4 w-fit bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200 dark:border-slate-700">
                       <TabsTrigger value="overview">{dict.tabs?.overview}</TabsTrigger>
                       <TabsTrigger value="itinerary">{dict.tabs?.itinerary}</TabsTrigger>
@@ -580,18 +639,8 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                         </div>
                       </TabsContent>
 
-                      <TabsContent value="packing" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
-                        <div className="space-y-6">
-                          <div className="text-center py-12 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                              <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.5 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
-                              </svg>
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">{dict.placeholders?.packing.title}</h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">{dict.placeholders?.packing.body}</p>
-                          </div>
-                        </div>
+                      <TabsContent value="packing" className="p-0 m-0 min-h-full">
+                        <PackingAssistant tripId={selectedTrip.id} trip={selectedTrip} />
                       </TabsContent>
 
                       <TabsContent value="settings" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
