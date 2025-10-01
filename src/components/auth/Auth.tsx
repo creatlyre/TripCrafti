@@ -6,7 +6,7 @@ import { createBrowserClient } from "@supabase/ssr";
 import AuthLogin from "./Login"; // We import the login UI here
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+const supabaseAnonKey = import.meta.env.SUPABASE_ANON_KEY;
 
 const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 

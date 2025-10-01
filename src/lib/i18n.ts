@@ -262,6 +262,48 @@ interface Dictionary {
     budgetOptions: { value: string; label: string }[];
     interests: { key: string; label: string }[];
   };
+  packingAssistant?: {
+    loading: string;
+    confirmation: {
+      title: string;
+      body: string;
+      cancel: string;
+      confirm: string;
+    };
+    validation: {
+      title: string;
+      body: string;
+      placeholder: string;
+      cancel: string;
+      confirm: string;
+    };
+    listEmptyError: string;
+    itemAdded: string;
+    itemRemoved: string;
+    itemNotFound: string;
+    itemUpdated: string;
+    itemsReplaced: string;
+    suggestionsAITitle: string;
+    suggestions: {
+      add: string;
+      remove: string;
+      adjust: string;
+      replace: string;
+      apply: string;
+      adjustReason: string;
+      addActionButton: string;
+      removeActionButton: string;
+      changeActionButton: string;
+    };
+    generateTitle: string;
+    manageTitle: string;
+    quickAddTitle: string;
+    archetype: string;
+    metaDetails: string;
+    errorDismiss: string;
+    replaceItems: string;
+    replaceWith: string;
+  };
 }
 
 const year = new Date().getFullYear();
@@ -573,6 +615,48 @@ export const dictionaries: Record<Lang, Dictionary> = {
         { key: "technology", label: "Technologia / Nauka" },
       ],
     },
+    packingAssistant: {
+      loading: "Ładowanie listy pakowania...",
+      confirmation: {
+        title: "Potwierdzenie",
+        body: "Masz już listę. Wygenerowanie nowej listy spowoduje zastąpienie bieżącej. Czy na pewno chcesz kontynuować?",
+        cancel: "Anuluj",
+        confirm: "Tak, wygeneruj nową",
+      },
+      validation: {
+        title: "Sprawdź listę z kontekstem",
+        body: "Czy coś się zmieniło w Twoich planach? Opisz to, a AI uwzględni to w sugestiach.",
+        placeholder: "np. Prognoza pogody zmieniła się na znacznie cieplejszą.",
+        cancel: "Anuluj",
+        confirm: "Sprawdź listę",
+      },
+      listEmptyError: "Lista jest pusta. Dodaj przedmioty lub załaduj listę, aby ją sprawdzić.",
+      itemAdded: "Dodano: {itemName}",
+      itemRemoved: "Usunięto: {itemName}",
+      itemNotFound: 'Nie znaleziono "{itemName}"',
+      itemUpdated: "Zmieniono: {itemName}",
+      itemsReplaced: "Zastąpiono przez: {itemName}",
+      suggestionsAITitle: "Sugestie AI:",
+      suggestions: {
+        add: "Do dodania:",
+        remove: "Do usunięcia:",
+        adjust: "Do zmiany:",
+        replace: "Do zastąpienia (optymalizacja):",
+        apply: "[✓] Zastosuj",
+        adjustReason: "Zmień {field} z '{current}' na '{suggested}' - {reason}",
+        addActionButton: "[+] Dodaj",
+        removeActionButton: "[x] Usuń",
+        changeActionButton: "[✓] Zmień",
+      },
+      generateTitle: "1. Wygeneruj nową listę",
+      manageTitle: "2. Zarządzaj listą",
+      quickAddTitle: "3. Szybkie dodawanie",
+      archetype: "Archetyp Podróży: {archetype}",
+      metaDetails: "Cel: {destination}, Dni: {days}, Osoby: {adults} dorosłych, {children} dzieci",
+      errorDismiss: "Dismiss",
+      replaceItems: "Zastąp: {items}",
+      replaceWith: "Przez: {item}",
+    },
   },
   en: {
     hero: {
@@ -872,6 +956,48 @@ export const dictionaries: Record<Lang, Dictionary> = {
         { key: "photography", label: "Photography" },
         { key: "technology", label: "Technology / Science" },
       ],
+    },
+    packingAssistant: {
+      loading: "Loading packing list...",
+      confirmation: {
+        title: "Confirmation",
+        body: "You already have a list. Generating a new one will replace the current list. Are you sure you want to continue?",
+        cancel: "Cancel",
+        confirm: "Yes, generate new",
+      },
+      validation: {
+        title: "Check list with context",
+        body: "Have your plans changed? Describe it, and the AI will consider it in its suggestions.",
+        placeholder: "e.g., The weather forecast has changed to be much warmer.",
+        cancel: "Cancel",
+        confirm: "Check list",
+      },
+      listEmptyError: "The list is empty. Add items or load a list to check it.",
+      itemAdded: "Added: {itemName}",
+      itemRemoved: "Removed: {itemName}",
+      itemNotFound: 'Item "{itemName}" not found',
+      itemUpdated: "Updated: {itemName}",
+      itemsReplaced: "Replaced with: {itemName}",
+      suggestionsAITitle: "AI Suggestions:",
+      suggestions: {
+        add: "To add:",
+        remove: "To remove:",
+        adjust: "To adjust:",
+        replace: "To replace (optimization):",
+        apply: "[✓] Apply",
+        adjustReason: "Change {field} from '{current}' to '{suggested}' - {reason}",
+        addActionButton: "[+] Add",
+        removeActionButton: "[x] Remove",
+        changeActionButton: "[✓] Change",
+      },
+      generateTitle: "1. Generate new list",
+      manageTitle: "2. Manage list",
+      quickAddTitle: "3. Quick add",
+      archetype: "Trip Archetype: {archetype}",
+      metaDetails: "Destination: {destination}, Days: {days}, People: {adults} adults, {children} children",
+      errorDismiss: "Dismiss",
+      replaceItems: "Replace: {items}",
+      replaceWith: "With: {item}",
     },
   },
 };
