@@ -3,7 +3,7 @@ name: Database Schema Manager
 mode: agent
 description: Guides the AI to safely modify the database schema, generate SQL migrations, and manage Supabase Row Level Security (RLS) policies.
 tags: ["database", "sql", "supabase", "migration", "schema-management"]
-author: Jules
+author: Wojciech Balon
 ---
 **ROLE**
 
