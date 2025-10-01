@@ -16,6 +16,8 @@ import { useAuth } from "@/components/hooks/useAuth";
 import { ItineraryPreferencesFormEnhanced as ItineraryPreferencesForm } from "./itinerary/ItineraryPreferencesFormEnhanced";
 import { ItineraryViewEnhanced as ItineraryView } from "./itinerary/ItineraryViewEnhanced";
 import { TripOverviewPanel } from "./TripOverviewPanel";
+import BudgetSummaryWidget from './budget/BudgetSummary';
+import QuickAddExpense from './budget/QuickAddExpense';
 import { TripImage } from "./TripImage";
 import { EmptyState } from "./EmptyState";
 import { TripCard } from "./TripCard";
@@ -38,7 +40,8 @@ interface TripDashboardProps {
 
 export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
   const { user, session, loading: authLoading } = useAuth();
-  const dict = getDictionary(lang).dashboard!;
+  const rootDict = getDictionary(lang);
+  const dict = rootDict.dashboard!;
   const [trips, setTrips] = useState<(Trip & { itineraries: GeneratedItinerary[] })[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -237,9 +240,9 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
   if (!user) {
     return (
       <div className="text-sm text-center space-y-4">
-        <p className="text-muted-foreground">{lang === "pl" ? "Musisz być zalogowany" : "You must be signed in"}</p>
+        <p className="text-muted-foreground">{dict.authGate?.mustBeSignedIn}</p>
         <Button asChild>
-          <a href={`/login?lang=${lang}`}>{lang === "pl" ? "Przejdź do logowania" : "Go to login"}</a>
+          <a href={`/login?lang=${lang}`}>{dict.authGate?.goToLogin}</a>
         </Button>
       </div>
     );
@@ -291,20 +294,20 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                 value={form.title}
                 onChange={(e) => onChange("title", e.target.value)}
                 className="h-9 rounded-md border bg-transparent px-3 text-sm"
-                placeholder={lang === "pl" ? "Lato we Włoszech" : "Summer in Italy"}
+                placeholder={dict.form?.placeholders.titleExample}
               />
             </div>
             <div className="flex flex-col gap-1.5 md:col-span-2">
               <label htmlFor="lodging" className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1">
-                {lang === 'pl' ? 'Hotel / nocleg (opcjonalnie)' : 'Lodging (optional)'}
-                <span title={lang==='pl' ? 'Wykorzystane aby dostosować plan do lokalizacji noclegu' : 'Used to tailor plan around lodging location'} className="text-muted-foreground cursor-help">ⓘ</span>
+                {dict.form?.lodging.label}
+                <span title={dict.form?.lodging.tooltip} className="text-muted-foreground cursor-help">ⓘ</span>
               </label>
               <input
                 id="lodging"
                 value={(form as any).lodging || ''}
                 onChange={(e) => onChange('lodging' as any, e.target.value)}
                 className="h-9 rounded-md border bg-transparent px-3 text-sm"
-                placeholder={lang === 'pl' ? 'Nazwa / URL / adres' : 'Name / URL / address'}
+                placeholder={dict.form?.placeholders.lodgingPlaceholder}
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -320,7 +323,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                 value={form.destination}
                 onChange={(e) => onChange("destination", e.target.value)}
                 className="h-9 rounded-md border bg-transparent px-3 text-sm"
-                placeholder={lang === "pl" ? "Toskania" : "Tuscany"}
+                placeholder={dict.form?.placeholders.destinationExample}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -340,7 +343,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
               </div>
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="currency" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Currency
+                  {dict.form?.currency.label}
                 </label>
                 <Select
                   value={form.currency ?? ""}
@@ -348,7 +351,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                   disabled={!form.budget}
                 >
                   <SelectTrigger className="h-9 rounded-md border bg-transparent px-3 text-sm uppercase">
-                    <SelectValue placeholder="Select" />
+                    <SelectValue placeholder={dict.form?.currency.selectPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="PLN">PLN</SelectItem>
@@ -401,7 +404,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                 value={duration ?? ""}
                 onChange={(e) => setDuration(e.target.value ? parseInt(e.target.value, 10) : undefined)}
                 className="h-9 rounded-md border bg-transparent px-3 text-sm"
-                placeholder={lang === "pl" ? "np. 7" : "e.g. 7"}
+                placeholder={dict.form?.placeholders.durationExample}
               />
             </div>
           </form>
@@ -411,7 +414,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
               {dict.create.cancel}
             </Button>
             <Button type="submit" onClick={submitCreate} disabled={creating}>
-              {creating ? (lang === "pl" ? "Tworzenie…" : "Creating…") : dict.create.submit}
+              {creating ? (dict.status?.creating || dict.create.submit) : dict.create.submit}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -430,7 +433,8 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
             <>
               {/* Accessible dialog title (visually hidden to satisfy Radix accessibility requirement) */}
               <DialogTitle className="sr-only">
-                {lang === "pl" ? "Szczegóły podróży:" : "Trip details:"} {selectedTrip.title}
+                {/* Trip details static label not yet in i18n, reusing overview tab */}
+                {dict.tabs?.overview}: {selectedTrip.title}
               </DialogTitle>
               <div className="flex flex-col">
                 {/* Header with close button (sticky remains for scrollable parent) */}
@@ -468,21 +472,11 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                 <div>
                   <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col">
                     <TabsList className="mx-6 mt-4 w-fit bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200 dark:border-slate-700">
-                      <TabsTrigger value="overview">
-                        {lang === "pl" ? "Przegląd" : "Overview"}
-                      </TabsTrigger>
-                      <TabsTrigger value="itinerary">
-                        {lang === "pl" ? "Plan podróży" : "Itinerary"}
-                      </TabsTrigger>
-                      <TabsTrigger value="budget">
-                        {lang === "pl" ? "Budżet" : "Budget"}
-                      </TabsTrigger>
-                      <TabsTrigger value="packing">
-                        {lang === "pl" ? "Pakowanie" : "Packing"}
-                      </TabsTrigger>
-                      <TabsTrigger value="settings">
-                        {lang === "pl" ? "Ustawienia" : "Settings"}
-                      </TabsTrigger>
+                      <TabsTrigger value="overview">{dict.tabs?.overview}</TabsTrigger>
+                      <TabsTrigger value="itinerary">{dict.tabs?.itinerary}</TabsTrigger>
+                      <TabsTrigger value="budget">{dict.tabs?.budget}</TabsTrigger>
+                      <TabsTrigger value="packing">{dict.tabs?.packing}</TabsTrigger>
+                      <TabsTrigger value="settings">{dict.tabs?.settings}</TabsTrigger>
                     </TabsList>
 
                     <div>
@@ -502,7 +496,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                <span className="font-medium">{lang === "pl" ? "Błąd" : "Error"}</span>
+                                <span className="font-medium">{dict.itinerary?.errorLabel}</span>
                               </div>
                               <p className="mt-1 text-sm">{itineraryError}</p>
                             </div>
@@ -514,12 +508,15 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
-                                {lang === "pl" ? "Plan podróży został wygenerowany" : "Itinerary has been generated"}
+                                {dict.itinerary?.generated}
                               </div>
                               <ItineraryView
                                 itineraryId={selectedTrip.itineraries[0].id}
                                 initialPlan={selectedTrip.itineraries[0].generated_plan_json}
                                 onSave={handleSaveItinerary}
+                                tripId={selectedTrip.id}
+                                tripCurrency={selectedTrip.currency}
+                                lang={lang}
                               />
                             </div>
                           ) : (
@@ -531,12 +528,10 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                                   </svg>
                                 </div>
                                 <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">
-                                  {lang === "pl" ? "Brak planu podróży" : "No itinerary yet"}
+                                  {rootDict.itineraryPreferences?.noItineraryTitle}
                                 </h3>
                                 <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">
-                                  {lang === "pl" 
-                                    ? "Wygeneruj inteligentny plan podróży na podstawie swoich preferencji i zainteresowań." 
-                                    : "Generate an intelligent travel plan based on your preferences and interests."}
+                                  {rootDict.itineraryPreferences?.noItineraryBody}
                                 </p>
                               </div>
                               <div>
@@ -556,21 +551,32 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
 
                       <TabsContent value="budget" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
                         <div className="space-y-6">
-                          <div className="text-center py-12 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
-                              <svg className="w-8 h-8 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                              </svg>
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">
-                              {lang === "pl" ? "Zarządzanie budżetem" : "Budget Management"}
-                            </h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">
-                              {lang === "pl" 
-                                ? "Funkcja zarządzania budżetem będzie dostępna wkrótce." 
-                                : "Budget management features coming soon."}
-                            </p>
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">{dict.tabs?.budget}</h3>
+                            {selectedTrip && selectedTrip.budget && (
+                              <span className="text-[11px] px-2 py-1 rounded bg-slate-800/60 text-slate-300 border border-slate-700">
+                                {selectedTrip.currency}
+                              </span>
+                            )}
                           </div>
+                          {selectedTrip && (
+                            <div className="relative">
+                              {/* Summary widget */}
+                              <div className="mb-6">
+                                <BudgetSummaryWidget tripId={selectedTrip.id} lang={lang} />
+                              </div>
+                              {/* Quick add expense inline button */}
+                              <div className="flex items-center gap-3">
+                                <QuickAddExpense tripId={selectedTrip.id} lang={lang} buttonVariant="inline" />
+                                <a
+                                  href={`/app/budget/${selectedTrip.id}`}
+                                  className="text-[11px] px-3 py-2 rounded-md border border-slate-700 text-slate-300 hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-colors"
+                                >
+                                  {lang === 'pl' ? 'Pełny widok' : 'Full view'}
+                                </a>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </TabsContent>
 
@@ -582,14 +588,8 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.5 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
                               </svg>
                             </div>
-                            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">
-                              {lang === "pl" ? "Asystent Pakowania" : "Packing Assistant"}
-                            </h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">
-                              {lang === "pl" 
-                                ? "Pozwól sztucznej inteligencji stworzyć idealną listę rzeczy do spakowania. Ta funkcja jest już w przygotowaniu." 
-                                : "Let AI create the perfect packing list for your trip. This feature is on its way."}
-                            </p>
+                            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">{dict.placeholders?.packing.title}</h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">{dict.placeholders?.packing.body}</p>
                           </div>
                         </div>
                       </TabsContent>
@@ -603,14 +603,8 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                               </svg>
                             </div>
-                            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">
-                              {lang === "pl" ? "Ustawienia podróży" : "Trip Settings"}
-                            </h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">
-                              {lang === "pl" 
-                                ? "Opcje edycji i zarządzania podróżą będą dostępne wkrótce." 
-                                : "Trip editing and management options coming soon."}
-                            </p>
+                            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">{dict.placeholders?.settings.title}</h3>
+                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">{dict.placeholders?.settings.body}</p>
                           </div>
                         </div>
                       </TabsContent>
@@ -660,7 +654,9 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                   budget: dict.budget,
                   open: dict.open,
                   openPlan: dict.openPlan,
-                  deleteAction: lang==='pl' ? (dict.delete?.confirm || 'Usuń podróż') : (dict.delete?.confirm || 'Delete trip')
+                  deleteAction: dict.delete?.confirm,
+                  budgetLink: rootDict.tripCard?.budgetLink,
+                  budgetAria: rootDict.tripCard?.budgetAria,
                 }}
               />
             ))}
@@ -672,9 +668,9 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
       <Dialog open={!!deletingTrip} onOpenChange={(o)=>{ if(!o) setDeletingTrip(null); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{lang==='pl' ? 'Usuń podróż' : 'Delete trip'}</DialogTitle>
+            <DialogTitle>{dict.delete?.heading}</DialogTitle>
             <DialogDescription>
-              {lang==='pl' ? 'Tej operacji nie można cofnąć. Czy na pewno chcesz usunąć tę podróż oraz powiązane wygenerowane plany?' : 'This action cannot be undone. Are you sure you want to delete this trip and its generated itineraries?'}
+              {dict.delete?.body}
             </DialogDescription>
           </DialogHeader>
           <div className="text-sm space-y-2">
@@ -682,15 +678,15 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
               <p className="font-medium">{deletingTrip.title} — {deletingTrip.destination}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              {lang==='pl' ? 'Powiązane rekordy (np. wygenerowane itineraria) zostaną usunięte kaskadowo.' : 'Related records (e.g. generated itineraries) will be removed via cascade.'}
+              {dict.delete?.cascadingNote}
             </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={()=>setDeletingTrip(null)} disabled={deleteLoading}>
-              {lang==='pl' ? 'Anuluj' : 'Cancel'}
+              {dict.delete?.cancel}
             </Button>
             <Button onClick={confirmDelete} disabled={deleteLoading} className="bg-red-600 hover:bg-red-500 text-white">
-              {deleteLoading ? (lang==='pl' ? 'Usuwanie…' : 'Deleting…') : (lang==='pl' ? 'Usuń' : 'Delete')}
+              {deleteLoading ? (dict.status?.deleting || dict.delete?.confirm) : (dict.delete?.confirm)}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -15,7 +15,7 @@ function switchUrl(target: string) {
 }
 ---
 
-<Layout title={(lang === "pl" ? "Logowanie" : "Log in") + " – TripCrafti"}>
+<Layout title={`${dict.login.heading} – TripCrafti`}>
   <main class="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
     <header class="flex items-center justify-between px-6 py-5">
       <a href={switchUrl(lang)} class="flex items-center gap-3 text-slate-200 hover:text-white transition">
@@ -42,7 +42,7 @@ function switchUrl(target: string) {
         <a
           href={switchUrl(lang === "pl" ? "pl" : "en")}
           class="text-xs font-medium text-slate-400 hover:text-slate-200 transition"
-          >{lang === "pl" ? "Strona główna" : "Home"}</a
+          >{dict.navigation?.home}</a
         >
       </nav>
     </header>

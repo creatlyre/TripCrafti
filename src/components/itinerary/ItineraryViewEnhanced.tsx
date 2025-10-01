@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getDictionary } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,11 +30,17 @@ interface ItineraryViewProps {
   itineraryId: string;
   initialPlan: Itinerary;
   onSave: (itineraryId: string, plan: Itinerary) => void;
+  tripId?: string; // needed for adding expenses
+  tripCurrency?: string | null; // optional base currency
+  lang?: 'pl' | 'en';
 }
 
-export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryId, initialPlan, onSave }) => {
+export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryId, initialPlan, onSave, tripId, tripCurrency, lang = 'pl' }) => {
   const [plan, setPlan] = useState<Itinerary>(initialPlan);
   const [isEditing, setIsEditing] = useState<string | null>(null); // e.g., "day-1-activity-0"
+  // Track which activities have been added as expenses (client-only; id composed from indices + name + cost)
+  const [added, setAdded] = useState<Set<string>>(new Set());
+  const dict = getDictionary(lang);
 
   const handleActivityChange = (dayIndex: number, activityIndex: number, field: keyof Activity, value: string | number) => {
     const newPlan = { ...plan };
@@ -52,6 +59,48 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
     onSave(itineraryId, plan);
     setIsEditing(null);
   };
+
+  function activityKey(dayIndex: number, activityIndex: number, act: Activity) {
+    return `${dayIndex}-${activityIndex}-${act.activity_name}-${act.estimated_cost}`;
+  }
+
+  const [addingKey, setAddingKey] = useState<string | null>(null);
+  const [announce, setAnnounce] = useState<string>("");
+
+  async function addActivityAsExpense(dayIndex: number, activityIndex: number) {
+    if (!tripId) return;
+    const act = plan.itinerary[dayIndex].activities[activityIndex];
+    if (!act) return;
+    if (!(act.estimated_cost > 0)) return;
+    const key = activityKey(dayIndex, activityIndex, act);
+    if (added.has(key) || addingKey === key) return;
+    setAddingKey(key);
+    setAnnounce((dict.budget?.itineraryAdd?.adding) || 'Dodawanie...');
+    const payload = {
+      amount: act.estimated_cost,
+      currency: act.currency || tripCurrency || 'EUR',
+      description: `${act.activity_name}`.slice(0, 140),
+      is_prepaid: false,
+    };
+    let success = false;
+    try {
+      const res = await fetch(`/api/trips/${tripId}/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.ok) {
+        setAdded(prev => new Set(prev).add(key));
+        success = true;
+        setAnnounce((dict.budget?.itineraryAdd?.added) || 'Dodano');
+      } else {
+        console.warn('[Itinerary] addActivityAsExpense failed', await res.text());
+        setAnnounce((dict.budget?.itineraryAdd?.error) || 'Błąd dodawania');
+      }
+    } catch (e) {
+      console.warn('[Itinerary] addActivityAsExpense error', e);
+      setAnnounce((dict.budget?.itineraryAdd?.error) || 'Błąd dodawania');
+    } finally {
+      // Briefly hold spinner if too fast (<150ms) for better perceived feedback
+      setTimeout(() => { setAddingKey(null); if (!success) { /* keep message */ } }, 150);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -187,11 +236,48 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
                                 variant="ghost" 
                                 size="icon"
                                 className="text-gray-400 hover:text-white hover:bg-gray-700"
+                                title="Edytuj"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                               </Button>
+                              {tripId && actHasCost(activity) && (() => {
+                                const key = activityKey(dayIndex, activityIndex, activity);
+                                const already = added.has(key);
+                                const isAdding = addingKey === key && !already;
+                                const labelIdle = dict.budget?.itineraryAdd?.button || 'Dodaj do wydatków';
+                                const labelAdding = dict.budget?.itineraryAdd?.adding || 'Dodawanie...';
+                                const labelAdded = dict.budget?.itineraryAdd?.added || 'Dodano';
+                                return (
+                                  <Button
+                                    onClick={() => addActivityAsExpense(dayIndex, activityIndex)}
+                                    variant={already ? 'outline' : (isAdding ? 'outline' : 'ghost')}
+                                    size="sm"
+                                    disabled={already || isAdding}
+                                    className={`relative overflow-hidden group ${already ? 'text-emerald-400 border-emerald-600 bg-emerald-900/30' : isAdding ? 'border-emerald-500 text-emerald-300' : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30'} transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none`}
+                                    title={already ? labelAdded : (isAdding ? labelAdding : labelIdle)}
+                                    aria-live="polite"
+                                  >
+                                    {isAdding && (
+                                      <span className="absolute inset-0 flex items-center justify-center">
+                                        <svg className="animate-spin h-4 w-4 text-emerald-300" viewBox="0 0 24 24" fill="none">
+                                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                        </svg>
+                                      </span>
+                                    )}
+                                    {!isAdding && already && (
+                                      <span className="flex items-center gap-1">
+                                        <svg className="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                        {labelAdded}
+                                      </span>
+                                    )}
+                                    {!isAdding && !already && labelIdle}
+                                    <span className="sr-only">{already ? labelAdded : (isAdding ? labelAdding : labelIdle)}</span>
+                                  </Button>
+                                );
+                              })()}
                               <Button 
                                 onClick={() => handleRemoveActivity(dayIndex, activityIndex)} 
                                 variant="ghost" 
@@ -214,6 +300,9 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
           </div>
         ))}
       </div>
+    <div className="sr-only" aria-live="polite">{announce}</div>
     </div>
   );
 };
+
+function actHasCost(a: Activity) { return a.estimated_cost != null && a.estimated_cost > 0; }
