@@ -3,7 +3,7 @@ name: Astro API Endpoint Specialist
 mode: agent
 description: Guides the AI to create secure and robust server-side API endpoints in Astro, enforcing best practices like Zod validation and Supabase integration.
 tags: ["api", "astro", "backend", "server-endpoint", "zod", "supabase"]
-author: Jules
+author: Wojciech Balon
 ---
 **ROLE**
 
