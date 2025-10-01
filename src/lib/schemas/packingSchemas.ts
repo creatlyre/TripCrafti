@@ -3,12 +3,13 @@ import { z } from 'zod';
 // Zod schemas for packing-related types
 
 export const PackingItemSchema = z.object({
-  id: z.number(),
+  id: z.number().optional(), // Client-side temporary ID; DB will generate its own
   name: z.string().min(1, "Item name is required"),
   qty: z.union([z.number(), z.string()]).transform(val => String(val)),
   category: z.string().min(1, "Category is required"),
-  notes: z.string().optional(),
-  optional: z.boolean().optional(),
+  // Accept null coming from DB or existing payload and normalize to undefined
+  notes: z.union([z.string(), z.null()]).optional().transform(v => v === null ? undefined : v),
+  optional: z.boolean().optional().default(false),
   packed: z.boolean()
 });
 
@@ -20,14 +21,14 @@ export const PackingListMetaSchema = z.object({
     children: z.number().min(0)
   }),
   season: z.string().min(1, "Season is required"),
-  transport: z.string().optional(),
-  accommodation: z.string().optional(),
-  activities: z.array(z.string()).optional(),
-  archetype: z.string().optional()
+  transport: z.union([z.string(), z.null()]).optional().transform(v => v === null ? undefined : v),
+  accommodation: z.union([z.string(), z.null()]).optional().transform(v => v === null ? undefined : v),
+  activities: z.union([z.array(z.string()), z.null()]).optional().transform(v => v === null ? undefined : v),
+  archetype: z.union([z.string(), z.null()]).optional().transform(v => v === null ? undefined : v)
 });
 
 export const ChecklistItemSchema = z.object({
-  id: z.number(),
+  id: z.number().optional(), // Make ID optional since it's client-side generated
   task: z.string().min(1, "Task is required"),
   done: z.boolean()
 });

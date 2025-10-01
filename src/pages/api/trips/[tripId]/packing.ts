@@ -127,9 +127,31 @@ export async function PUT({ params, request, locals }: APIContext) {
             );
         }
 
-        // Parse and validate request body
-        const body = await request.json();
+        // Parse and normalize request body (convert explicit nulls for optional fields)
+        const rawBody = await request.json();
+        console.log('Backend request body received:', JSON.stringify(rawBody, null, 2));
+
+        const body = {
+            ...rawBody,
+            packingItems: Array.isArray(rawBody.packingItems) ? rawBody.packingItems.map((it: any) => ({
+                ...it,
+                notes: it.notes === null ? undefined : it.notes,
+            })) : [],
+            checklistItems: Array.isArray(rawBody.checklistItems) ? rawBody.checklistItems : [],
+            categories: Array.isArray(rawBody.categories) ? rawBody.categories : [],
+            listMeta: rawBody.listMeta ? {
+                ...rawBody.listMeta,
+                transport: rawBody.listMeta.transport === null ? undefined : rawBody.listMeta.transport,
+                accommodation: rawBody.listMeta.accommodation === null ? undefined : rawBody.listMeta.accommodation,
+                activities: rawBody.listMeta.activities === null ? undefined : rawBody.listMeta.activities,
+                archetype: rawBody.listMeta.archetype === null ? undefined : rawBody.listMeta.archetype,
+            } : rawBody.listMeta,
+        };
+
+        console.log('Normalized body before validation:', JSON.stringify(body, null, 2));
+        console.log('Attempting SavedListSchema validation...');
         const validatedData = SavedListSchema.parse(body);
+        console.log('Validation successful!');
         const { packingItems, checklistItems, categories, listMeta } = validatedData;
 
         // Step 1: Upsert the main packing list record to get a stable ID
@@ -207,6 +229,7 @@ export async function PUT({ params, request, locals }: APIContext) {
         console.error('Error saving packing list:', error);
         
         if (error instanceof z.ZodError) {
+            console.error('Zod validation error:', error.errors);
             return new Response(
                 JSON.stringify({ 
                     error: 'Invalid request data', 
