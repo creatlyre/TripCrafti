@@ -4,6 +4,7 @@ import { getDictionary, type Lang } from '@/lib/i18n';
 import BudgetSummaryWidget from './BudgetSummary';
 import QuickAddExpense from './QuickAddExpense';
 import CategoryManagement from './CategoryManagement';
+import BudgetPostTripReport from './BudgetPostTripReport';
 
 interface Props { trip: Trip; lang?: Lang }
 
@@ -107,6 +108,12 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
           <p className="text-xs text-muted-foreground">{trip.title} · {trip.destination} · {trip.start_date} → {trip.end_date}</p>
         </div>
         <div className="flex gap-3 items-center flex-wrap">
+			<button
+				onClick={() => { window.open(`/api/trips/${trip.id}/expenses/export.csv`, '_blank'); }}
+				className="text-[11px] px-3 py-1 rounded-md border border-slate-700 hover:bg-slate-800"
+			>
+				CSV
+			</button>
           <div className="inline-flex rounded-md overflow-hidden border border-slate-700 bg-slate-900/60">
             {(['simple','full'] as BudgetMode[]).map(val => (
               <button key={val} onClick={()=> setBudgetMode(val)} className={`px-2 py-1 text-[11px] transition ${budgetMode===val ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>{val === 'simple' ? (dict.dashboard.modes?.simple || 'On-Trip') : (dict.dashboard.modes?.full || 'Full')}</button>
@@ -122,6 +129,8 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
       </header>
       {actionError && <div className="text-xs text-red-500">{actionError}</div>}
       <BudgetSummaryWidget tripId={trip.id} refreshToken={summaryRefresh} budgetMode={budgetMode} />
+{ /* Post trip report appears after end date */ }
+      <BudgetPostTripReport trip={trip} />
       <div className="grid gap-8 md:grid-cols-3">
         <div className="md:col-span-2 space-y-4">
           <div className="rounded-xl bg-slate-900/50 border border-slate-800 p-4 space-y-4">

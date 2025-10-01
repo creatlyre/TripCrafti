@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
+import { convertAmount } from '@/lib/fx';
 
 export const prerender = false;
 
@@ -74,7 +75,13 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
 	const payload = parsed.data;
 
 	// Currency normalization (Phase 1: assume same currency; Phase 3 will add FX conversion)
-	const amountInHome = payload.currency === trip.currency ? payload.amount : payload.amount; // placeholder
+	let amountInHome = payload.amount;
+	let fxMeta: any = null;
+	if (trip.currency && payload.currency !== trip.currency) {
+		const { value, meta } = await convertAmount(payload.amount, payload.currency, trip.currency);
+		amountInHome = value;
+		fxMeta = meta; // presently unused; could be logged or returned if desired
+	}
 
 	const { data: inserted, error } = await supabase
 		.from('expenses')

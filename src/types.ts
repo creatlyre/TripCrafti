@@ -117,5 +117,27 @@ export interface BudgetSummary {
   }[];
 }
 
+// Phase 3: Detailed budget report (planned vs actual) for post-trip analysis
+export interface BudgetReportCategoryRow {
+  category_id: string;
+  name: string;
+  planned: number;
+  spent: number;
+  delta: number; // spent - planned
+  utilization: number | null; // spent / planned (null if planned 0)
+}
+
+export interface BudgetReport {
+  trip_id: string;
+  currency: string | null;
+  plannedTotal: number; // sum of planned across categories
+  totalSpent: number; // all expenses
+  totalPrepaid: number; // prepaid expenses
+  totalOnTrip: number; // totalSpent - totalPrepaid
+  deltaTotal: number; // totalSpent - plannedTotal
+  categories: BudgetReportCategoryRow[];
+  generated_at: string; // ISO timestamp
+}
+
 // Budget display mode for UI (purely front-end, does not affect API responses)
 export type BudgetMode = 'simple' | 'full';

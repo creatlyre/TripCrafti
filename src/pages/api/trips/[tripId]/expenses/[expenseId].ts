@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { z } from 'zod';
+import { convertAmount } from '@/lib/fx';
 
 export const prerender = false;
 
@@ -91,9 +92,18 @@ export const PUT: APIRoute = async ({ params, locals, request }) => {
   // FX placeholder (Phase 3). Recalculate amount_in_home_currency if amount or currency changed.
   if (d.amount !== undefined || d.currency !== undefined) {
     const amount = d.amount ?? undefined;
-    const currency = d.currency ?? trip.currency;
-    if (amount != null && currency) {
-      updatePayload.amount_in_home_currency = currency === trip.currency ? amount : amount; // placeholder conversion
+    const currency = d.currency ?? undefined;
+    if (amount != null) {
+      const effectiveFrom = (currency || (d.currency ? d.currency : undefined)) || d.currency || updatePayload.currency || d.currency || d.currency; // ensure variable exists
+      const fromCur = (currency || updatePayload.currency || d.currency || '') || '';
+      const srcCurrency = fromCur || d.currency || (updatePayload.currency as string) || '';
+      const targetCurrency = trip.currency;
+      if (targetCurrency && srcCurrency && targetCurrency !== srcCurrency) {
+        const { value } = await convertAmount(amount, srcCurrency, targetCurrency);
+        updatePayload.amount_in_home_currency = value;
+      } else if (targetCurrency) {
+        updatePayload.amount_in_home_currency = amount;
+      }
     }
   }
 

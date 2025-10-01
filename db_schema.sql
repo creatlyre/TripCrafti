@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS expenses (
   amount NUMERIC NOT NULL,
   currency TEXT NOT NULL,
   amount_in_home_currency NUMERIC NOT NULL,
+  fx_rate NUMERIC;
   is_prepaid BOOLEAN DEFAULT FALSE,
   expense_date TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now()
