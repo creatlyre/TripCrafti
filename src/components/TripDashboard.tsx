@@ -20,6 +20,7 @@ import { TripImage } from "./TripImage";
 import { EmptyState } from "./EmptyState";
 import { TripCard } from "./TripCard";
 import { TripCardSkeleton } from "./TripCardSkeleton";
+import PackingAssistant from "./packing/PackingAssistant";
 
 interface CreateFormState extends TripInput {}
 
@@ -574,24 +575,8 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                         </div>
                       </TabsContent>
 
-                      <TabsContent value="packing" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
-                        <div className="space-y-6">
-                          <div className="text-center py-12 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                              <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.5 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
-                              </svg>
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">
-                              {lang === "pl" ? "Asystent Pakowania" : "Packing Assistant"}
-                            </h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">
-                              {lang === "pl" 
-                                ? "Pozwól sztucznej inteligencji stworzyć idealną listę rzeczy do spakowania. Ta funkcja jest już w przygotowaniu." 
-                                : "Let AI create the perfect packing list for your trip. This feature is on its way."}
-                            </p>
-                          </div>
-                        </div>
+                      <TabsContent value="packing" className="p-0 m-0 min-h-full">
+                        <PackingAssistant tripId={selectedTrip.id} />
                       </TabsContent>
 
                       <TabsContent value="settings" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
