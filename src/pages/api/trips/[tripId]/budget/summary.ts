@@ -39,7 +39,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
   // Aggregate expenses grouped by category
   const { data: expenses, error: expErr } = await supabase
     .from('expenses')
-    .select('amount_in_home_currency, is_prepaid, category_id, budget_categories(name, planned_amount)')
+    .select('amount_in_home_currency, is_prepaid, category_id, expense_date, budget_categories(name, planned_amount)')
     .eq('trip_id', tripId);
   if (expErr) return new Response(JSON.stringify({ error: expErr.message }), { status: 500 });
 
@@ -74,7 +74,10 @@ export const GET: APIRoute = async ({ params, locals }) => {
   const todayIso = new Date().toISOString().split('T')[0];
   let spentToday = 0;
   (expenses || []).forEach((e: any) => {
-    const d = new Date(e.expense_date).toISOString().split('T')[0];
+    if (!e.expense_date) return; // guard against missing column or null
+    const dt = new Date(e.expense_date);
+    if (isNaN(dt.getTime())) return; // invalid date safeguard
+    const d = dt.toISOString().split('T')[0];
     if (d === todayIso && !e.is_prepaid) {
       spentToday += Number(e.amount_in_home_currency || 0);
     }

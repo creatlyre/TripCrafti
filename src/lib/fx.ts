@@ -11,6 +11,8 @@
  */
 
 const BASE = (import.meta as any).env?.PUBLIC_FX_API_BASE || 'https://api.exchangerate.host';
+// Optional API key (recently required by exchangerate.host). Server-side only (no PUBLIC_ prefix).
+const EX_API_KEY = (import.meta as any).env?.EXCHANGERATE_API_KEY;
 
 interface RateEntry { rate: number; fetched: number; }
 const CACHE: Record<string, Record<string, RateEntry>> = {};
@@ -30,11 +32,60 @@ function setCached(from: string, to: string, rate: number) {
 }
 
 async function fetchRate(from: string, to: string): Promise<number> {
-  // API doc: GET /latest?base={from}&symbols={to}
-  const url = `${BASE.replace(/\/$/, '')}/latest?base=${encodeURIComponent(from)}&symbols=${encodeURIComponent(to)}`;
+  const baseUrl = BASE.replace(/\/$/, '');
+  let useLive = false;
+  let url: string;
+  try {
+    const host = new URL(BASE).host;
+    const isExHost = /exchangerate\.host$/i.test(host);
+    // Prefer /live for exchangerate.host because /latest style may not be supported with key
+    useLive = isExHost;
+    if (useLive) {
+      // /live returns quotes keyed as SOURCE+TARGET (e.g., USDPLN). Default source is USD unless &source=FROM
+      // We'll request source=FROM so we can directly read FROM+TO key.
+      url = `${baseUrl}/live?source=${encodeURIComponent(from)}&currencies=${encodeURIComponent(to)}`;
+    } else {
+      // Generic /latest pattern
+      url = `${baseUrl}/latest?base=${encodeURIComponent(from)}&symbols=${encodeURIComponent(to)}`;
+    }
+    // Append key(s) if needed
+    if (EX_API_KEY && isExHost && !/[?&](access_key|apikey)=/i.test(url)) {
+      url += `&access_key=${encodeURIComponent(EX_API_KEY)}`;
+    }
+  } catch {
+    // Fallback to generic pattern if URL parsing failed
+    url = `${baseUrl}/latest?base=${encodeURIComponent(from)}&symbols=${encodeURIComponent(to)}`;
+  }
+
   const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
   if (!res.ok) throw new Error(`FX HTTP ${res.status}`);
   const json: any = await res.json();
+  if (json && json.success === false) {
+    const code = json.error?.code;
+    const type = json.error?.type;
+    const info = json.error?.info;
+    const errMsg = info || type || `fx_provider_error_${code || 'unknown'}`;
+    throw new Error(errMsg);
+  }
+  // Parse depending on shape
+  if (useLive) {
+    const pairKey = `${from.toUpperCase()}${to.toUpperCase()}`;
+    const rate = json?.quotes?.[pairKey];
+    if (typeof rate === 'number' && isFinite(rate) && rate > 0) return rate;
+    // If live failed to give expected key, attempt secondary /convert call
+    try {
+      const convertUrl = `${baseUrl}/convert?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&amount=1${EX_API_KEY ? `&access_key=${encodeURIComponent(EX_API_KEY)}` : ''}`;
+      const r2 = await fetch(convertUrl, { headers: { 'Accept': 'application/json' } });
+      if (r2.ok) {
+        const j2: any = await r2.json();
+        if (j2 && j2.success !== false && typeof j2.result === 'number') {
+          return j2.result; // already amount=1 conversion result
+        }
+      }
+    } catch { /* ignore */ }
+    throw new Error('Unexpected live payload');
+  }
+  // Generic rates shape
   if (!json || typeof json !== 'object' || !json.rates || typeof json.rates[to] !== 'number') {
     throw new Error('Unexpected FX payload');
   }

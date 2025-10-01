@@ -16,6 +16,8 @@ import { useAuth } from "@/components/hooks/useAuth";
 import { ItineraryPreferencesFormEnhanced as ItineraryPreferencesForm } from "./itinerary/ItineraryPreferencesFormEnhanced";
 import { ItineraryViewEnhanced as ItineraryView } from "./itinerary/ItineraryViewEnhanced";
 import { TripOverviewPanel } from "./TripOverviewPanel";
+import BudgetSummaryWidget from './budget/BudgetSummary';
+import QuickAddExpense from './budget/QuickAddExpense';
 import { TripImage } from "./TripImage";
 import { EmptyState } from "./EmptyState";
 import { TripCard } from "./TripCard";
@@ -512,6 +514,9 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                                 itineraryId={selectedTrip.itineraries[0].id}
                                 initialPlan={selectedTrip.itineraries[0].generated_plan_json}
                                 onSave={handleSaveItinerary}
+                                tripId={selectedTrip.id}
+                                tripCurrency={selectedTrip.currency}
+                                lang={lang}
                               />
                             </div>
                           ) : (
@@ -546,15 +551,32 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
 
                       <TabsContent value="budget" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
                         <div className="space-y-6">
-                          <div className="text-center py-12 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
-                              <svg className="w-8 h-8 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                              </svg>
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">{dict.placeholders?.budget.title}</h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md mx-auto">{dict.placeholders?.budget.body}</p>
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">{dict.tabs?.budget}</h3>
+                            {selectedTrip && selectedTrip.budget && (
+                              <span className="text-[11px] px-2 py-1 rounded bg-slate-800/60 text-slate-300 border border-slate-700">
+                                {selectedTrip.currency}
+                              </span>
+                            )}
                           </div>
+                          {selectedTrip && (
+                            <div className="relative">
+                              {/* Summary widget */}
+                              <div className="mb-6">
+                                <BudgetSummaryWidget tripId={selectedTrip.id} lang={lang} />
+                              </div>
+                              {/* Quick add expense inline button */}
+                              <div className="flex items-center gap-3">
+                                <QuickAddExpense tripId={selectedTrip.id} lang={lang} buttonVariant="inline" />
+                                <a
+                                  href={`/app/budget/${selectedTrip.id}`}
+                                  className="text-[11px] px-3 py-2 rounded-md border border-slate-700 text-slate-300 hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-colors"
+                                >
+                                  {lang === 'pl' ? 'Pełny widok' : 'Full view'}
+                                </a>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </TabsContent>
 

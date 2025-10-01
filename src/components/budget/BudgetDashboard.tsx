@@ -77,28 +77,38 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
     } finally { setDeletingId(null); }
   }, [deletingId, expenses, trip.id]);
 
-  const ExpenseItem: React.FC<{ e: Expense }> = ({ e }) => (
-    <li key={e.id} className="group rounded border border-slate-800 bg-slate-900/50 p-3 text-xs flex justify-between gap-4 hover:bg-slate-800/70 transition-colors">
-      <div className="space-y-0.5 pr-2 min-w-0 flex-1">
-        <div className="font-medium line-clamp-1 text-slate-200" title={e.description || e.category?.name || dict.dashboard.expenses.fallbackTitle}>{e.description || e.category?.name || dict.dashboard.expenses.fallbackTitle}</div>
-        <div className="text-muted-foreground flex gap-2 flex-wrap items-center">
-          {e.category?.name && <span className="bg-slate-800/60 px-1 rounded text-[10px]">{e.category.name}</span>}
-          {e.is_prepaid && <span className="uppercase tracking-wide text-[10px] bg-indigo-600/20 text-indigo-300 px-1 rounded">{dict.dashboard.expenses.prepaidBadge}</span>}
-          <span className="text-[10px] text-slate-500">{new Date(e.expense_date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+  const ExpenseItem: React.FC<{ e: Expense }> = ({ e }) => {
+    const showFx = trip.currency && e.currency !== trip.currency;
+    const rateDisplay = showFx && e.fx_rate ? ` @ ${e.fx_rate.toFixed(4)}` : '';
+    const warning = showFx && e.fx_source === 'fallback';
+    return (
+      <li key={e.id} className="group rounded border border-slate-800 bg-slate-900/50 p-3 text-xs flex justify-between gap-4 hover:bg-slate-800/70 transition-colors">
+        <div className="space-y-0.5 pr-2 min-w-0 flex-1">
+          <div className="font-medium line-clamp-1 text-slate-200" title={e.description || e.category?.name || dict.dashboard.expenses.fallbackTitle}>{e.description || e.category?.name || dict.dashboard.expenses.fallbackTitle}</div>
+          <div className="text-muted-foreground flex gap-2 flex-wrap items-center">
+            {e.category?.name && <span className="bg-slate-800/60 px-1 rounded text-[10px]">{e.category.name}</span>}
+            {e.is_prepaid && <span className="uppercase tracking-wide text-[10px] bg-indigo-600/20 text-indigo-300 px-1 rounded">{dict.dashboard.expenses.prepaidBadge}</span>}
+            <span className="text-[10px] text-slate-500">{new Date(e.expense_date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+            {warning && <span className="text-[10px] text-amber-400" title={e.fx_warning || 'Fallback FX rate (1:1) used'}>⚠ FX</span>}
+          </div>
         </div>
-      </div>
-      <div className="flex flex-col items-end justify-between">
-        <div className="font-mono text-sm text-slate-100">{e.amount.toFixed(2)} {e.currency}</div>
-        {e.currency !== trip.currency && <div className="text-[10px] text-slate-500">{e.amount_in_home_currency.toFixed(2)} {trip.currency}</div>}
-      </div>
-      <button
-        aria-label="Delete expense"
-        onClick={() => deleteExpense(e.id)}
-        disabled={deletingId === e.id}
-        className="opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-50 self-start text-slate-400 hover:text-red-400 transition text-[11px] px-2 -mr-2 -mt-2 py-1 rounded-md hover:bg-red-500/10"
-      >{deletingId === e.id ? '…' : '✕'}</button>
-    </li>
-  );
+        <div className="flex flex-col items-end justify-between">
+          <div className="font-mono text-sm text-slate-100">{e.amount.toFixed(2)} {e.currency}</div>
+          {showFx && (
+            <div className="text-[10px] text-slate-500" title={e.fx_source ? `FX source: ${e.fx_source}${e.fx_warning ? ' - ' + e.fx_warning : ''}` : undefined}>
+              {e.amount_in_home_currency.toFixed(2)} {trip.currency}{rateDisplay}
+            </div>
+          )}
+        </div>
+        <button
+          aria-label="Delete expense"
+          onClick={() => deleteExpense(e.id)}
+          disabled={deletingId === e.id}
+          className="opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-50 self-start text-slate-400 hover:text-red-400 transition text-[11px] px-2 -mr-2 -mt-2 py-1 rounded-md hover:bg-red-500/10"
+        >{deletingId === e.id ? '…' : '✕'}</button>
+      </li>
+    );
+  };
 
   return (
     <div className="space-y-10 pb-28">
@@ -107,7 +117,7 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
           <h1 className="text-lg font-semibold">{dict.dashboard.title}</h1>
           <p className="text-xs text-muted-foreground">{trip.title} · {trip.destination} · {trip.start_date} → {trip.end_date}</p>
         </div>
-        <div className="flex gap-3 items-center flex-wrap">
+  <div className="flex gap-3 items-center flex-wrap">
 			<button
 				onClick={() => { window.open(`/api/trips/${trip.id}/expenses/export.csv`, '_blank'); }}
 				className="text-[11px] px-3 py-1 rounded-md border border-slate-700 hover:bg-slate-800"
@@ -125,6 +135,7 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
             ))}
           </div>
           <button onClick={manualRefresh} disabled={refreshing} className="text-[11px] px-3 py-1 rounded-md border border-slate-700 hover:bg-slate-800 disabled:opacity-50">{refreshing ? dict.dashboard.refresh.refreshing : dict.dashboard.refresh.action}</button>
+          <QuickAddExpense tripId={trip.id} onAdded={onAdded} lang={lang} buttonVariant="inline" />
         </div>
       </header>
       {actionError && <div className="text-xs text-red-500">{actionError}</div>}
@@ -163,7 +174,7 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
           <CategoryManagement tripId={trip.id} />
         </div>
       </div>
-      <QuickAddExpense tripId={trip.id} onAdded={onAdded} lang={lang} />
+  { /* Floating button removed in favor of inline placement above */ }
     </div>
   );
 };

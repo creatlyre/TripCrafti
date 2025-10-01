@@ -134,6 +134,7 @@ interface Dictionary {
       adding: string;
       submit: string;
     };
+    itineraryAdd?: { button: string; added?: string; error?: string };
     page: {
       titleBase: string;
       titleForTrip: string; // use {title}
@@ -349,6 +350,8 @@ export const dictionaries: Record<Lang, Dictionary> = {
       budgetLink: "Budżet",
       budgetAria: "Otwórz panel budżetu",
     },
+    // Additional labels for trip detail dashboard
+    // (Not yet used in dictionary types; lightweight inline usage)
     budget: {
       dashboard: {
         title: "Panel budżetu",
@@ -415,6 +418,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         adding: "Dodawanie…",
         submit: "Dodaj wydatek",
       },
+      itineraryAdd: { button: "Dodaj do wydatków", added: "Dodano", error: "Błąd dodawania" },
       page: {
         titleBase: "Budżet",
         titleForTrip: "Budżet dla {title}",
@@ -647,6 +651,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
       budgetLink: "Budget",
       budgetAria: "Open budget dashboard",
     },
+    // Additional labels for trip detail dashboard
     budget: {
       dashboard: {
         title: "Budget Dashboard",
@@ -713,6 +718,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         adding: "Adding...",
         submit: "Add Expense",
       },
+      itineraryAdd: { button: "Add to expenses", added: "Added", error: "Add failed" },
       page: {
         titleBase: "Budget",
         titleForTrip: "Budget for {title}",

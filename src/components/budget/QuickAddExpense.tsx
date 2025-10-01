@@ -7,9 +7,9 @@ import { Textarea } from '../ui/textarea';
 import type { BudgetCategory, Expense } from '../../types';
 import { getDictionary, type Lang } from '@/lib/i18n';
 
-interface Props { tripId: string; onAdded?: (e: Expense) => void; lang?: Lang }
+interface Props { tripId: string; onAdded?: (e: Expense) => void; lang?: Lang; buttonVariant?: 'fab' | 'inline' }
 
-const QuickAddExpense: React.FC<Props> = ({ tripId, onAdded, lang = 'pl' }) => {
+const QuickAddExpense: React.FC<Props> = ({ tripId, onAdded, lang = 'pl', buttonVariant = 'fab' }) => {
   const dict = getDictionary(lang).budget!;
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
@@ -57,12 +57,18 @@ const QuickAddExpense: React.FC<Props> = ({ tripId, onAdded, lang = 'pl' }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button
-          aria-label={dict.quickAdd.fabAria}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xl font-bold shadow-lg shadow-indigo-700/30 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400"
-        >
-          +
-        </button>
+        {buttonVariant === 'fab' ? (
+          <button
+            aria-label={dict.quickAdd.fabAria}
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xl font-bold shadow-lg shadow-indigo-700/30 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400"
+          >
+            +
+          </button>
+        ) : (
+          <Button size="sm" variant="default" className="text-[11px]">
+            {dict.quickAdd.submit}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>{dict.quickAdd.title}</DialogTitle></DialogHeader>

@@ -41,6 +41,11 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onOpen, onDelete, dict
                 <strong className="font-medium text-slate-300">{dict.budget}:</strong> {trip.budget.toLocaleString()} {trip.currency}
               </p>
             )}
+            <p>
+              <a href={`/app/${trip.id}`} onClick={e=>e.stopPropagation()} className="text-[11px] uppercase tracking-wide text-indigo-400 hover:text-indigo-300 font-medium">
+                {dict.open} {"→"}
+              </a>
+            </p>
           </CardContent>
         </div>
         <CardFooter className="flex items-center justify-between gap-2 p-4 mt-auto">

@@ -92,6 +92,9 @@ export interface Expense {
   amount: number; // original amount in provided currency
   currency: string; // ISO 4217 code
   amount_in_home_currency: number; // normalized to trip currency
+  fx_rate?: number | null; // stored conversion rate (null if identity or not available)
+  fx_source?: string | null; // 'identity' | 'cache' | 'live' | 'fallback'
+  fx_warning?: string | null; // warning message if fallback used
   is_prepaid: boolean;
   expense_date: string; // ISO timestamp
   created_at?: string;

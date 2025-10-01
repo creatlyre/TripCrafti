@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getDictionary } from '@/lib/i18n';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,11 +30,17 @@ interface ItineraryViewProps {
   itineraryId: string;
   initialPlan: Itinerary;
   onSave: (itineraryId: string, plan: Itinerary) => void;
+  tripId?: string; // needed for adding expenses
+  tripCurrency?: string | null; // optional base currency
+  lang?: 'pl' | 'en';
 }
 
-export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryId, initialPlan, onSave }) => {
+export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryId, initialPlan, onSave, tripId, tripCurrency, lang = 'pl' }) => {
   const [plan, setPlan] = useState<Itinerary>(initialPlan);
   const [isEditing, setIsEditing] = useState<string | null>(null); // e.g., "day-1-activity-0"
+  // Track which activities have been added as expenses (client-only; id composed from indices + name + cost)
+  const [added, setAdded] = useState<Set<string>>(new Set());
+  const dict = getDictionary(lang);
 
   const handleActivityChange = (dayIndex: number, activityIndex: number, field: keyof Activity, value: string | number) => {
     const newPlan = { ...plan };
@@ -52,6 +59,38 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
     onSave(itineraryId, plan);
     setIsEditing(null);
   };
+
+  function activityKey(dayIndex: number, activityIndex: number, act: Activity) {
+    return `${dayIndex}-${activityIndex}-${act.activity_name}-${act.estimated_cost}`;
+  }
+
+  async function addActivityAsExpense(dayIndex: number, activityIndex: number) {
+    if (!tripId) return;
+    const act = plan.itinerary[dayIndex].activities[activityIndex];
+    if (!act) return;
+    // Basic validation only if cost > 0; allow zero? We skip if no estimated cost.
+    if (!(act.estimated_cost > 0)) return;
+    const key = activityKey(dayIndex, activityIndex, act);
+    if (added.has(key)) return; // already added
+    const payload = {
+      amount: act.estimated_cost,
+      currency: act.currency || tripCurrency || 'EUR',
+      description: `${act.activity_name}`.slice(0, 140),
+      // category_id omitted: user can re-categorize later
+      is_prepaid: false,
+    };
+    try {
+      const res = await fetch(`/api/trips/${tripId}/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!res.ok) {
+        // Non-intrusive feedback; could integrate toast system later
+        console.warn('[Itinerary] addActivityAsExpense failed', await res.text());
+      } else {
+        setAdded(prev => new Set(prev).add(key));
+      }
+    } catch (e) {
+      console.warn('[Itinerary] addActivityAsExpense error', e);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -187,11 +226,28 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
                                 variant="ghost" 
                                 size="icon"
                                 className="text-gray-400 hover:text-white hover:bg-gray-700"
+                                title="Edytuj"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                               </Button>
+                              {tripId && actHasCost(activity) && (() => {
+                                const key = activityKey(dayIndex, activityIndex, activity);
+                                const already = added.has(key);
+                                return (
+                                  <Button
+                                    onClick={() => addActivityAsExpense(dayIndex, activityIndex)}
+                                    variant={already ? 'outline' : 'ghost'}
+                                    size="sm"
+                                    disabled={already}
+                                    className={already ? 'text-gray-500 border-gray-600 hover:bg-gray-700/40' : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30'}
+                                    title={already ? (dict.budget?.itineraryAdd?.added || 'Dodano') : (dict.budget?.itineraryAdd?.button || 'Dodaj do wydatków')}
+                                  >
+                                    {already ? (dict.budget?.itineraryAdd?.added || 'Dodano') : (dict.budget?.itineraryAdd?.button || 'Dodaj do wydatków')}
+                                  </Button>
+                                );
+                              })()}
                               <Button 
                                 onClick={() => handleRemoveActivity(dayIndex, activityIndex)} 
                                 variant="ghost" 
@@ -217,3 +273,5 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({ itineraryI
     </div>
   );
 };
+
+function actHasCost(a: Activity) { return a.estimated_cost != null && a.estimated_cost > 0; }

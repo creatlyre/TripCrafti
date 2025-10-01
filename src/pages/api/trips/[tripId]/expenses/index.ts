@@ -33,6 +33,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
 	const { data, error } = await supabase
 		.from('expenses')
+		// Selecting * includes fx_rate, fx_source, fx_warning for FE transparency
 		.select('*, budget_categories(*)')
 		.eq('trip_id', tripId)
 		.order('expense_date', { ascending: false });
@@ -74,27 +75,33 @@ export const POST: APIRoute = async ({ params, locals, request }) => {
 	}
 	const payload = parsed.data;
 
-	// Currency normalization (Phase 1: assume same currency; Phase 3 will add FX conversion)
+	// Currency normalization with FX metadata persistence
 	let amountInHome = payload.amount;
-	let fxMeta: any = null;
+	let fxMeta: { rate: number; source: string; warning?: string } | null = null;
 	if (trip.currency && payload.currency !== trip.currency) {
 		const { value, meta } = await convertAmount(payload.amount, payload.currency, trip.currency);
 		amountInHome = value;
-		fxMeta = meta; // presently unused; could be logged or returned if desired
+		fxMeta = meta;
 	}
 
+	const insertPayload: any = {
+		trip_id: tripId,
+		category_id: payload.category_id ?? null,
+		description: payload.description ?? null,
+		amount: payload.amount,
+		currency: payload.currency,
+		amount_in_home_currency: amountInHome,
+		is_prepaid: payload.is_prepaid ?? false,
+		expense_date: payload.expense_date ?? new Date().toISOString(),
+	};
+	if (fxMeta) {
+		insertPayload.fx_rate = fxMeta.rate === 1 && payload.currency !== trip.currency ? null : fxMeta.rate; // store null if identity but different currency fallback used (ambiguous)
+		insertPayload.fx_source = fxMeta.source;
+		if (fxMeta.warning) insertPayload.fx_warning = fxMeta.warning;
+	}
 	const { data: inserted, error } = await supabase
 		.from('expenses')
-		.insert({
-			trip_id: tripId,
-			category_id: payload.category_id ?? null,
-			description: payload.description ?? null,
-			amount: payload.amount,
-			currency: payload.currency,
-			amount_in_home_currency: amountInHome,
-			is_prepaid: payload.is_prepaid ?? false,
-			expense_date: payload.expense_date ?? new Date().toISOString(),
-		})
+		.insert(insertPayload)
 		.select('*, budget_categories(*)')
 		.single();
 
