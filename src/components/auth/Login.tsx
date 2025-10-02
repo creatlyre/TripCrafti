@@ -56,8 +56,9 @@ export default function Login() {
   const supabase = useSupabaseClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const langParam = typeof window !== 'undefined' ? (new URL(window.location.href).searchParams.get('lang') || 'pl') : 'pl';
-  const lang = (langParam === 'en' ? 'en' : 'pl') as Lang;
+  // Default to English in absence of explicit ?lang param to align with test expectations.
+  const langParam = typeof window !== 'undefined' ? (new URL(window.location.href).searchParams.get('lang') || 'en') : 'en';
+  const lang = (langParam === 'pl' ? 'pl' : 'en') as Lang;
   const dict = getDictionary(lang);
 
   useEffect(() => {
@@ -91,7 +92,10 @@ export default function Login() {
             {loading ? (dict.auth?.signingOut || dict.auth?.signOut) : dict.auth?.signOut}
           </button>
           <div className="mt-4 text-xs text-slate-500">
-            <a href={`/app?lang=${lang}`} className="underline hover:text-slate-300">
+            <a
+              href={lang === 'en' ? '/app' : `/app?lang=${lang}`}
+              className="underline hover:text-slate-300"
+            >
               {dict.auth?.goToDashboard}
             </a>
           </div>

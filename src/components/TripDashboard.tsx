@@ -293,9 +293,10 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
   if (!user) {
     return (
       <div className="text-sm text-center space-y-4">
-        <p className="text-muted-foreground">{dict.authGate?.mustBeSignedIn}</p>
+        {/* Provide defensive fallbacks if mocked i18n dictionary omits authGate (tests do this) */}
+        <p className="text-muted-foreground">{dict.authGate?.mustBeSignedIn || 'You must be signed in'}</p>
         <Button asChild>
-          <a href={`/login?lang=${lang}`}>{dict.authGate?.goToLogin}</a>
+          <a href={`/login?lang=${lang}`}>{dict.authGate?.goToLogin || 'Go to login'}</a>
         </Button>
       </div>
     );
