@@ -640,7 +640,19 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                       </TabsContent>
 
                       <TabsContent value="packing" className="p-0 m-0 min-h-full">
-                        <PackingAssistant tripId={selectedTrip.id} trip={selectedTrip} />
+                        <PackingAssistant 
+                          tripId={selectedTrip.id} 
+                          trip={selectedTrip} 
+                          lang={lang}
+                          actionSlot={(
+                            <a
+                              href={`/app/packing/${selectedTrip.id}?lang=${lang}`}
+                              className="inline-flex items-center gap-2 text-xs px-3 py-2 rounded-md border border-indigo-500/50 bg-indigo-600/10 text-indigo-300 hover:bg-indigo-600/20 hover:text-white transition-colors"
+                            >
+                              {lang==='pl' ? 'Pełny widok pakowania' : 'Full packing view'}
+                            </a>
+                          )}
+                        />
                       </TabsContent>
 
                       <TabsContent value="settings" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">

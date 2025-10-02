@@ -41,151 +41,11 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ category, onAddItem }) => {
     );
 };
 
-interface AddNewCategoryItemFormProps {
-    onAddItem: (itemName: string, category: string, quantity: string) => void;
-    categories: string[];
-}
-
-const AddNewCategoryItemForm: React.FC<AddNewCategoryItemFormProps> = ({ onAddItem, categories }) => {
-    const [itemName, setItemName] = useState('');
-    const [category, setCategory] = useState('');
-    const [quantity, setQuantity] = useState('1');
-    const [suggestions, setSuggestions] = useState<string[]>([]);
-    const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(false);
-
-    const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setCategory(value);
-        if (value.trim()) {
-            const filtered = categories.filter(cat =>
-                cat.toLowerCase().includes(value.toLowerCase())
-            );
-            setSuggestions(filtered);
-            setIsSuggestionsVisible(true);
-        } else {
-            setIsSuggestionsVisible(false);
-            setSuggestions([]);
-        }
-    };
-
-    const handleSuggestionClick = (suggestion: string) => {
-        setCategory(suggestion);
-        setIsSuggestionsVisible(false);
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        const finalCategory = category.trim() || 'Nieskategoryzowane';
-        onAddItem(itemName, finalCategory, quantity);
-        setItemName('');
-        setCategory('');
-        setQuantity('1');
-        setIsSuggestionsVisible(false);
-    };
-
-    return (
-        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 no-print">
-            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-3">Dodaj przedmiot do nowej/istniejącej kategorii</h3>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 items-end">
-                 <div className="lg:col-span-2">
-                    <label htmlFor="newItemName" className="block text-xs font-medium text-slate-500 dark:text-slate-400">Nazwa przedmiotu</label>
-                    <input
-                        id="newItemName"
-                        type="text" value={itemName} onChange={(e) => setItemName(e.target.value)}
-                        placeholder="np. Power bank"
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200"
-                        required
-                    />
-                </div>
-                 <div className="relative lg:col-span-2">
-                    <label htmlFor="newCategoryName" className="block text-xs font-medium text-slate-500 dark:text-slate-400">Wybierz lub wpisz kategorię</label>
-                    <input
-                        id="newCategoryName"
-                        type="text"
-                        value={category}
-                        onChange={handleCategoryChange}
-                        onFocus={() => setIsSuggestionsVisible(true)}
-                        onBlur={() => setTimeout(() => setIsSuggestionsVisible(false), 150)}
-                        placeholder="np. Elektronika (zostaw puste dla 'Nieskategoryzowane')"
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200"
-                        autoComplete="off"
-                    />
-                    {isSuggestionsVisible && suggestions.length > 0 && (
-                        <ul className="absolute z-10 w-full bg-white border border-slate-300 rounded-md mt-1 max-h-40 overflow-y-auto shadow-lg dark:bg-slate-700 dark:border-slate-600">
-                            {suggestions.map(s => (
-                                <li
-                                    key={s}
-                                    onMouseDown={() => handleSuggestionClick(s)}
-                                    className="px-3 py-2 text-sm text-slate-700 cursor-pointer hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-600"
-                                >
-                                    {s}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-                 <div>
-                    <label htmlFor="newItemQuantity" className="block text-xs font-medium text-slate-500 dark:text-slate-400">Ilość</label>
-                    <input
-                        id="newItemQuantity"
-                        type="text"
-                        value={quantity}
-                        onChange={(e) => setQuantity(e.target.value)}
-                        placeholder="np. 1"
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200"
-                        required
-                    />
-                </div>
-                <button type="submit" className="h-10 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 lg:col-span-5">
-                    Dodaj przedmiot
-                </button>
-            </form>
-        </div>
-    );
-}
-
-interface AddCategoryFormProps {
-    onAddCategory: (title: string) => void;
-}
-
-const AddCategoryForm: React.FC<AddCategoryFormProps> = ({ onAddCategory }) => {
-    const [newCategoryTitle, setNewCategoryTitle] = useState('');
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onAddCategory(newCategoryTitle);
-        setNewCategoryTitle('');
-    };
-
-    return (
-        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 no-print">
-            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-3">...lub dodaj nową pustą kategorię</h3>
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 items-end">
-                <div className="flex-grow">
-                    <label htmlFor="newCategoryTitleInput" className="block text-xs font-medium text-slate-500 dark:text-slate-400">Nazwa kategorii</label>
-                    <input
-                        id="newCategoryTitleInput"
-                        type="text"
-                        value={newCategoryTitle}
-                        onChange={(e) => setNewCategoryTitle(e.target.value)}
-                        placeholder="np. Dokumenty"
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200"
-                        required
-                    />
-                </div>
-                <button type="submit" className="h-10 w-full sm:w-auto px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Dodaj kategorię
-                </button>
-            </form>
-        </div>
-    );
-};
 
 interface PackingListProps {
     items: PackingItem[];
     categories: string[];
     onAddItem: (itemName: string, category: string, quantity: string) => void;
-    onAddCategory: (title: string) => void;
     onToggleItem: (itemId: number) => void;
     onDeleteItem: (itemId: number) => void;
     onUpdateItem: (itemId: number, newName: string, newQty: string) => void;
@@ -203,6 +63,7 @@ interface PackingListProps {
     onToggleFullScreen: () => void;
     isCategorizedView: boolean;
     onToggleCategorizedView: () => void;
+    onOpenAddModal: () => void;
 }
 
 const CircularProgressBar: React.FC<{ progress: number }> = ({ progress }) => {
@@ -214,7 +75,7 @@ const CircularProgressBar: React.FC<{ progress: number }> = ({ progress }) => {
     const dashOffset = dashArray - dashArray * progress / 100;
 
     return (
-        <svg width={sqSize} height={sqSize} viewBox={viewBox} className="transform -rotate-90">
+        <svg width={sqSize} height={sqSize} viewBox={viewBox} className="">
             <circle
                 className="stroke-current text-slate-200 dark:text-slate-700"
                 cx={sqSize / 2} cy={sqSize / 2} r={radius}
@@ -232,13 +93,14 @@ const CircularProgressBar: React.FC<{ progress: number }> = ({ progress }) => {
                     transition: 'stroke-dashoffset 0.3s ease 0s'
                 }}
             />
-            <text
-                className="fill-current text-slate-700 dark:text-slate-200 text-xs font-semibold transform rotate-90"
-                x="25" y="-25"
-                textAnchor="middle" dy="1.2em"
-            >
-                {`${Math.round(progress)}%`}
-            </text>
+            <g className="pointer-events-none select-none" aria-hidden="true">
+              <text
+                  className="fill-current text-slate-700 dark:text-slate-200 text-[10px] font-semibold"
+                  x="50%" y="50%" dominantBaseline="middle" textAnchor="middle"
+              >
+                  {`${Math.round(progress)}%`}
+              </text>
+            </g>
         </svg>
     );
 };
@@ -257,11 +119,11 @@ const CompressIcon = () => (
 
 
 const PackingList: React.FC<PackingListProps> = ({
-    items, categories, onAddItem, onAddCategory, onToggleItem,
+    items, categories, onAddItem, onToggleItem,
     onDeleteItem, onUpdateItem, onDropItem, onDropCategory, onSortCategories,
     onDeleteCategory, onUpdateCategory, isLoading,
     searchTerm, onSearchChange, totalItemCount, totalPackedCount,
-    isFullScreen, onToggleFullScreen, isCategorizedView, onToggleCategorizedView
+    isFullScreen, onToggleFullScreen, isCategorizedView, onToggleCategorizedView, onOpenAddModal
 }) => {
     const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
     const [draggedItem, setDraggedItem] = useState<{ type: 'item' | 'category'; id: number | string } | null>(null);
@@ -434,11 +296,9 @@ const PackingList: React.FC<PackingListProps> = ({
             <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md packing-list-container">
                 <div className="text-center">
                     <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200">Twoja lista jest pusta</h2>
-                    <p className="text-slate-500 dark:text-slate-400 mt-2">Wygeneruj nową listę, wczytaj domyślną lub dodaj pierwszy przedmiot/kategorię.</p>
-                    <div className="mt-4 mb-8 text-5xl text-slate-300 dark:text-slate-600">🧳</div>
+                    <p className="text-slate-500 dark:text-slate-400 mt-2">Wygeneruj nową listę lub użyj przycisku 'Dodaj przedmiot'.</p>
+                    <div className="mt-4 mb-2 text-5xl text-slate-300 dark:text-slate-600">🧳</div>
                 </div>
-                <AddNewCategoryItemForm onAddItem={onAddItem} categories={categories} />
-                <AddCategoryForm onAddCategory={onAddCategory} />
             </div>
         );
     }
@@ -446,8 +306,8 @@ const PackingList: React.FC<PackingListProps> = ({
     return (
         <div className={containerClasses}>
             <div className={` ${isFullScreen ? 'p-4 md:p-6' : ''}`}>
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b dark:border-slate-700 pb-4 gap-4">
-                    <div className="flex items-center gap-4">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b dark:border-slate-700 pb-4 gap-4">
+                                                            <div className="flex items-center gap-4 flex-wrap">
                         <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Lista do spakowania</h2>
                         {totalItemCount > 0 && <CircularProgressBar progress={overallProgress} />}
                     </div>
@@ -505,12 +365,7 @@ const PackingList: React.FC<PackingListProps> = ({
             <div className={contentWrapperClasses}>
                 {isCategorizedView ? (
                      <div className={`space-y-2 ${isFullScreen ? 'p-4 md:p-6 pt-0' : ''}`}>
-                        { (totalItemCount > 0 || categories.length > 0) && !searchTerm.trim() && !isFullScreen &&
-                            <div className="mb-8 no-print">
-                                 <AddNewCategoryItemForm onAddItem={onAddItem} categories={categories} />
-                                 <AddCategoryForm onAddCategory={onAddCategory} />
-                            </div>
-                        }
+                        {/* Removed inline add forms to simplify UI; creation handled by floating modal */}
                          {searchTerm.trim() && items.length === 0 && (
                             <div className="text-center py-8">
                                 <p className="text-slate-500 dark:text-slate-400">Brak wyników dla zapytania "{searchTerm}"</p>
@@ -665,12 +520,7 @@ const PackingList: React.FC<PackingListProps> = ({
                 )}
             </div>
 
-            { (totalItemCount > 0 || categories.length > 0) && !searchTerm.trim() && isFullScreen &&
-                <div className="p-4 md:p-6 pt-0 no-print">
-                     <AddNewCategoryItemForm onAddItem={onAddItem} categories={categories} />
-                     <AddCategoryForm onAddCategory={onAddCategory} />
-                </div>
-            }
+            {/* Inline forms removed in full screen as well */}
         </div>
     );
 };
