@@ -1,16 +1,26 @@
 import type { PackingItem, ChecklistItem } from '@/types';
 
-export interface PackingTemplate {
-  id: string;
+export interface PackingTemplateTranslation {
   name: string;
   description: string;
+  checklistTasks?: string[]; // optional override / translation of checklist if needed
+  categories?: Record<string, string>; // category name mapping (pl->en)
+}
+
+export interface PackingTemplate {
+  id: string;
+  name: string; // default (Polish) for backward compatibility
+  description: string; // default (Polish)
   icon: string;
-  categories: string[];
-  transport: string[];
-  accommodation: string[];
-  season: string[];
-  items: Omit<PackingItem, 'id' | 'packed'>[];
-  checklist: Omit<ChecklistItem, 'id'>[];
+  categories: string[]; // stored internally in PL for consistency
+  transport: string[]; // PL values used in filters
+  accommodation: string[]; // PL values used in filters
+  season: string[]; // PL values used in filters
+  items: Omit<PackingItem, 'id' | 'packed'>[]; // item names in PL baseline
+  checklist: Omit<ChecklistItem, 'id'>[]; // tasks in PL baseline
+  translations?: {
+    en?: PackingTemplateTranslation;
+  };
 }
 
 // Base template with common essentials
@@ -90,7 +100,23 @@ const BEACH_VACATION_TEMPLATE: PackingTemplate = {
     { "task": "Sprawdź limity bagażu linii lotniczej", "done": false },
     { "task": "Zarejestruj się online na lot", "done": false },
     { "task": "Przygotuj dokumenty podróży do bagażu podręcznego", "done": false },
-  ]
+  ],
+  translations: {
+    en: {
+      name: 'Beach (Flight)',
+      description: 'Beach vacation traveling by plane – everything for relaxation in a warm climate',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Apteczka': 'First Aid',
+        'Elektronika': 'Electronics',
+        'W Podróży (Podręczne)': 'In Transit (Carry‑on)',
+        'Plaża': 'Beach'
+      }
+    }
+  }
 };
 
 // Template: Narty (autem)
@@ -127,7 +153,22 @@ const SKI_VACATION_TEMPLATE: PackingTemplate = {
     { "task": "Przygotuj łańcuchy śniegowe", "done": false },
     { "task": "Zarezerwuj skipassy online", "done": false },
     { "task": "Sprawdź prognozę pogody górskiej", "done": false },
-  ]
+  ],
+  translations: {
+    en: {
+      name: 'Ski Trip (Car)',
+      description: 'Ski holiday traveling by car',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Apteczka': 'First Aid',
+        'Elektronika': 'Electronics',
+        'Narty': 'Ski'
+      }
+    }
+  }
 };
 
 // Template: Górskie wędrówki (autem)
@@ -165,7 +206,22 @@ const MOUNTAIN_HIKING_TEMPLATE: PackingTemplate = {
     { "task": "Poinformuj kogoś o planowanej trasie", "done": false },
     { "task": "Sprawdź godziny kursowania kolejek", "done": false },
     { "task": "Pobierz mapy offline na telefon", "done": false },
-  ]
+  ],
+  translations: {
+    en: {
+      name: 'Mountain Hiking (Car)',
+      description: 'Mountain hikes with lodging – arriving by car',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Apteczka': 'First Aid',
+        'Elektronika': 'Electronics',
+        'Trekking': 'Trekking'
+      }
+    }
+  }
 };
 
 // Template: All Inclusive
@@ -196,7 +252,22 @@ const ALL_INCLUSIVE_TEMPLATE: PackingTemplate = {
     { "task": "Sprawdź, co jest wliczone w all inclusive", "done": false },
     { "task": "Zarezerwuj transfer z lotniska", "done": false },
     { "task": "Przygotuj gotówkę na napiwki", "done": false },
-  ]
+  ],
+  translations: {
+    en: {
+      name: 'All Inclusive Holiday',
+      description: 'All‑inclusive hotel stay – minimal packing essentials',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Apteczka': 'First Aid',
+        'Elektronika': 'Electronics',
+        'Plaża': 'Beach'
+      }
+    }
+  }
 };
 
 // Current template with all your items
@@ -279,7 +350,365 @@ const COMPREHENSIVE_FAMILY_TEMPLATE: PackingTemplate = {
   ],
   checklist: [
     ...COMPREHENSIVE_FAMILY_CHECKLIST,
-  ]
+  ],
+  translations: {
+    en: {
+      name: 'Complete Family List',
+      description: 'Comprehensive template – ideal for families with kids',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Apteczka': 'First Aid',
+        'Elektronika': 'Electronics',
+        'Dzieci': 'Kids',
+        'Aktywności Specjalne': 'Special Activities',
+        'W Podróży (Podręczne)': 'In Transit (Carry‑on)',
+        'Inne': 'Other'
+      }
+    }
+  }
+};
+
+// Additional Templates (bilingual)
+const CITY_BREAK_TEMPLATE: PackingTemplate = {
+  id: 'city-break-weekend',
+  name: 'City Break Weekend',
+  description: 'Lekka lista na 2–4 dniowy wypad do miasta',
+  icon: '🏙️',
+  categories: ['Dokumenty i Finanse', 'Ubrania', 'Obuwie', 'Higiena i Kosmetyki', 'Elektronika', 'Inne'],
+  transport: ['Samolot', 'Pociąg', 'Samochód'],
+  accommodation: ['Hotel', 'Apartament'],
+  season: ['Wiosna', 'Lato', 'Jesień', 'Zima'],
+  items: [
+    ...BASE_ESSENTIALS,
+    { name: 'Lekka kurtka', qty: '1', category: 'Ubrania' },
+    { name: 'Koszulki', qty: '2-3', category: 'Ubrania' },
+    { name: 'Spodnie/jeansy', qty: '1-2', category: 'Ubrania' },
+    { name: 'Wygodne buty do chodzenia', qty: '1 para', category: 'Obuwie' },
+    { name: 'Notatnik / długopis', qty: '1', category: 'Inne', optional: true },
+  ],
+  checklist: [
+    ...BASE_CHECKLIST,
+    { task: 'Pobierz mapy offline miasta', done: false },
+  ],
+  translations: {
+    en: {
+      name: 'City Break Weekend',
+      description: 'Light list for a 2–4 day urban getaway',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Elektronika': 'Electronics',
+        'Inne': 'Other'
+      }
+    }
+  }
+};
+
+const BACKPACKING_TEMPLATE: PackingTemplate = {
+  id: 'backpacking-adventure',
+  name: 'Backpacking / Plecak',
+  description: 'Minimalistyczna lista dla podróży z plecakiem',
+  icon: '🎒',
+  categories: ['Dokumenty i Finanse', 'Ubrania', 'Obuwie', 'Higiena i Kosmetyki', 'Apteczka', 'Elektronika', 'Trekking', 'Inne'],
+  transport: ['Samolot', 'Pociąg', 'Autobus'],
+  accommodation: ['Hostel', 'Schronisko', 'Kemping'],
+  season: ['Wiosna', 'Lato', 'Jesień'],
+  items: [
+    ...BASE_ESSENTIALS,
+    { name: 'Plecak 40L', qty: '1', category: 'Trekking' },
+    { name: 'Koszulki z szybkim schnięciem', qty: '3', category: 'Ubrania' },
+    { name: 'Bielizna szybkoschnąca', qty: '3', category: 'Ubrania' },
+    { name: 'Ręcznik szybkoschnący', qty: '1', category: 'Higiena i Kosmetyki' },
+    { name: 'Buty trekkingowe lekkie', qty: '1 para', category: 'Obuwie' },
+    { name: 'Czołówka', qty: '1', category: 'Elektronika' },
+    { name: 'Filtr do wody', qty: '1', category: 'Inne' },
+  ],
+  checklist: [
+    ...BASE_CHECKLIST,
+    { task: 'Sprawdź limity bagażu podręcznego', done: false },
+  ],
+  translations: {
+    en: {
+      name: 'Backpacking Adventure',
+      description: 'Minimalist list for lightweight backpack travel',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Apteczka': 'First Aid',
+        'Elektronika': 'Electronics',
+        'Trekking': 'Trekking',
+        'Inne': 'Other'
+      }
+    }
+  }
+};
+
+const CAMPING_TEMPLATE: PackingTemplate = {
+  id: 'camping-outdoor',
+  name: 'Kemping Outdoor',
+  description: 'Lista dla noclegu pod namiotem / biwak',
+  icon: '🏕️',
+  categories: ['Dokumenty i Finanse', 'Ubrania', 'Obuwie', 'Apteczka', 'Elektronika', 'Trekking', 'Inne'],
+  transport: ['Samochód'],
+  accommodation: ['Kemping'],
+  season: ['Wiosna', 'Lato', 'Jesień'],
+  items: [
+    ...BASE_ESSENTIALS,
+    { name: 'Namiot', qty: '1', category: 'Trekking' },
+    { name: 'Śpiwór', qty: '1', category: 'Trekking' },
+    { name: 'Karimata/mata', qty: '1', category: 'Trekking' },
+    { name: 'Kuchenka turystyczna', qty: '1', category: 'Inne' },
+    { name: 'Zapałki / zapalniczka', qty: '1', category: 'Inne' },
+    { name: 'Sztućce turystyczne', qty: '1 zestaw', category: 'Inne' },
+  ],
+  checklist: [
+    ...BASE_CHECKLIST,
+    { task: 'Sprawdź zasady kempingu', done: false },
+  ],
+  translations: {
+    en: {
+      name: 'Camping Outdoor',
+      description: 'Checklist for tent / campsite stay',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Apteczka': 'First Aid',
+        'Elektronika': 'Electronics',
+        'Trekking': 'Trekking',
+        'Inne': 'Other'
+      }
+    }
+  }
+};
+
+const ROAD_TRIP_TEMPLATE: PackingTemplate = {
+  id: 'road-trip-car',
+  name: 'Road Trip',
+  description: 'Podróż samochodem z wieloma przystankami',
+  icon: '🛣️',
+  categories: ['Dokumenty i Finanse', 'Ubrania', 'Obuwie', 'Higiena i Kosmetyki', 'Elektronika', 'Inne'],
+  transport: ['Samochód'],
+  accommodation: ['Hotel', 'Apartament', 'Pensjonat'],
+  season: ['Wiosna', 'Lato', 'Jesień', 'Zima'],
+  items: [
+    ...BASE_ESSENTIALS,
+    { name: 'Organizer do samochodu', qty: '1', category: 'Inne' },
+    { name: 'Ładowarka samochodowa', qty: '1', category: 'Elektronika' },
+    { name: 'Przekąski na drogę', qty: 'Zapas', category: 'Inne' },
+    { name: 'Mapa papierowa (backup)', qty: '1', category: 'Inne', optional: true },
+  ],
+  checklist: [
+    ...BASE_CHECKLIST,
+    { task: 'Sprawdź ciśnienie w oponach', done: false },
+  ],
+  translations: {
+    en: {
+      name: 'Road Trip',
+      description: 'Car journey with multiple stops',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Elektronika': 'Electronics',
+        'Inne': 'Other'
+      }
+    }
+  }
+};
+
+const BUSINESS_TRIP_TEMPLATE: PackingTemplate = {
+  id: 'business-trip',
+  name: 'Podróż Służbowa',
+  description: 'Lista dla wyjazdu biznesowego / konferencji',
+  icon: '💼',
+  categories: ['Dokumenty i Finanse', 'Ubrania', 'Obuwie', 'Elektronika', 'Higiena i Kosmetyki', 'Inne'],
+  transport: ['Samolot', 'Pociąg'],
+  accommodation: ['Hotel'],
+  season: ['Wiosna', 'Lato', 'Jesień', 'Zima'],
+  items: [
+    ...BASE_ESSENTIALS,
+    { name: 'Laptop', qty: '1', category: 'Elektronika' },
+    { name: 'Ładowarka do laptopa', qty: '1', category: 'Elektronika' },
+    { name: 'Elegancka koszula / bluzka', qty: '2', category: 'Ubrania' },
+    { name: 'Spodnie garniturowe / eleganckie', qty: '1', category: 'Ubrania' },
+    { name: 'Buty eleganckie', qty: '1 para', category: 'Obuwie' },
+    { name: 'Wizytówki', qty: 'Kilka', category: 'Inne' },
+  ],
+  checklist: [
+    ...BASE_CHECKLIST,
+    { task: 'Przygotuj prezentację', done: false },
+  ],
+  translations: {
+    en: {
+      name: 'Business Trip',
+      description: 'Checklist for business travel / conference',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Elektronika': 'Electronics',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Inne': 'Other'
+      }
+    }
+  }
+};
+
+const FESTIVAL_TEMPLATE: PackingTemplate = {
+  id: 'music-festival',
+  name: 'Festiwal Muzyczny',
+  description: 'Lista na wyjazd na festiwal (open-air)',
+  icon: '🎵',
+  categories: ['Dokumenty i Finanse', 'Ubrania', 'Obuwie', 'Higiena i Kosmetyki', 'Apteczka', 'Elektronika', 'Inne'],
+  transport: ['Samochód', 'Pociąg'],
+  accommodation: ['Kemping', 'Hotel'],
+  season: ['Lato'],
+  items: [
+    ...BASE_ESSENTIALS,
+    { name: 'Płaszcz przeciwdeszczowy', qty: '1', category: 'Ubrania' },
+    { name: 'Buty odporne na błoto', qty: '1 para', category: 'Obuwie' },
+    { name: 'Powerbank', qty: '1', category: 'Elektronika' },
+    { name: 'Folia / mata do siedzenia', qty: '1', category: 'Inne' },
+  ],
+  checklist: [
+    ...BASE_CHECKLIST,
+    { task: 'Sprawdź regulamin festiwalu', done: false },
+  ],
+  translations: {
+    en: {
+      name: 'Music Festival',
+      description: 'Packing list for an outdoor music festival',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Apteczka': 'First Aid',
+        'Elektronika': 'Electronics',
+        'Inne': 'Other'
+      }
+    }
+  }
+};
+
+const REMOTE_WORK_TEMPLATE: PackingTemplate = {
+  id: 'remote-work',
+  name: 'Praca Zdalna Podróż',
+  description: 'Lista dla digital nomad / pracy zdalnej',
+  icon: '🧑‍💻',
+  categories: ['Dokumenty i Finanse', 'Ubrania', 'Elektronika', 'Higiena i Kosmetyki', 'Inne'],
+  transport: ['Samolot'],
+  accommodation: ['Apartament', 'Hotel'],
+  season: ['Wiosna', 'Lato', 'Jesień', 'Zima'],
+  items: [
+    ...BASE_ESSENTIALS,
+    { name: 'Laptop', qty: '1', category: 'Elektronika' },
+    { name: 'Słuchawki z mikrofonem', qty: '1', category: 'Elektronika' },
+    { name: 'Adapter / listwa zasilająca', qty: '1', category: 'Elektronika' },
+    { name: 'Ekran przenośny (opcjonalnie)', qty: '1', category: 'Elektronika', optional: true },
+  ],
+  checklist: [
+    ...BASE_CHECKLIST,
+    { task: 'Sprawdź prędkość internetu noclegu', done: false },
+  ],
+  translations: {
+    en: {
+      name: 'Remote Work Travel',
+      description: 'Digital nomad / remote work essentials',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Elektronika': 'Electronics',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Inne': 'Other'
+      }
+    }
+  }
+};
+
+const TROPICAL_ADVENTURE_TEMPLATE: PackingTemplate = {
+  id: 'tropical-adventure',
+  name: 'Przygoda Tropikalna',
+  description: 'Lista na wyjazd w tropiki z aktywnościami',
+  icon: '🌴',
+  categories: ['Dokumenty i Finanse', 'Ubrania', 'Obuwie', 'Higiena i Kosmetyki', 'Apteczka', 'Elektronika', 'Plaża', 'Inne'],
+  transport: ['Samolot'],
+  accommodation: ['Hotel', 'Apartament'],
+  season: ['Lato'],
+  items: [
+    ...BASE_ESSENTIALS,
+    { name: 'Lekka koszula z długim rękawem', qty: '2', category: 'Ubrania' },
+    { name: 'Buty do wody', qty: '1 para', category: 'Obuwie' },
+    { name: 'Repelent na owady', qty: '1', category: 'Apteczka' },
+    { name: 'Krem z wysokim filtrem', qty: '1', category: 'Higiena i Kosmetyki' },
+    { name: 'Kapelusz przeciwsłoneczny', qty: '1', category: 'Ubrania' },
+    { name: 'Pokrowiec wodoodporny na telefon', qty: '1', category: 'Elektronika' },
+  ],
+  checklist: [
+    ...BASE_CHECKLIST,
+    { task: 'Sprawdź wymagane szczepienia', done: false },
+  ],
+  translations: {
+    en: {
+      name: 'Tropical Adventure',
+      description: 'Trip to the tropics with mixed activities',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Apteczka': 'First Aid',
+        'Elektronika': 'Electronics',
+        'Plaża': 'Beach',
+        'Inne': 'Other'
+      }
+    }
+  }
+};
+
+const WINTER_CITY_TEMPLATE: PackingTemplate = {
+  id: 'winter-city-break',
+  name: 'Zimowy City Break',
+  description: 'Krótki wyjazd do miasta zimą',
+  icon: '❄️',
+  categories: ['Dokumenty i Finanse', 'Ubrania', 'Obuwie', 'Higiena i Kosmetyki', 'Elektronika', 'Inne'],
+  transport: ['Samolot', 'Pociąg'],
+  accommodation: ['Hotel', 'Apartament'],
+  season: ['Zima'],
+  items: [
+    ...BASE_ESSENTIALS,
+    { name: 'Ciepła kurtka', qty: '1', category: 'Ubrania' },
+    { name: 'Czapka zimowa', qty: '1', category: 'Ubrania' },
+    { name: 'Rękawiczki', qty: '1 para', category: 'Ubrania' },
+    { name: 'Termos', qty: '1', category: 'Inne', optional: true },
+  ],
+  checklist: [
+    ...BASE_CHECKLIST,
+    { task: 'Sprawdź prognozę temperatury', done: false },
+  ],
+  translations: {
+    en: {
+      name: 'Winter City Break',
+      description: 'Short urban trip in winter',
+      categories: {
+        'Dokumenty i Finanse': 'Documents & Money',
+        'Ubrania': 'Clothing',
+        'Obuwie': 'Footwear',
+        'Higiena i Kosmetyki': 'Toiletries',
+        'Elektronika': 'Electronics',
+        'Inne': 'Other'
+      }
+    }
+  }
 };
 
 export const PACKING_TEMPLATES: PackingTemplate[] = [
@@ -288,6 +717,15 @@ export const PACKING_TEMPLATES: PackingTemplate[] = [
   SKI_VACATION_TEMPLATE,
   MOUNTAIN_HIKING_TEMPLATE,
   ALL_INCLUSIVE_TEMPLATE,
+  CITY_BREAK_TEMPLATE,
+  BACKPACKING_TEMPLATE,
+  CAMPING_TEMPLATE,
+  ROAD_TRIP_TEMPLATE,
+  BUSINESS_TRIP_TEMPLATE,
+  FESTIVAL_TEMPLATE,
+  REMOTE_WORK_TEMPLATE,
+  TROPICAL_ADVENTURE_TEMPLATE,
+  WINTER_CITY_TEMPLATE,
 ];
 
 export function getTemplatesByFilters(transport?: string, accommodation?: string, season?: string): PackingTemplate[] {
@@ -298,4 +736,19 @@ export function getTemplatesByFilters(transport?: string, accommodation?: string
     
     return matchesTransport && matchesAccommodation && matchesSeason;
   });
+}
+
+/**
+ * Helper to get localized template data without mutating originals.
+ * Falls back to Polish if translation missing.
+ */
+export function localizeTemplate(template: PackingTemplate, lang: 'pl' | 'en'): PackingTemplate {
+  if (lang === 'pl' || !template.translations?.en) return template;
+  const t = template.translations.en;
+  return {
+    ...template,
+    name: t.name || template.name,
+    description: t.description || template.description,
+    // Keep categories/items internal values to avoid breaking grouping – only UI layer should map names if desired
+  };
 }

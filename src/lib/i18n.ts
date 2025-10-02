@@ -262,6 +262,33 @@ interface Dictionary {
     budgetOptions: { value: string; label: string }[];
     interests: { key: string; label: string }[];
   };
+  packing?: {
+    sections: {
+      generate: string; manage: string; quickAdd: string; archetype: string; preview: string;
+    };
+    templateLoader: {
+      open: string; title: string; description: string; filters: { transport: string; lodging: string; season: string; all: string; clear: string; }; stats: { items: string; tasks: string; }; none: { title: string; reset: string; }; preview: { items: string; tasks: string; more: string; }; actions: { cancel: string; load: string; loading: string; };
+    };
+    actions: {
+      description: string;
+      validate: string; validating: string;
+      categorize: string; categorizing: string;
+      clear: string;
+    };
+    generator: {
+      introWithTrip: string; intro: string; destination: string; destinationTrip: string; days: string; daysTrip: string; adults: string; childrenAges: string; region: string; travelStyle: string; season: string; transport: string; lodging: string; activities: string; activitiesFromItinerary: string; special: string; submit: string; submitting: string; placeholders: { destination: string; days: string; childrenAges: string; region: string; activities: string; special: string; }; options: { seasons: string[]; transport: string[]; lodging: string[]; travelStyles: string[]; };
+    };
+    modals: {
+      confirmGenerate: { title: string; body: string; cancel: string; confirm: string; };
+      validate: { title: string; body: string; placeholder: string; cancel: string; confirm: string; };
+    };
+    suggestions: {
+      heading: string; add: string; remove: string; adjust: string; replace: string; apply: string; plus: string; change: (field: string, current: string, suggested: string, reason: string) => string; replaceLabel: { from: string; to: string; };
+    };
+    toasts: { emptyListValidate: string; added: string; removed: string; changed: string; replaced: string; notFound: string; };
+    checklist: { title: string };
+    stats: { destination: string; days: string; adults: string; children: string };
+  };
 }
 
 const year = new Date().getFullYear();
@@ -573,6 +600,36 @@ export const dictionaries: Record<Lang, Dictionary> = {
         { key: "technology", label: "Technologia / Nauka" },
       ],
     },
+    packing: {
+      sections: { generate: '1. Wygeneruj nową listę', manage: '2. Zarządzaj listą', quickAdd: '3. Szybkie dodawanie', archetype: 'Archetyp Podróży', preview: 'Podgląd szablonu:' },
+      templateLoader: {
+        open: 'Załaduj szablon', title: 'Wybierz szablon pakowania', description: 'Wybierz gotowy szablon dostosowany do typu podróży, który możesz dostosować do swoich potrzeb.',
+        filters: { transport: 'Transport', lodging: 'Nocleg', season: 'Sezon', all: 'Wszystkie', clear: 'Wyczyść filtry' },
+        stats: { items: 'Przedmioty:', tasks: 'Zadania:' },
+        none: { title: 'Brak szablonów pasujących do wybranych filtrów.', reset: 'Wyczyść filtry aby zobaczyć wszystkie szablony' },
+        preview: { items: 'Przedmioty', tasks: 'Zadania', more: 'więcej' },
+        actions: { cancel: 'Anuluj', load: 'Załaduj szablon', loading: 'Ładowanie...' },
+      },
+      actions: { description: 'Załaduj gotowy szablon, użyj AI do weryfikacji, kategoryzuj lub wyczyść listę.', validate: 'Sprawdź listę z AI', validating: 'Sprawdzanie...', categorize: 'Kategoryzuj z AI', categorizing: 'Kategoryzowanie...', clear: 'Wyczyść listę' },
+      generator: {
+        introWithTrip: 'Dane z podróży zostały automatycznie uzupełnione. Możesz je dostosować.',
+        intro: 'Opisz swój wyjazd, a AI stworzy dla Ciebie spersonalizowaną listę.',
+        destination: 'Cel podróży', destinationTrip: 'Miasto/Cel (z podróży)',
+        days: 'Liczba dni', daysTrip: 'Liczba dni (wyliczona)', adults: 'Dorośli', childrenAges: 'Wiek dzieci (oddzielone przecinkami)', region: 'Region', travelStyle: 'Styl podróży', season: 'Pora roku', transport: 'Transport', lodging: 'Nocleg', activities: 'Planowane aktywności', activitiesFromItinerary: 'Planowane aktywności (z itinerarium)', special: 'Uwagi specjalne', submit: 'Generuj listę', submitting: 'Generowanie...',
+        placeholders: { destination: 'np. Kraków, Paryż', days: 'np. 7', childrenAges: 'np. 2, 5', region: 'np. Europa, Azja Płd.-Wsch.', activities: 'np. trekking, plażowanie, praca zdalna', special: 'np. ograniczenia bagażu, alergie' },
+        options: { seasons: ['Wiosna', 'Lato', 'Jesień', 'Zima'], transport: ['Samochód', 'Samolot', 'Pociąg', 'Autobus'], lodging: ['Hotel', 'Apartament', 'Domek', 'Kemping', 'U znajomych'], travelStyles: ['Standardowy', 'Budżetowy (plecak)', 'Rodzinny (komfort)', 'Luksusowy', 'Biznesowy', 'Przygoda (outdoor)'] },
+      },
+      modals: {
+        confirmGenerate: { title: 'Potwierdzenie', body: 'Masz już listę. Wygenerowanie nowej listy spowoduje zastąpienie bieżącej. Czy na pewno chcesz kontynuować?', cancel: 'Anuluj', confirm: 'Tak, wygeneruj nową' },
+        validate: { title: 'Sprawdź listę z kontekstem', body: 'Czy coś się zmieniło w Twoich planach? Opisz to, a AI uwzględni to w sugestiach.', placeholder: 'np. Prognoza pogody zmieniła się na znacznie cieplejszą.', cancel: 'Anuluj', confirm: 'Sprawdź listę' },
+      },
+      suggestions: {
+        heading: 'Sugestie AI:', add: 'Do dodania:', remove: 'Do usunięcia:', adjust: 'Do zmiany:', replace: 'Do zastąpienia (optymalizacja):', apply: '[✓] Zastosuj', plus: '... i', change: (field, current, suggested, reason) => `Zmień ${field} z '${current}' na '${suggested}' - ${reason}`, replaceLabel: { from: 'Zastąp', to: 'Przez' }
+      },
+      toasts: { emptyListValidate: 'Lista jest pusta. Dodaj przedmioty lub załaduj listę, aby ją sprawdzić.', added: 'Dodano', removed: 'Usunięto', changed: 'Zmieniono', replaced: 'Zastąpiono przez', notFound: 'Nie znaleziono' },
+      checklist: { title: 'Zadania' },
+      stats: { destination: 'Cel', days: 'Dni', adults: 'dorośli', children: 'dzieci' },
+    },
   },
   en: {
     hero: {
@@ -872,6 +929,36 @@ export const dictionaries: Record<Lang, Dictionary> = {
         { key: "photography", label: "Photography" },
         { key: "technology", label: "Technology / Science" },
       ],
+    },
+    packing: {
+      sections: { generate: '1. Generate new list', manage: '2. Manage list', quickAdd: '3. Quick add', archetype: 'Trip Archetype', preview: 'Template preview:' },
+      templateLoader: {
+        open: 'Load template', title: 'Choose a packing template', description: 'Select a ready template tailored to your trip type and customize it.',
+        filters: { transport: 'Transport', lodging: 'Lodging', season: 'Season', all: 'All', clear: 'Clear filters' },
+        stats: { items: 'Items:', tasks: 'Tasks:' },
+        none: { title: 'No templates match the selected filters.', reset: 'Clear filters to see all templates' },
+        preview: { items: 'Items', tasks: 'Tasks', more: 'more' },
+        actions: { cancel: 'Cancel', load: 'Load template', loading: 'Loading...' },
+      },
+      actions: { description: 'Load a ready template, verify with AI, categorize or clear the list.', validate: 'Validate with AI', validating: 'Checking...', categorize: 'Categorize with AI', categorizing: 'Categorizing...', clear: 'Clear list' },
+      generator: {
+        introWithTrip: 'Trip data auto-filled. You can adjust it.',
+        intro: 'Describe your trip and AI will create a personalized list.',
+        destination: 'Destination', destinationTrip: 'City/Destination (from trip)',
+        days: 'Number of days', daysTrip: 'Number of days (calculated)', adults: 'Adults', childrenAges: 'Children ages (comma separated)', region: 'Region', travelStyle: 'Travel style', season: 'Season', transport: 'Transport', lodging: 'Lodging', activities: 'Planned activities', activitiesFromItinerary: 'Planned activities (from itinerary)', special: 'Special notes', submit: 'Generate list', submitting: 'Generating...',
+        placeholders: { destination: 'e.g. Krakow, Paris', days: 'e.g. 7', childrenAges: 'e.g. 2, 5', region: 'e.g. Europe, SE Asia', activities: 'e.g. hiking, beach, remote work', special: 'e.g. baggage limits, allergies' },
+        options: { seasons: ['Spring', 'Summer', 'Autumn', 'Winter'], transport: ['Car', 'Plane', 'Train', 'Bus'], lodging: ['Hotel', 'Apartment', 'Cottage', 'Camping', 'With friends'], travelStyles: ['Standard', 'Budget (backpack)', 'Family (comfort)', 'Luxury', 'Business', 'Adventure (outdoor)'] },
+      },
+      modals: {
+        confirmGenerate: { title: 'Confirmation', body: 'You already have a list. Generating a new one will replace the current list. Continue?', cancel: 'Cancel', confirm: 'Yes, generate new' },
+        validate: { title: 'Validate list with context', body: 'Did your plans change? Describe it so AI can adapt suggestions.', placeholder: 'e.g. Weather forecast turned much warmer.', cancel: 'Cancel', confirm: 'Validate list' },
+      },
+      suggestions: {
+        heading: 'AI Suggestions:', add: 'To add:', remove: 'To remove:', adjust: 'To adjust:', replace: 'To replace (optimize):', apply: '[✓] Apply', plus: '... plus', change: (field, current, suggested, reason) => `Change ${field} from '${current}' to '${suggested}' - ${reason}`, replaceLabel: { from: 'Replace', to: 'With' }
+      },
+      toasts: { emptyListValidate: 'List is empty. Add items or load a list before validating.', added: 'Added', removed: 'Removed', changed: 'Changed', replaced: 'Replaced with', notFound: 'Not found' },
+      checklist: { title: 'Tasks' },
+      stats: { destination: 'Destination', days: 'Days', adults: 'adults', children: 'children' },
     },
   },
 };

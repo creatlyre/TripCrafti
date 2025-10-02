@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { GenerateDetails, ValidationResult, Trip, GeneratedItinerary } from '@/types';
 import { usePacking } from '@/components/hooks/usePacking';
+import { getDictionary } from '@/lib/i18n';
 
 // Import UI components
 import PackingHeader from '@/components/PackingHeader';
@@ -14,9 +15,11 @@ import QuickAddItem from '@/components/QuickAddItem';
 interface PackingAssistantProps {
   tripId: string;
   trip?: Trip & { itineraries: GeneratedItinerary[] };
+  lang?: 'pl' | 'en';
 }
 
-const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip }) => {
+const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang = 'pl' }) => {
+  const dictRoot = getDictionary(lang).packing;
   const {
     // State
     packingItems,
@@ -145,7 +148,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip }) => 
 
   const handleValidateList = async () => {
     if (packingItems.length === 0) {
-      showToast('Lista jest pusta. Dodaj przedmioty lub załaduj listę, aby ją sprawdzić.', 'error');
+      showToast(dictRoot?.toasts.emptyListValidate || 'Empty', 'error');
       return;
     }
     setValidationModalOpen(true);
@@ -215,16 +218,16 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip }) => 
 
     const handleApplyAddSuggestion = (item: { name: string; category: string; }) => {
       addItem(item.name, item.category, '1');
-      showToast(`Dodano: ${item.name}`, 'success');
+      showToast(`${dictRoot?.toasts.added}: ${item.name}`, 'success');
     };
 
     const handleApplyRemoveSuggestion = (item: { name: string; }) => {
       const itemToRemove = packingItems.find(p => p.name.toLowerCase() === item.name.toLowerCase());
       if (itemToRemove) {
         deleteItem(itemToRemove.id);
-        showToast(`Usunięto: ${item.name}`, 'success');
+        showToast(`${dictRoot?.toasts.removed}: ${item.name}`, 'success');
       } else {
-        showToast(`Nie znaleziono "${item.name}"`, 'error');
+        showToast(`${dictRoot?.toasts.notFound} "${item.name}"`, 'error');
       }
     };
 
@@ -234,7 +237,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip }) => 
         if (item.field === 'name' || item.field === 'qty') {
           updateItem(targetItem.id, item.field === 'name' ? item.suggested : targetItem.name, item.field === 'qty' ? item.suggested : targetItem.qty);
         }
-        showToast(`Zmieniono: ${item.name}`, 'success');
+        showToast(`${dictRoot?.toasts.changed}: ${item.name}`, 'success');
       }
     };
 
@@ -244,7 +247,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip }) => 
       
       itemsToRemove.forEach(itemToRemove => deleteItem(itemToRemove.id));
       addItem(item.suggested_item.name, item.suggested_item.category, '1');
-      showToast(`Zastąpiono przez: ${item.suggested_item.name}`, 'success');
+      showToast(`${dictRoot?.toasts.replaced}: ${item.suggested_item.name}`, 'success');
     };
 
     const renderList = (title: string, items: {name: string, reason?: string, category?: string}[], action?: (item: any) => React.ReactNode) => (
@@ -291,23 +294,23 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip }) => 
 
     return (
       <div className="bg-blue-100 border border-blue-400 text-blue-800 px-4 py-3 rounded-lg relative dark:bg-blue-900/20 dark:border-blue-500/30 dark:text-blue-200">
-        <strong className="font-bold block mb-2">Sugestie AI:</strong>
-        {renderList('Do dodania:', suggestions.missing, (item) => (
+        <strong className="font-bold block mb-2">{dictRoot?.suggestions.heading}</strong>
+        {renderList(dictRoot?.suggestions.add || 'Add:', suggestions.missing, (item) => (
           <ActionButton onClick={() => handleApplyAddSuggestion(item)} className="bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800">
             [+] Dodaj
           </ActionButton>
         ))}
-        {renderList('Do usunięcia:', suggestions.remove, (item) => (
+        {renderList(dictRoot?.suggestions.remove || 'Remove:', suggestions.remove, (item) => (
           <ActionButton onClick={() => handleApplyRemoveSuggestion(item)} className="bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800">
             [x] Usuń
           </ActionButton>
         ))}
-        {renderList('Do zmiany:', suggestions.adjust.map(a => ({...a, reason: `Zmień ${a.field} z '${a.current}' na '${a.suggested}' - ${a.reason}`})), (item) => (
+        {renderList(dictRoot?.suggestions.adjust || 'Adjust:', suggestions.adjust.map(a => ({...a, reason: dictRoot?.suggestions.change ? dictRoot.suggestions.change(a.field, a.current, a.suggested, a.reason) : a.reason})), (item) => (
           <ActionButton onClick={() => handleApplyAdjustSuggestion(item)} className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800">
             [✓] Zmień
           </ActionButton>
         ))}
-        {renderReplaceList('Do zastąpienia (optymalizacja):', suggestions.replace)}
+        {renderReplaceList(dictRoot?.suggestions.replace || 'Replace:', suggestions.replace)}
       </div>
     );
   };
@@ -333,10 +336,10 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip }) => 
       <main className={`container mx-auto transition-all duration-300 ${isFullScreen ? 'p-0 md:p-0 max-w-full' : 'p-4 md:p-8'}`}>
         <div className={`${isFullScreen ? '' : 'grid grid-cols-1 lg:grid-cols-3 gap-8'}`}>
           <div className={`lg:col-span-1 space-y-6 no-print ${isFullScreen ? 'hidden' : ''}`}>
-            <CollapsibleSection title="1. Wygeneruj nową listę">
-              <PackingListGenerator onGenerate={handleGenerateList} isLoading={isLoading} trip={trip} />
+            <CollapsibleSection title={dictRoot?.sections.generate || 'Generate list'}>
+              <PackingListGenerator onGenerate={handleGenerateList} isLoading={isLoading} trip={trip} lang={lang} />
             </CollapsibleSection>
-            <CollapsibleSection title="2. Zarządzaj listą">
+            <CollapsibleSection title={dictRoot?.sections.manage || 'Manage'}>
               <PackingListActions
                 onCheckList={handleValidateList}
                 onClearList={clearList}
@@ -344,9 +347,10 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip }) => 
                 isListEmpty={packingItems.length === 0 && checklistItems.length === 0}
                 onCategorizeList={categorizeList}
                 onLoadTemplate={loadTemplate}
+                lang={lang}
               />
             </CollapsibleSection>
-            <CollapsibleSection title="3. Szybkie dodawanie">
+            <CollapsibleSection title={dictRoot?.sections.quickAdd || 'Quick add'}>
               <QuickAddItem onAddItem={addItemFromLibrary} />
             </CollapsibleSection>
             {error && (
@@ -364,9 +368,9 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip }) => 
           <div className={`lg:col-span-2 space-y-6 transition-all duration-300 ${isFullScreen ? 'lg:col-span-3' : ''}`}>
             {listMeta && listMeta.archetype && !isFullScreen && (
               <div className="bg-indigo-50 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-r-lg shadow dark:bg-indigo-900/20 dark:border-indigo-500 dark:text-indigo-200">
-                <p className="font-bold text-lg">Archetyp Podróży: <span className="font-normal">{listMeta.archetype}</span></p>
+                <p className="font-bold text-lg">{dictRoot?.sections.archetype}: <span className="font-normal">{listMeta.archetype}</span></p>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  Cel: {listMeta.destination}, Dni: {listMeta.days}, Osoby: {listMeta.people.adults} dorosłych, {listMeta.people.children} dzieci
+                  {dictRoot?.stats.destination}: {listMeta.destination}, {dictRoot?.stats.days}: {listMeta.days}, {dictRoot?.stats.adults}: {listMeta.people.adults} {dictRoot?.stats.children}: {listMeta.people.children}
                 </p>
               </div>
             )}

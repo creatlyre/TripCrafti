@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { GenerateDetails, Trip, GeneratedItinerary } from '@/types';
+import { getDictionary, type Lang } from '@/lib/i18n';
 
 // Utility functions
 function getSeasonFromDate(dateString: string): string {
@@ -165,9 +166,11 @@ interface ListGeneratorProps {
     onGenerate: (details: GenerateDetails) => void;
     isLoading: boolean;
     trip?: Trip & { itineraries: GeneratedItinerary[] };
+    lang?: Lang;
 }
 
-const PackingListGenerator: React.FC<ListGeneratorProps> = ({ onGenerate, isLoading, trip }) => {
+const PackingListGenerator: React.FC<ListGeneratorProps> = ({ onGenerate, isLoading, trip, lang = 'pl' }) => {
+    const dict = getDictionary(lang).packing?.generator;
     const [details, setDetails] = useState<GenerateDetails>({
         destination: '',
         days: '',
@@ -216,13 +219,13 @@ const PackingListGenerator: React.FC<ListGeneratorProps> = ({ onGenerate, isLoad
     return (
         <>
             <p className="text-slate-500 dark:text-slate-400 mb-4 text-sm">
-                {trip ? 'Dane z podróży zostały automatycznie uzupełnione. Możesz je dostosować.' : 'Opisz swój wyjazd, a AI stworzy dla Ciebie spersonalizowaną listę.'}
+                {trip ? dict?.introWithTrip : dict?.intro}
             </p>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <InputField 
                     name="destination" 
-                    label={trip ? "Miasto/Cel (z podróży)" : "Cel podróży"} 
-                    placeholder="np. Kraków, Paryż" 
+                    label={trip ? dict?.destinationTrip || '' : dict?.destination || ''} 
+                    placeholder={dict?.placeholders.destination} 
                     required 
                     value={details.destination} 
                     onChange={handleChange} 
@@ -230,69 +233,69 @@ const PackingListGenerator: React.FC<ListGeneratorProps> = ({ onGenerate, isLoad
                 <div className="grid grid-cols-2 gap-4">
                     <InputField 
                         name="days" 
-                        label={trip ? "Liczba dni (wyliczona)" : "Liczba dni"} 
-                        placeholder="np. 7" 
+                        label={trip ? dict?.daysTrip || '' : dict?.days || ''} 
+                        placeholder={dict?.placeholders.days} 
                         required 
                         value={details.days} 
                         onChange={handleChange} 
                     />
-                    <InputField name="adults" label="Dorośli" placeholder="np. 2" required value={details.adults} onChange={handleChange} />
+                    <InputField name="adults" label={dict?.adults || ''} placeholder="2" required value={details.adults} onChange={handleChange} />
                 </div>
-                <InputField name="childrenAges" label="Wiek dzieci (oddzielone przecinkami)" placeholder="np. 2, 5" value={details.childrenAges} onChange={handleChange} />
+                <InputField name="childrenAges" label={dict?.childrenAges || ''} placeholder={dict?.placeholders.childrenAges} value={details.childrenAges} onChange={handleChange} />
                 {/* Only show region field if no trip data (manual entry) */}
                 {!trip && (
                     <InputField 
                         name="region" 
-                        label="Region" 
-                        placeholder="np. Europa, Azja Płd.-Wsch." 
+                        label={dict?.region || ''} 
+                        placeholder={dict?.placeholders.region} 
                         value={details.region || ''} 
                         onChange={handleChange} 
                     />
                 )}
                 <InputField
                     name="travelStyle"
-                    label="Styl podróży"
+                    label={dict?.travelStyle || ''}
                     as="select"
-                    options={['Standardowy', 'Budżetowy (plecak)', 'Rodzinny (komfort)', 'Luksusowy', 'Biznesowy', 'Przygoda (outdoor)']}
+                    options={dict?.options.travelStyles || []}
                     value={details.travelStyle || 'Standardowy'}
                     onChange={handleChange}
                 />
                 <div className="grid grid-cols-2 gap-4">
                     <InputField 
                         name="season" 
-                        label={trip ? "Pora roku (z dat podróży)" : "Pora roku"} 
+                        label={trip ? `${dict?.season} (trip)` : dict?.season || ''} 
                         as="select" 
-                        options={['Wiosna', 'Lato', 'Jesień', 'Zima']} 
+                        options={dict?.options.seasons || []} 
                         value={details.season} 
                         onChange={handleChange} 
                     />
-                    <InputField name="transport" label="Transport" as="select" options={['Samochód', 'Samolot', 'Pociąg', 'Autobus']} value={details.transport} onChange={handleChange} />
+                    <InputField name="transport" label={dict?.transport || ''} as="select" options={dict?.options.transport || []} value={details.transport} onChange={handleChange} />
                 </div>
-                 <InputField name="accommodation" label="Nocleg" as="select" options={['Hotel', 'Apartament', 'Domek', 'Kemping', 'U znajomych']} value={details.accommodation} onChange={handleChange} />
+                 <InputField name="accommodation" label={dict?.lodging || ''} as="select" options={dict?.options.lodging || []} value={details.accommodation} onChange={handleChange} />
                 <InputField 
                     name="activities" 
-                    label={trip && extractActivitiesFromItinerary(trip) ? "Planowane aktywności (z itinerarium)" : "Planowane aktywności"} 
+                    label={trip && extractActivitiesFromItinerary(trip) ? (dict?.activitiesFromItinerary || '') : (dict?.activities || '')} 
                     as="textarea" 
-                    placeholder="np. trekking, plażowanie, praca zdalna" 
+                    placeholder={dict?.placeholders.activities} 
                     value={details.activities} 
                     onChange={handleChange} 
                 />
-                <InputField name="special" label="Uwagi specjalne" as="textarea" placeholder="np. ograniczenia bagażu, alergie" value={details.special} onChange={handleChange} />
+                <InputField name="special" label={dict?.special || ''} as="textarea" placeholder={dict?.placeholders.special} value={details.special} onChange={handleChange} />
 
                 <button
                     type="submit"
                     disabled={isLoading}
                     className="w-full flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 disabled:cursor-not-allowed transition-colors"
                 >
-                    {isLoading ? (
+                                        {isLoading ? (
                         <>
                           <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          Generowanie...
+                                                    {dict?.submitting}
                         </>
-                    ) : 'Generuj listę'}
+                                        ) : dict?.submit}
                 </button>
             </form>
         </>

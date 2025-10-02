@@ -640,7 +640,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                       </TabsContent>
 
                       <TabsContent value="packing" className="p-0 m-0 min-h-full">
-                        <PackingAssistant tripId={selectedTrip.id} trip={selectedTrip} />
+                        <PackingAssistant tripId={selectedTrip.id} trip={selectedTrip} lang={lang} />
                       </TabsContent>
 
                       <TabsContent value="settings" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
