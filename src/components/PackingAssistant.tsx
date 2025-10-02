@@ -114,17 +114,35 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [isBulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [isRegenerateModalOpen, setRegenerateModalOpen] = useState(false);
+  const [isShareOpen, setShareOpen] = useState(false);
+  const [shareCreating, setShareCreating] = useState(false);
+  const [shareAllowEdits, setShareAllowEdits] = useState(true);
+  const [shareExpiryHours, setShareExpiryHours] = useState('');
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+  const shareDict = dictionary?.share;
+  // Scroll lock when share modal open
+  React.useEffect(() => {
+    if (!isShareOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isShareOpen]);
   // Regeneration modal UI stage: 'form' | 'loading' | 'preview'
   const [regenStage, setRegenStage] = useState<'form' | 'loading' | 'preview'>('form');
   const isRegenLocked = regenStage === 'loading';
 
   // Prevent ESC and background scroll / clicks during locked state
   React.useEffect(() => {
-    if (!isRegenerateModalOpen || !isRegenLocked) return;
+    if (!isRegenerateModalOpen) return;
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
+        if (isRegenLocked) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
       }
     };
     document.addEventListener('keydown', handleKey, true);
@@ -488,12 +506,11 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
           <div className="flex flex-col items-center gap-4 p-6 rounded-xl bg-white/90 dark:bg-slate-800/90 shadow-xl border border-purple-400/30">
             <div className="w-12 h-12 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
             <p className="text-sm font-medium text-slate-700 dark:text-slate-200 text-center max-w-xs">
-              {lang === 'pl'
-                ? 'AI generuje nową listę. Proszę nie zamykaj ani nie odświeżaj strony...'
-                : 'AI is generating a new list. Please do not close or refresh the page...'}
+              {regenDict?.loadingOverlay?.message ||
+                'AI is generating a new list. Please do not close or refresh the page...'}
             </p>
             <p className="text-[11px] uppercase tracking-wide text-purple-600 dark:text-purple-300 font-semibold">
-              {lang === 'pl' ? 'Zabezpieczenie kosztów' : 'Cost protection'}
+              {regenDict?.loadingOverlay?.costProtection || 'Cost protection'}
             </p>
           </div>
         </div>
@@ -520,12 +537,23 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
                 className="inline-flex items-center gap-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow px-5 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-400"
               >
                 <span className="text-lg leading-none">♻</span>
-                <span>{regenDict?.button || (lang === 'pl' ? 'Re-generuj (AI)' : 'Re-generate (AI)')}</span>
+                <span>{regenDict?.button || 'Re-generate (AI)'}</span>
                 <span className="text-[10px] bg-purple-500/60 px-2 py-0.5 rounded-full">
                   {(listMeta?.regenerationCount ?? 0) + 1}/2
                 </span>
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => {
+                setShareOpen(true);
+                setShareCopied(false);
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-teal-600 hover:bg-teal-700 text-white shadow px-5 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-400"
+            >
+              <span className="text-lg leading-none">🔗</span>
+              <span>{shareDict?.button || 'Share'}</span>
+            </button>
             <button
               type="button"
               onClick={() => setAddModalOpen(true)}
@@ -666,7 +694,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0h8m-9 0h10l-1-3H9l-1 3z"
                 />
               </svg>
-              {lang === 'pl' ? 'Usuń całą listę' : 'Delete entire list'}
+              {dictionary?.bulkDelete?.openButton || 'Delete entire list'}
             </button>
           </div>
         </div>
@@ -676,7 +704,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/55 backdrop-blur-sm"
         >
           <div className="w-full max-w-md rounded-lg bg-white dark:bg-slate-800 border border-red-500/30 shadow-xl relative">
             <div className="p-5 space-y-4">
@@ -693,12 +721,11 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
                 </div>
                 <div className="flex-1">
                   <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    {lang === 'pl' ? 'Potwierdź usunięcie listy' : 'Confirm list deletion'}
+                    {dictionary?.bulkDelete?.title || 'Confirm list deletion'}
                   </h2>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {lang === 'pl'
-                      ? 'Ta akcja usunie wszystkie przedmioty, checklistę oraz kategorie (poza domyślnymi). Tej operacji nie można cofnąć. Czy na pewno chcesz kontynuować?'
-                      : 'This will remove all packing items, checklist entries and reset categories to defaults. This action cannot be undone. Are you sure you want to proceed?'}
+                    {dictionary?.bulkDelete?.body ||
+                      'This will remove all packing items, checklist entries and reset categories to defaults. This action cannot be undone. Are you sure you want to proceed?'}
                   </p>
                 </div>
               </div>
@@ -708,7 +735,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
                   onClick={() => setBulkDeleteOpen(false)}
                   className="inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  {lang === 'pl' ? 'Anuluj' : 'Cancel'}
+                  {dictionary?.confirmation?.cancel || dictAll.ui?.common.cancel || 'Cancel'}
                 </button>
                 <button
                   type="button"
@@ -726,7 +753,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0h8m-9 0h10l-1-3H9l-1 3z"
                     />
                   </svg>
-                  {lang === 'pl' ? 'Usuń wszystko' : 'Delete all'}
+                  {dictionary?.bulkDelete?.deleteAll || 'Delete all'}
                 </button>
               </div>
             </div>
@@ -747,106 +774,236 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
       )}
       {isRegenerateModalOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-slate-950/70"
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-2xl bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 relative">
-            {regenStage !== 'loading' && (
-              <button
-                onClick={() => {
-                  if (regenStage === 'preview') {
-                    discardRegeneratedPreview();
-                  }
-                  setRegenerateModalOpen(false);
-                }}
-                className="absolute top-2 right-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                aria-label="Close"
-              >
-                ✕
-              </button>
-            )}
-            <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-100">
-              {regenDict?.title || (lang === 'pl' ? 'Re-generuj listę' : 'Re-generate list')}
-            </h3>
-            {regenStage === 'form' && (
-              <PackingListGenerator
-                onGenerate={async (d) => {
-                  try {
-                    setRegenStage('loading');
-                    await regenerateList(d);
-                    setRegenStage('preview');
-                  } catch (e) {
-                    showToast(
-                      (e as Error).message ||
-                        (lang === 'pl' ? 'Błąd podczas regeneracji listy' : 'Error regenerating list'),
-                      'error'
-                    );
-                    setRegenStage('form');
-                  }
-                }}
-                isLoading={regenStage !== 'form' || isLoading}
-                trip={trip}
-                regenerateMode
-                uiLang={lang}
-              />
-            )}
-            {regenStage === 'loading' && (
-              <div
-                className="flex flex-col items-center justify-center gap-4 py-12 relative"
-                role="status"
-                aria-busy="true"
-              >
-                <div className="w-10 h-10 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
-                <p className="text-sm text-slate-600 dark:text-slate-300">
-                  {lang === 'pl' ? 'Generowanie nowej listy...' : 'Generating new list...'}
-                </p>
-                <span className="sr-only">{lang === 'pl' ? 'Proszę czekać' : 'Please wait'}</span>
-              </div>
-            )}
-            {regenStage === 'preview' && regeneratedPreview && regeneratedPreview.length > 0 && (
-              <div className="space-y-4">
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {lang === 'pl'
-                    ? 'Nowa lista została wygenerowana. Możesz dodać całość albo wybrane pozycje.'
-                    : 'A new list has been generated. You can add all or select individual items.'}
-                </p>
-                <PackingRegenerationPreview
-                  items={regeneratedPreview}
-                  onAddAll={() => {
-                    applyRegeneratedPreview('all');
+          <div className="w-full max-w-3xl bg-gradient-to-br from-slate-800 via-slate-850 to-slate-900 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950 rounded-2xl shadow-2xl border border-slate-700/60 relative overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none opacity-[0.07] bg-[radial-gradient(circle_at_30%_20%,#6366f1,transparent_60%),radial-gradient(circle_at_70%_80%,#8b5cf6,transparent_65%)]" />
+            <div className="relative p-6 max-h-[80vh] flex flex-col">
+              {regenStage !== 'loading' && (
+                <button
+                  onClick={() => {
+                    if (regenStage === 'preview') {
+                      discardRegeneratedPreview();
+                    }
                     setRegenerateModalOpen(false);
                   }}
-                  onDiscard={() => {
-                    discardRegeneratedPreview();
-                    setRegenStage('form');
+                  className="absolute top-3 right-3 text-slate-400 hover:text-slate-200 transition-colors"
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              )}
+              <h3 className="text-xl font-semibold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 tracking-tight">
+                {regenDict?.title || 'Re-generate list'}
+              </h3>
+              {regenStage === 'form' && (
+                <PackingListGenerator
+                  onGenerate={async (d) => {
+                    try {
+                      setRegenStage('loading');
+                      await regenerateList(d);
+                      setRegenStage('preview');
+                    } catch (e) {
+                      showToast(
+                        (e as Error).message ||
+                          (lang === 'pl' ? 'Błąd podczas regeneracji listy' : 'Error regenerating list'),
+                        'error'
+                      );
+                      setRegenStage('form');
+                    }
                   }}
-                  onAddSingle={(id) => addSingleFromPreview(id)}
+                  isLoading={regenStage !== 'form' || isLoading}
+                  trip={trip}
+                  regenerateMode
+                  uiLang={lang}
                 />
-                <div className="flex justify-end gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      discardRegeneratedPreview();
-                      setRegenerateModalOpen(false);
-                    }}
-                    className="px-4 py-2 text-sm font-medium rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100"
-                  >
-                    {lang === 'pl' ? 'Zamknij' : 'Close'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      applyRegeneratedPreview('all');
-                      setRegenerateModalOpen(false);
-                    }}
-                    className="px-4 py-2 text-sm font-semibold rounded-md bg-purple-600 hover:bg-purple-700 text-white shadow"
-                  >
-                    {regenDict?.addAll || (lang === 'pl' ? 'Dodaj wszystkie' : 'Add all')}
-                  </button>
+              )}
+              {regenStage === 'loading' && (
+                <div
+                  className="flex flex-col items-center justify-center gap-5 py-16 relative"
+                  role="status"
+                  aria-busy="true"
+                >
+                  <div className="relative">
+                    <div className="w-14 h-14 rounded-full border-4 border-indigo-400/30 border-t-indigo-400 animate-spin" />
+                    <div className="absolute inset-0 rounded-full border-4 border-transparent border-b-purple-500 animate-spin-slow" />
+                  </div>
+                  <p className="text-sm text-slate-300 font-medium tracking-wide">
+                    {regenDict?.generatingNewList || 'Generating new list...'}
+                  </p>
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-indigo-400/80">AI</p>
+                  <span className="sr-only">{dictAll.ui?.common.pleaseWait || 'Please wait'}</span>
                 </div>
+              )}
+              {regenStage === 'preview' && regeneratedPreview && regeneratedPreview.length > 0 && (
+                <div className="space-y-5 overflow-hidden flex-1 flex flex-col">
+                  <p className="text-sm text-slate-300">
+                    {regenDict?.previewIntro ||
+                      'A new list has been generated. You can add all or select individual items.'}
+                  </p>
+                  <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
+                    <PackingRegenerationPreview
+                      items={regeneratedPreview}
+                      onAddAll={() => {
+                        applyRegeneratedPreview('all');
+                        setRegenerateModalOpen(false);
+                      }}
+                      onDiscard={() => {
+                        discardRegeneratedPreview();
+                        setRegenStage('form');
+                      }}
+                      onAddSingle={(id) => addSingleFromPreview(id)}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-3 pt-2 border-t border-slate-600/40">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        discardRegeneratedPreview();
+                        setRegenerateModalOpen(false);
+                      }}
+                      className="px-4 py-2 text-sm font-medium rounded-md bg-slate-700/70 hover:bg-slate-600 text-slate-200"
+                    >
+                      {dictAll.ui?.common.close || 'Close'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        applyRegeneratedPreview('all');
+                        setRegenerateModalOpen(false);
+                      }}
+                      className="px-4 py-2 text-sm font-semibold rounded-md bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white shadow"
+                    >
+                      {regenDict?.addAll || 'Add all'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {isShareOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        >
+          <div className="w-full max-w-md rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 shadow-xl relative">
+            <button
+              onClick={() => setShareOpen(false)}
+              className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              aria-label={dictAll.ui?.common.close || 'Close'}
+            >
+              ✕
+            </button>
+            <div className="p-6 space-y-4">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {shareDict?.title || 'Share packing list'}
+              </h2>
+              <div className="space-y-3">
+                <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={shareAllowEdits}
+                    onChange={(e) => setShareAllowEdits(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-teal-600 focus:ring-teal-500"
+                  />
+                  <span>
+                    {shareDict?.allowEdits || 'Allow edits'}
+                    {shareDict?.allowEditsHelp && (
+                      <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {shareDict.allowEditsHelp}
+                      </span>
+                    )}
+                  </span>
+                </label>
+                <label className="block text-sm text-slate-700 dark:text-slate-300">
+                  <span>{shareDict?.expiryLabel || 'Expiry (hours, optional)'}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={shareExpiryHours}
+                    onChange={(e) => setShareExpiryHours(e.target.value)}
+                    placeholder={shareDict?.expiryLabel || 'Expiry (hours, optional)'}
+                    className="mt-1 w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  />
+                  {shareDict?.expiryHelp && (
+                    <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {shareDict.expiryHelp}
+                    </span>
+                  )}
+                </label>
+                {shareUrl && (
+                  <div className="rounded-md bg-slate-100 dark:bg-slate-700 p-3 text-xs break-all text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600">
+                    {shareUrl}
+                  </div>
+                )}
               </div>
-            )}
+              <div className="flex flex-wrap gap-3 justify-end pt-2">
+                {!shareUrl && (
+                  <button
+                    type="button"
+                    disabled={shareCreating}
+                    onClick={async () => {
+                      setShareCreating(true);
+                      setShareCopied(false);
+                      try {
+                        const body: Record<string, unknown> = { canModify: shareAllowEdits, lang };
+                        const hrs = parseInt(shareExpiryHours, 10);
+                        if (!Number.isNaN(hrs) && hrs > 0) body.expiresInHours = hrs;
+                        const res = await fetch(`/api/trips/${tripId}/packing/share`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          credentials: 'include',
+                          body: JSON.stringify(body),
+                        });
+                        if (!res.ok) throw new Error('Share failed');
+                        const data = await res.json();
+                        setShareUrl(data.url);
+                        showToast(shareDict?.success || 'Link created', 'success');
+                      } catch (e) {
+                        showToast(shareDict?.error || (e as Error).message || 'Share failed', 'error');
+                      } finally {
+                        setShareCreating(false);
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 rounded-md bg-teal-600 hover:bg-teal-500 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  >
+                    {shareCreating ? shareDict?.creating || 'Creating...' : shareDict?.create || 'Create link'}
+                  </button>
+                )}
+                {shareUrl && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(shareUrl);
+                        setShareCopied(true);
+                        setTimeout(() => setShareCopied(false), 2000);
+                      } catch {
+                        // ignore clipboard errors (e.g. permissions)
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 rounded-md bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  >
+                    {shareCopied ? shareDict?.copied || 'Copied!' : shareDict?.copy || 'Copy link'}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShareOpen(false);
+                    setShareUrl(null);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-sm font-medium px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                >
+                  {dictAll.ui?.common.close || 'Close'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
