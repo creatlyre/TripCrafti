@@ -1,5 +1,4 @@
-
-import type { ItineraryPreferences } from "../../types";
+import type { ItineraryPreferences } from '../../types';
 
 /**
  * Creates an advanced, structured prompt for generating a travel itinerary.
@@ -20,9 +19,13 @@ export function createAdvancedItineraryPrompt(
   // Dynamic style guidance
   const style = preferences.travelStyle;
   const styleActivityRange: Record<string, { min: number; max: number; description: string }> = {
-    Relaxed: { min: 3, max: 4, description: "Gentle pacing, more downtime, earliest typical start 09:00." },
-    Balanced: { min: 4, max: 6, description: "Moderate pacing; blend of highlights, culture, food, light exploration." },
-    Intense: { min: 6, max: 8, description: "High-energy coverage; efficient sequencing; earliest start 08:00." },
+    Relaxed: { min: 3, max: 4, description: 'Gentle pacing, more downtime, earliest typical start 09:00.' },
+    Balanced: {
+      min: 4,
+      max: 6,
+      description: 'Moderate pacing; blend of highlights, culture, food, light exploration.',
+    },
+    Intense: { min: 6, max: 8, description: 'High-energy coverage; efficient sequencing; earliest start 08:00.' },
   } as const;
   const range = styleActivityRange[style];
 
@@ -35,13 +38,14 @@ export function createAdvancedItineraryPrompt(
     if (preferences.adultsCount && preferences.adultsCount > 2) {
       return `Group of ${preferences.adultsCount} adults; may include shared culinary, cultural, mild nightlife aligned with style.`;
     }
-      return 'Adult-focused trip (no children).';
+    return 'Adult-focused trip (no children).';
   })();
 
   const interestsList = preferences.interests.join(', ');
-  const distanceConstraint = preferences.maxTravelDistanceKm && (preferences as any).lodgingCoords
-    ? `At least 85% of activities each day must be within a ${preferences.maxTravelDistanceKm} km radius of lodging coordinates (lat ${(preferences as any).lodgingCoords.lat}, lon ${(preferences as any).lodgingCoords.lon}). At most one exception per day; if exception add phrase \"Outside radius\" at start of description.`
-    : 'No explicit distance radius constraint.';
+  const distanceConstraint =
+    preferences.maxTravelDistanceKm && (preferences as any).lodgingCoords
+      ? `At least 85% of activities each day must be within a ${preferences.maxTravelDistanceKm} km radius of lodging coordinates (lat ${(preferences as any).lodgingCoords.lat}, lon ${(preferences as any).lodgingCoords.lon}). At most one exception per day; if exception add phrase \"Outside radius\" at start of description.`
+      : 'No explicit distance radius constraint.';
 
   return `
 <prompt>

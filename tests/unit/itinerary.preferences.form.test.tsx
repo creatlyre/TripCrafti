@@ -1,6 +1,8 @@
-import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import React from 'react';
+
+import { describe, it, expect, vi } from 'vitest';
+
 import { ItineraryPreferencesFormEnhanced } from '../../src/components/itinerary/ItineraryPreferencesFormEnhanced';
 
 // Minimal dictionary dependency shim via manual mock (could alternatively mock getDictionary)
@@ -17,21 +19,21 @@ vi.mock('../../src/lib/i18n', () => ({
       budgetOptions: [
         { value: 'Low', label: 'Low' },
         { value: 'Mid-Range', label: 'Mid' },
-        { value: 'High', label: 'High' }
+        { value: 'High', label: 'High' },
       ],
       travelStyles: [
         { value: 'Relaxed', label: 'Relaxed' },
         { value: 'Balanced', label: 'Balanced' },
-        { value: 'Intense', label: 'Intense' }
+        { value: 'Intense', label: 'Intense' },
       ],
       interests: [
         { key: 'history', label: 'History' },
-        { key: 'food', label: 'Food' }
+        { key: 'food', label: 'Food' },
       ],
       submit: 'Generate',
-      generating: 'Generating...'
-    }
-  })
+      generating: 'Generating...',
+    },
+  }),
 }));
 
 describe('ItineraryPreferencesFormEnhanced', () => {

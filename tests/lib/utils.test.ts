@@ -1,5 +1,6 @@
-import { cn } from '@/lib/utils';
 import { describe, it, expect } from 'vitest';
+
+import { cn } from '@/lib/utils';
 
 describe('cn utility', () => {
   it('merges basic classes', () => {
@@ -20,7 +21,8 @@ describe('cn utility', () => {
   it('handles a mix of strings, objects, and undefined values', () => {
     const hasBg = true;
     const padding = 'p-4';
-    expect(cn('font-bold', { 'bg-red-500': hasBg, 'bg-blue-500': !hasBg }, padding, undefined, null, 'mx-2')).toBe('font-bold bg-red-500 p-4 mx-2');
+    expect(cn('font-bold', { 'bg-red-500': hasBg, 'bg-blue-500': !hasBg }, padding, undefined, null, 'mx-2')).toBe(
+      'font-bold bg-red-500 p-4 mx-2'
+    );
   });
-
 });

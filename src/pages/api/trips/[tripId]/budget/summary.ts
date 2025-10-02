@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+
 import { computeDailySpendTarget } from '../../../../../lib/utils';
 
 export const prerender = false;
@@ -17,7 +18,9 @@ export const GET: APIRoute = async ({ params, locals }) => {
   const supabase = locals.supabase;
   if (!supabase) return new Response(JSON.stringify({ error: 'Supabase client not available' }), { status: 500 });
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
 
   const { data: trip, error: tripError } = await supabase
@@ -45,7 +48,10 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
   let totalSpent = 0;
   let totalSpentPrepaid = 0;
-  const byCategoryMap: Record<string, { category_id: string | null; category: string | null; planned: number | null; spent: number; }> = {};
+  const byCategoryMap: Record<
+    string,
+    { category_id: string | null; category: string | null; planned: number | null; spent: number }
+  > = {};
 
   (expenses || []).forEach((e: any) => {
     const amt = Number(e.amount_in_home_currency || 0);

@@ -1,9 +1,15 @@
 // Simple geocoding helper using OpenStreetMap Nominatim (no key required)
 // NOTE: For production consider rate limiting & user-agent header compliance.
-export interface GeoPoint { lat: number; lon: number; raw?: any }
+export interface GeoPoint {
+  lat: number;
+  lon: number;
+  raw?: any;
+}
 
 async function fetchJson(url: string) {
-  const res = await fetch(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'TripCrafti/1.0 (learning project)' } });
+  const res = await fetch(url, {
+    headers: { Accept: 'application/json', 'User-Agent': 'TripCrafti/1.0 (learning project)' },
+  });
   if (!res.ok) throw new Error('GeocodeFailed:' + res.status);
   return res.json();
 }

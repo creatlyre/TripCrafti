@@ -1,16 +1,19 @@
-import type { APIRoute } from "astro";
-import { z } from "zod";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { createAdvancedItineraryPrompt } from "../../../../lib/prompts/itineraryPrompt";
-import { geocode } from "../../../../lib/geocoding";
-import type { ItineraryPreferences } from "../../../../types";
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { APIRoute } from 'astro';
+
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from 'zod';
+
+import type { ItineraryPreferences } from '../../../../types';
+
+import { geocode } from '../../../../lib/geocoding';
+import { createAdvancedItineraryPrompt } from '../../../../lib/prompts/itineraryPrompt';
 
 export const prerender = false;
 
 const preferencesSchema = z.object({
   interests: z.array(z.string()),
-  travelStyle: z.enum(["Relaxed", "Balanced", "Intense"]),
+  travelStyle: z.enum(['Relaxed', 'Balanced', 'Intense']),
   budget: z.string(),
   language: z.string().min(2),
   adultsCount: z.number().int().min(1).max(20).optional(),
@@ -26,7 +29,7 @@ function getGenAI() {
   if (!genAI) {
     const key = import.meta.env.GEMINI_API_KEY;
     if (!key) {
-      throw new Error("Missing GEMINI_API_KEY environment variable");
+      throw new Error('Missing GEMINI_API_KEY environment variable');
     }
     genAI = new GoogleGenerativeAI(key);
   }
@@ -41,7 +44,7 @@ const MODEL_CANDIDATES = [
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
   'gemini-2.0-flash',
-  'gemini-2.0-flash-lite'
+  'gemini-2.0-flash-lite',
 ].filter(Boolean) as string[];
 
 let resolvedModel: string | null = null; // cache the first working model for subsequent requests
@@ -49,8 +52,13 @@ let resolvedModel: string | null = null; // cache the first working model for su
 function withTimeout<T>(p: Promise<T>, ms: number, label = 'Timeout'): Promise<T> {
   return new Promise((resolve, reject) => {
     const t = setTimeout(() => reject(new Error(label)), ms);
-    p.then(v => { clearTimeout(t); resolve(v); })
-     .catch(e => { clearTimeout(t); reject(e); });
+    p.then((v) => {
+      clearTimeout(t);
+      resolve(v);
+    }).catch((e) => {
+      clearTimeout(t);
+      reject(e);
+    });
   });
 }
 
@@ -58,7 +66,10 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
   if (resolvedModel) {
     console.log('[itinerary-ai] Using cached model', resolvedModel);
     const model = genAIInstance.getGenerativeModel({ model: resolvedModel });
-    return { modelName: resolvedModel, result: await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout') };
+    return {
+      modelName: resolvedModel,
+      result: await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout'),
+    };
   }
   let lastError: any = null;
   for (const candidate of MODEL_CANDIDATES) {
@@ -74,14 +85,16 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
       continue;
     }
   }
-  throw new Error('AllModelsFailed: ' + MODEL_CANDIDATES.join(', ') + ' lastError=' + (lastError?.message || lastError));
+  throw new Error(
+    'AllModelsFailed: ' + MODEL_CANDIDATES.join(', ') + ' lastError=' + (lastError?.message || lastError)
+  );
 }
 
 function json(data: unknown, init: number | ResponseInit = 200) {
   return new Response(JSON.stringify(data), {
-    status: typeof init === "number" ? init : init.status,
-    headers: { "content-type": "application/json" },
-    ...(typeof init === "object" ? init : {}),
+    status: typeof init === 'number' ? init : init.status,
+    headers: { 'content-type': 'application/json' },
+    ...(typeof init === 'object' ? init : {}),
   });
 }
 
@@ -90,13 +103,13 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   const { supabase } = locals;
 
   if (!tripId) {
-    return json({ error: "Trip ID is required" }, 400);
+    return json({ error: 'Trip ID is required' }, 400);
   }
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return json({ error: "Unauthorized" }, 401);
+  if (!user) return json({ error: 'Unauthorized' }, 401);
 
   // 1. Validate user preferences from request body (with safe JSON parse)
   let preferences: ItineraryPreferences;
@@ -105,24 +118,24 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     try {
       body = await request.json();
     } catch (parseErr) {
-      return json({ error: "InvalidJSON", details: "Request body is not valid JSON" }, 400);
+      return json({ error: 'InvalidJSON', details: 'Request body is not valid JSON' }, 400);
     }
     preferences = preferencesSchema.parse(body);
   } catch (e) {
     const error = e as { issues?: unknown; message: string };
-    return json({ error: "ValidationError", details: error.issues ?? error.message }, 400);
+    return json({ error: 'ValidationError', details: error.issues ?? error.message }, 400);
   }
 
   // 2. Verify trip ownership and get trip details
   const { data: trip, error: tripError } = await supabase
-    .from("trips")
-    .select("destination, start_date, end_date, budget, lodging, lodging_lat, lodging_lon")
-    .eq("id", tripId)
-    .eq("user_id", user.id)
+    .from('trips')
+    .select('destination, start_date, end_date, budget, lodging, lodging_lat, lodging_lon')
+    .eq('id', tripId)
+    .eq('user_id', user.id)
     .single();
 
   if (tripError || !trip) {
-    return json({ error: "Trip not found or you do not have access." }, 404);
+    return json({ error: 'Trip not found or you do not have access.' }, 404);
   }
 
   // 3. Determine final budget and create final preferences object
@@ -137,15 +150,21 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 4000);
-      const geo = await geocode(`${preferences.hotelNameOrUrl} ${preferences?.interests?.length ? '' : trip.destination}`);
+      const geo = await geocode(
+        `${preferences.hotelNameOrUrl} ${preferences?.interests?.length ? '' : trip.destination}`
+      );
       clearTimeout(timeout);
       if (geo) {
         finalPreferences.lodgingCoords = { lat: geo.lat, lon: geo.lon };
         // If trip doesn't yet have lodging stored, update it (best-effort, non-blocking)
         if (!trip.lodging) {
-          supabase.from('trips').update({ lodging: preferences.hotelNameOrUrl, lodging_lat: geo.lat, lodging_lon: geo.lon }).eq('id', tripId).then(r => {
-            if (r.error) console.warn('[itinerary] failed to backfill lodging on trip', r.error.message);
-          });
+          supabase
+            .from('trips')
+            .update({ lodging: preferences.hotelNameOrUrl, lodging_lat: geo.lat, lodging_lon: geo.lon })
+            .eq('id', tripId)
+            .then((r) => {
+              if (r.error) console.warn('[itinerary] failed to backfill lodging on trip', r.error.message);
+            });
         }
       }
     } catch (e) {
@@ -154,22 +173,25 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   }
 
   try {
-  // 4. Create a record in itinerary table (single canonical lowercase name)
-  const tableToUse = "generateditineraries";
+    // 4. Create a record in itinerary table (single canonical lowercase name)
+    const tableToUse = 'generateditineraries';
 
     const { data: itineraryRecord, error: insertError } = await supabase
       .from(tableToUse)
       .insert({
         trip_id: tripId,
         preferences_json: finalPreferences,
-        status: "GENERATING",
+        status: 'GENERATING',
       })
-      .select("id")
+      .select('id')
       .single();
 
     if (insertError || !itineraryRecord) {
-      console.error("generateditineraries insert error", insertError);
-      return json({ error: "InsertFailed", details: insertError?.message, hint: insertError?.hint, code: insertError?.code }, 500);
+      console.error('generateditineraries insert error', insertError);
+      return json(
+        { error: 'InsertFailed', details: insertError?.message, hint: insertError?.hint, code: insertError?.code },
+        500
+      );
     }
 
     const itineraryId = itineraryRecord.id;
@@ -181,17 +203,16 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       preferences: finalPreferences,
       supabase,
       language: finalPreferences.language,
-      tableName: tableToUse
-    })
-      .catch(err => {
-        console.error("generateItinerary top-level rejection", err);
-      });
+      tableName: tableToUse,
+    }).catch((err) => {
+      console.error('generateItinerary top-level rejection', err);
+    });
 
     // Immediately return a response to the client
-    return json({ message: "Itinerary generation started.", itineraryId }, 202);
+    return json({ message: 'Itinerary generation started.', itineraryId }, 202);
   } catch (err: any) {
     const msg = err?.message || String(err);
-    return json({ error: "UnhandledServerError", details: msg }, 500);
+    return json({ error: 'UnhandledServerError', details: msg }, 500);
   }
 };
 
@@ -206,23 +227,26 @@ interface GenerateArgs {
 
 async function generateItinerary({ itineraryId, trip, preferences, supabase, language, tableName }: GenerateArgs) {
   try {
-  const genAIInstance = getGenAI();
-  const prompt = createAdvancedItineraryPrompt(trip, preferences, language);
+    const genAIInstance = getGenAI();
+    const prompt = createAdvancedItineraryPrompt(trip, preferences, language);
 
-  console.time('[itinerary-ai] total_generation');
-  const { modelName, result } = await generateWithFallback(genAIInstance, prompt);
-  const response = await result.response;
-  console.log('[itinerary-ai] Model success', modelName);
+    console.time('[itinerary-ai] total_generation');
+    const { modelName, result } = await generateWithFallback(genAIInstance, prompt);
+    const response = await result.response;
+    console.log('[itinerary-ai] Model success', modelName);
     const text = response.text();
 
     // Clean the response to get valid JSON
-    const jsonString = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const jsonString = text
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
     let generatedPlan: any = null;
     try {
       generatedPlan = JSON.parse(jsonString);
     } catch (parseErr) {
-      console.error("Failed to parse model JSON response", { raw: text.slice(0, 400) });
-      throw new Error("ModelReturnedInvalidJSON");
+      console.error('Failed to parse model JSON response', { raw: text.slice(0, 400) });
+      throw new Error('ModelReturnedInvalidJSON');
     }
 
     // Basic token estimation (SDK may expose usage metrics in future; placeholder logic)
@@ -234,26 +258,25 @@ async function generateItinerary({ itineraryId, trip, preferences, supabase, lan
       .from(tableName)
       .update({
         generated_plan_json: generatedPlan,
-        status: "COMPLETED",
+        status: 'COMPLETED',
         input_tokens: inputTokens,
         thought_tokens: thoughtTokens,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", itineraryId);
+      .eq('id', itineraryId);
     console.timeEnd('[itinerary-ai] total_generation');
     if (updateOk.error) {
       console.error('[itinerary-ai] Failed to update itinerary after generation', updateOk.error);
     }
-
   } catch (error) {
-    console.error("Error generating itinerary:", error);
+    console.error('Error generating itinerary:', error);
     const failUpdate = await supabase
       .from(tableName)
       .update({
-        status: "FAILED",
+        status: 'FAILED',
         updated_at: new Date().toISOString(),
       })
-      .eq("id", itineraryId);
+      .eq('id', itineraryId);
     if (failUpdate.error) {
       console.error('[itinerary-ai] Failed to mark FAILED', failUpdate.error);
     }

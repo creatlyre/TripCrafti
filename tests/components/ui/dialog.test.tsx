@@ -1,5 +1,9 @@
 import { render, screen } from '@testing-library/react';
+
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect } from 'vitest';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogTrigger,
@@ -9,8 +13,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { describe, it, expect } from 'vitest';
 
 describe('Dialog Components', () => {
   const TestDialog = () => (
@@ -59,7 +61,7 @@ describe('Dialog Components', () => {
 
     // There are two "Close" buttons. We want the one that is an icon.
     const closeButtons = screen.getAllByRole('button', { name: /close/i });
-    const iconButton = closeButtons.find(btn => btn.querySelectorAll('svg').length > 0);
+    const iconButton = closeButtons.find((btn) => btn.querySelectorAll('svg').length > 0);
     expect(iconButton).toBeInTheDocument();
     await user.click(iconButton!);
 

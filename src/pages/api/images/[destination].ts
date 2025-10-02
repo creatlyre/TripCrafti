@@ -27,7 +27,6 @@ async function fetchUnsplashImage(query: string, accessKey: string) {
   return data.results[0] || null;
 }
 
-
 /**
  * API route to fetch a landscape image with a cascading fallback system.
  * 1. Tries the specific destination.
@@ -75,7 +74,7 @@ export const GET: APIRoute = async ({ params }) => {
       console.log(`All specific searches failed for "${destination}", trying generic fallback: "travel"`);
       photo = await fetchUnsplashImage('travel', unsplashAccessKey);
     }
-    
+
     // --- End of Fallback Logic ---
 
     if (!photo) {
@@ -103,7 +102,6 @@ export const GET: APIRoute = async ({ params }) => {
         'Cache-Control': 'public, max-age=86400, immutable', // Cache for 1 day
       },
     });
-
   } catch (error: any) {
     console.error('An unexpected error occurred while fetching an image:', error.message);
     return new Response(JSON.stringify({ error: 'Failed to fetch image from provider' }), {

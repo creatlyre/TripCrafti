@@ -1,5 +1,6 @@
+import { describe, it, expect, test } from 'vitest';
+
 import { getDictionary, dictionaries } from '@/lib/i18n';
-import { describe, it, expect } from 'vitest';
 
 describe('getDictionary', () => {
   it('returns the English dictionary when "en" is passed', () => {
@@ -30,3 +31,11 @@ describe('getDictionary', () => {
     expect(dictForUndefined).toEqual(dictionaries.pl);
   });
 });
+
+// NOTE: Heuristic DOM scan for hardcoded strings removed.
+// Rationale: Too many false positives and noisy skips. Preferred future approach:
+//  1. Introduce an ESLint custom rule that flags JSXText / string literals in
+//     components outside an allowed list (e.g. marketing entry points) unless wrapped
+//     by a translation helper (t(), dictionary.* access, etc.).
+//  2. Maintain explicit translation dictionary coverage via unit tests (the ones above).
+//  3. Optionally add a build step to extract untranslated literals (AST-based) if needed.

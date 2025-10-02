@@ -1,7 +1,9 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+
 import userEvent from '@testing-library/user-event';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { describe, it, expect, vi } from 'vitest';
+
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 describe('Tabs Components', () => {
   const TestTabs = ({ onValueChange }: { onValueChange?: (value: string) => void }) => (
@@ -64,7 +66,9 @@ describe('Tabs Components', () => {
   it('renders TabsList with correct classes', () => {
     render(<TabsList className="custom-list">List</TabsList>);
     const listElement = screen.getByText('List');
-    expect(listElement).toHaveClass('inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground');
+    expect(listElement).toHaveClass(
+      'inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground'
+    );
     expect(listElement).toHaveClass('custom-list');
   });
 });

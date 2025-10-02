@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+
 import { describe, it, expect } from 'vitest';
+
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 
 describe('Card Components', () => {
   describe('Card', () => {
@@ -65,8 +67,6 @@ describe('Card Components', () => {
       const contentElement = screen.getByText('Content');
       expect(contentElement).toHaveClass('p-6 pt-0');
     });
-
-
 
     it('applies custom className', () => {
       render(<CardContent className="custom-class">Content</CardContent>);

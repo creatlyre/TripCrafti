@@ -1,7 +1,8 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { getDictionary } from "@/lib/i18n";
-import { TripDashboard } from "@/components/TripDashboard.tsx";
+import Layout from '../layouts/Layout.astro';
+
+import { TripDashboard } from '@/components/TripDashboard.tsx';
+import { getDictionary } from '@/lib/i18n';
 export const prerender = false;
 
 const lang = Astro.locals.lang;
@@ -9,14 +10,16 @@ const dict = getDictionary(lang);
 // console.log("SESSION IN APP.ASTRO", Astro.locals.session);
 function switchUrl(target: string) {
   const url = new URL(Astro.request.url);
-  url.searchParams.set("lang", target);
-  return url.pathname + "?" + url.searchParams.toString();
+  url.searchParams.set('lang', target);
+  return url.pathname + '?' + url.searchParams.toString();
 }
 ---
 
-<Layout title={(lang === "pl" ? "Panel podróży" : "Trips Dashboard") + " – TripCrafti"}>
+<Layout title={(lang === 'pl' ? 'Panel podróży' : 'Trips Dashboard') + ' – TripCrafti'}>
   <main class="min-h-screen flex flex-col bg-slate-950 text-slate-50">
-    <header class="flex items-center justify-between px-6 py-4 border-b border-slate-800/60 sticky top-0 bg-slate-950/80 backdrop-blur-sm z-20">
+    <header
+      class="flex items-center justify-between px-6 py-4 border-b border-slate-800/60 sticky top-0 bg-slate-950/80 backdrop-blur-sm z-20"
+    >
       <a href="/" class="flex items-center gap-2 text-slate-200 hover:text-white transition">
         <span
           class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 font-bold text-white shadow"
@@ -26,13 +29,13 @@ function switchUrl(target: string) {
       </a>
       <nav aria-label={dict.langSwitcher.label} class="flex items-center gap-2">
         <a
-          href={switchUrl("pl")}
-          class={`text-xs font-medium px-2.5 py-1 rounded-md border transition ${lang === "pl" ? "border-indigo-400/60 text-white bg-slate-800/60" : "border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50"}`}
+          href={switchUrl('pl')}
+          class={`text-xs font-medium px-2.5 py-1 rounded-md border transition ${lang === 'pl' ? 'border-indigo-400/60 text-white bg-slate-800/60' : 'border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50'}`}
           >PL</a
         >
         <a
-          href={switchUrl("en")}
-          class={`text-xs font-medium px-2.5 py-1 rounded-md border transition ${lang === "en" ? "border-indigo-400/60 text-white bg-slate-800/60" : "border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50"}`}
+          href={switchUrl('en')}
+          class={`text-xs font-medium px-2.5 py-1 rounded-md border transition ${lang === 'en' ? 'border-indigo-400/60 text-white bg-slate-800/60' : 'border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50'}`}
           >EN</a
         >
       </nav>
