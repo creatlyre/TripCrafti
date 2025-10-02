@@ -247,7 +247,7 @@ export function usePacking({
         const response = await fetch('/api/ai/packing', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'generate', payload: { details } }),
+          body: JSON.stringify({ action: 'generate', payload: { details, tripId } }),
         });
 
         if (!response.ok) {
@@ -286,7 +286,7 @@ export function usePacking({
         setIsLoading(false);
       }
     },
-    [showToast]
+    [showToast, tripId]
   );
 
   // Re-generate list without replacing existing one; enforce limit (max 2 for a trip)
@@ -304,7 +304,7 @@ export function usePacking({
         const response = await fetch('/api/ai/packing', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'generate', payload: { details } }),
+          body: JSON.stringify({ action: 'generate', payload: { details, tripId } }),
         });
         if (!response.ok) {
           const err = await response.json().catch(() => ({ error: 'Failed to regenerate list' }));
@@ -356,7 +356,7 @@ export function usePacking({
         setIsLoading(false);
       }
     },
-    [listMeta, showToast]
+    [listMeta, showToast, tripId]
   );
 
   const applyRegeneratedPreview = useCallback(
@@ -454,7 +454,7 @@ export function usePacking({
         setIsLoading(false);
       }
     },
-    [packingItems]
+    [packingItems, showToast]
   );
 
   const categorizeList = useCallback(async () => {
@@ -593,7 +593,7 @@ export function usePacking({
       setCategories((prev) => [...prev, trimmedTitle]);
       setError(null);
     },
-    [categories]
+    [categories, showToast]
   );
 
   const deleteCategory = useCallback(
@@ -606,7 +606,7 @@ export function usePacking({
       setCategories((prev) => prev.filter((c) => c !== categoryToDelete));
       showToast(`Kategoria "${categoryToDelete}" usunięta.`, 'success');
     },
-    [packingItems]
+    [packingItems, showToast]
   );
 
   const updateCategory = useCallback(
@@ -629,7 +629,7 @@ export function usePacking({
       );
       showToast('Nazwa kategorii zaktualizowana.', 'success');
     },
-    [categories]
+    [categories, showToast]
   );
 
   const sortCategories = useCallback(
@@ -640,19 +640,22 @@ export function usePacking({
   );
 
   // Checklist management
-  const addChecklistItem = useCallback((task: string) => {
-    const trimmedTask = task.trim();
-    if (!trimmedTask) return;
+  const addChecklistItem = useCallback(
+    (task: string) => {
+      const trimmedTask = task.trim();
+      if (!trimmedTask) return;
 
-    const newItem: ChecklistItem = {
-      id: PackingService.generateItemId(),
-      task: trimmedTask,
-      done: false,
-    };
+      const newItem: ChecklistItem = {
+        id: PackingService.generateItemId(),
+        task: trimmedTask,
+        done: false,
+      };
 
-    setChecklistItems((prev) => [...prev, newItem]);
-    showToast('Dodano nowe zadanie do checklisty.', 'success');
-  }, []);
+      setChecklistItems((prev) => [...prev, newItem]);
+      showToast('Dodano nowe zadanie do checklisty.', 'success');
+    },
+    [showToast]
+  );
 
   const updateChecklistItem = useCallback((itemId: number, task: string) => {
     setChecklistItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, task: task.trim() } : item)));
@@ -707,7 +710,7 @@ export function usePacking({
         showToast(`Applied ${appliedChanges.length} suggestions`, 'success');
       }
     },
-    [packingItems]
+    [packingItems, showToast]
   );
 
   const clearSuggestions = useCallback(() => {

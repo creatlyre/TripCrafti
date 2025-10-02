@@ -137,7 +137,7 @@ export async function PUT({ params, request, locals }: APIContext) {
 
     // Parse and normalize request body (convert explicit nulls for optional fields)
     const rawBody = await request.json();
-    console.log('Backend request body received:', JSON.stringify(rawBody, null, 2));
+    // console.log('Backend request body received:', JSON.stringify(rawBody, null, 2));
 
     const body = {
       ...rawBody,
@@ -160,8 +160,8 @@ export async function PUT({ params, request, locals }: APIContext) {
         : rawBody.listMeta,
     };
 
-    console.log('Normalized body before validation:', JSON.stringify(body, null, 2));
-    console.log('Attempting SavedListSchema validation...');
+    // console.log('Normalized body before validation:', JSON.stringify(body, null, 2));
+    // console.log('Attempting SavedListSchema validation...');
     const validatedData = SavedListSchema.parse(body);
     console.log('Validation successful!');
     const { packingItems, checklistItems, categories, listMeta } = validatedData;

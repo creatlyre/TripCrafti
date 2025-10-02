@@ -2,6 +2,7 @@ import type { APIContext } from 'astro';
 
 import { z } from 'zod';
 
+import type { SupabaseClientType } from '@/lib/supabase';
 import type { PackingItem } from '@/types';
 
 import { AIPackingActionSchema } from '@/lib/schemas/packingSchemas';
@@ -9,7 +10,7 @@ import { generatePackingList, validatePackingList, categorizePackingList } from 
 
 export const prerender = false;
 
-export async function POST({ request }: APIContext) {
+export async function POST({ request, locals }: APIContext) {
   try {
     const body = await request.json();
 
@@ -31,6 +32,68 @@ export async function POST({ request }: APIContext) {
         const headerLang = /pl/i.test(acceptLang) ? 'Polish' : /en/i.test(acceptLang) ? 'English' : 'Polish';
         const targetLanguage = payload.details.language || headerLang;
         const generatedList = await generatePackingList(payload.details, targetLanguage);
+
+        // Persist token usage if tripId provided and we have supabase in locals
+        if (payload.tripId && locals?.supabase) {
+          try {
+            // Narrow supabase type minimally to the methods we use; avoid 'any'
+            // Narrow to Supabase client (locals augmentation done in middleware)
+            const supabase = locals.supabase as unknown as SupabaseClientType;
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+            if (user) {
+              // Ensure trip belongs to user before updating
+              const { data: tripCheck } = await supabase
+                .from('trips')
+                .select('id')
+                .eq('id', payload.tripId)
+                .eq('user_id', user.id)
+                .single();
+              if (tripCheck) {
+                const usage = generatedList.usage || {};
+                if (
+                  usage.inputTokens !== undefined ||
+                  usage.outputTokens !== undefined ||
+                  usage.totalTokens !== undefined ||
+                  usage.thoughtTokens !== undefined
+                ) {
+                  // Fetch existing token totals (nullable columns)
+                  const { data: existingTrip } = await supabase
+                    .from('trips')
+                    .select(
+                      'packing_ai_input_tokens, packing_ai_output_tokens, packing_ai_total_tokens, packing_ai_thought_tokens'
+                    )
+                    .eq('id', payload.tripId)
+                    .single();
+
+                  const currentInput = existingTrip?.packing_ai_input_tokens || 0;
+                  const currentOutput = existingTrip?.packing_ai_output_tokens || 0;
+                  const currentTotal = existingTrip?.packing_ai_total_tokens || 0;
+                  const currentThought = existingTrip?.packing_ai_thought_tokens || 0;
+
+                  await supabase
+                    .from('trips')
+                    .update({
+                      packing_ai_input_tokens:
+                        usage.inputTokens !== undefined ? currentInput + usage.inputTokens : currentInput,
+                      packing_ai_output_tokens:
+                        usage.outputTokens !== undefined ? currentOutput + usage.outputTokens : currentOutput,
+                      packing_ai_total_tokens:
+                        usage.totalTokens !== undefined ? currentTotal + usage.totalTokens : currentTotal,
+                      packing_ai_thought_tokens:
+                        usage.thoughtTokens !== undefined ? currentThought + usage.thoughtTokens : currentThought,
+                    })
+                    .eq('id', payload.tripId);
+                }
+              }
+            }
+          } catch (persistErr) {
+            // Silently ignore persistence issues (non-blocking)
+            void persistErr;
+          }
+        }
+
         return new Response(JSON.stringify(generatedList), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },

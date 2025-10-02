@@ -13,6 +13,11 @@ export interface Trip {
   lodging?: string | null;
   lodging_lat?: number | null;
   lodging_lon?: number | null;
+  // AI packing token usage (nullable until any generation occurs)
+  packing_ai_input_tokens?: number | null;
+  packing_ai_output_tokens?: number | null;
+  packing_ai_total_tokens?: number | null;
+  packing_ai_thought_tokens?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -121,7 +126,7 @@ export interface GenerateDetails {
 export interface ValidationResult {
   missing: { name: string; category: string; reason: string }[];
   remove: { name: string; reason: string }[];
-  adjust: { name: string; field: string; current: any; suggested: any; reason: string }[];
+  adjust: { name: string; field: string; current: unknown; suggested: unknown; reason: string }[];
   replace: {
     items_to_remove: string[];
     suggested_item: { name: string; category: string };

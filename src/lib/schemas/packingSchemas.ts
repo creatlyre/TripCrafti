@@ -100,6 +100,8 @@ export const AIPackingActionSchema = z.object({
       .optional(),
     items: z.array(PackingItemSchema).optional(),
     categories: z.array(z.string()).optional(),
+    // Trip context (used for persisting token usage & regeneration counters)
+    tripId: z.string().uuid().optional(),
   }),
 });
 

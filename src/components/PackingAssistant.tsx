@@ -105,6 +105,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
   // UI state
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
   const [isCategorizedView, setIsCategorizedView] = useState<boolean>(true);
+  const toggleFullScreen = () => setIsFullScreen((p) => !p);
 
   // Modal states
   const [isConfirmationModalOpen, setConfirmationModalOpen] = useState(false);
@@ -113,6 +114,48 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [isBulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [isRegenerateModalOpen, setRegenerateModalOpen] = useState(false);
+  // Regeneration modal UI stage: 'form' | 'loading' | 'preview'
+  const [regenStage, setRegenStage] = useState<'form' | 'loading' | 'preview'>('form');
+  const isRegenLocked = regenStage === 'loading';
+
+  // Prevent ESC and background scroll / clicks during locked state
+  React.useEffect(() => {
+    if (!isRegenerateModalOpen || !isRegenLocked) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    document.addEventListener('keydown', handleKey, true);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleKey, true);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isRegenLocked, isRegenerateModalOpen]);
+
+  // beforeunload protection while generation in progress
+  React.useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isRegenLocked) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    if (isRegenLocked) {
+      window.addEventListener('beforeunload', handler);
+    }
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isRegenLocked]);
+
+  // When opening regeneration modal reset stage
+  React.useEffect(() => {
+    if (isRegenerateModalOpen) {
+      setRegenStage('form');
+    }
+  }, [isRegenerateModalOpen]);
 
   // Theme state (remains client-side)
   const [theme, setTheme] = useState(() => {
@@ -139,13 +182,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
     }
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
-
-  const toggleFullScreen = () => {
-    setIsFullScreen((prev) => !prev);
-  };
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
   // Modal handlers
   const handleGenerateList = async (details: GenerateDetails) => {
@@ -399,8 +436,8 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
           suggestions.adjust.map((a) => ({
             name: a.name,
             field: a.field as 'name' | 'qty',
-            current: a.current,
-            suggested: a.suggested,
+            current: a.current as string | number,
+            suggested: a.suggested as string | number,
             reason: dictionary?.suggestions?.adjustReason
               .replace('{field}', a.field)
               .replace('{current}', String(a.current))
@@ -441,6 +478,26 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300 relative">
+      {/* Global regeneration lock overlay */}
+      {isRegenerateModalOpen && regenStage === 'loading' && (
+        <div
+          className="fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center pointer-events-auto"
+          aria-busy="true"
+          aria-live="assertive"
+        >
+          <div className="flex flex-col items-center gap-4 p-6 rounded-xl bg-white/90 dark:bg-slate-800/90 shadow-xl border border-purple-400/30">
+            <div className="w-12 h-12 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200 text-center max-w-xs">
+              {lang === 'pl'
+                ? 'AI generuje nową listę. Proszę nie zamykaj ani nie odświeżaj strony...'
+                : 'AI is generating a new list. Please do not close or refresh the page...'}
+            </p>
+            <p className="text-[11px] uppercase tracking-wide text-purple-600 dark:text-purple-300 font-semibold">
+              {lang === 'pl' ? 'Zabezpieczenie kosztów' : 'Cost protection'}
+            </p>
+          </div>
+        </div>
+      )}
       <PackingHeader theme={theme} toggleTheme={toggleTheme} actionSlot={actionSlot} />
 
       {toast && (
@@ -547,7 +604,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
                 </p>
               </div>
             )}
-            {regeneratedPreview && regeneratedPreview.length > 0 && (
+            {regeneratedPreview && regeneratedPreview.length > 0 && !isRegenerateModalOpen && (
               <div className="no-print">
                 <PackingRegenerationPreview
                   items={regeneratedPreview}
@@ -694,27 +751,102 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
           role="dialog"
           aria-modal="true"
         >
-          <div className="w-full max-w-lg bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 relative">
-            <button
-              onClick={() => setRegenerateModalOpen(false)}
-              className="absolute top-2 right-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-              aria-label="Close"
-            >
-              ✕
-            </button>
+          <div className="w-full max-w-2xl bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 relative">
+            {regenStage !== 'loading' && (
+              <button
+                onClick={() => {
+                  if (regenStage === 'preview') {
+                    discardRegeneratedPreview();
+                  }
+                  setRegenerateModalOpen(false);
+                }}
+                className="absolute top-2 right-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            )}
             <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-100">
               {regenDict?.title || (lang === 'pl' ? 'Re-generuj listę' : 'Re-generate list')}
             </h3>
-            <PackingListGenerator
-              onGenerate={(d) => {
-                regenerateList(d);
-                setRegenerateModalOpen(false);
-              }}
-              isLoading={isLoading}
-              trip={trip}
-              regenerateMode
-              uiLang={lang}
-            />
+            {regenStage === 'form' && (
+              <PackingListGenerator
+                onGenerate={async (d) => {
+                  try {
+                    setRegenStage('loading');
+                    await regenerateList(d);
+                    setRegenStage('preview');
+                  } catch (e) {
+                    showToast(
+                      (e as Error).message ||
+                        (lang === 'pl' ? 'Błąd podczas regeneracji listy' : 'Error regenerating list'),
+                      'error'
+                    );
+                    setRegenStage('form');
+                  }
+                }}
+                isLoading={regenStage !== 'form' || isLoading}
+                trip={trip}
+                regenerateMode
+                uiLang={lang}
+              />
+            )}
+            {regenStage === 'loading' && (
+              <div
+                className="flex flex-col items-center justify-center gap-4 py-12 relative"
+                role="status"
+                aria-busy="true"
+              >
+                <div className="w-10 h-10 border-4 border-purple-300 border-t-purple-600 rounded-full animate-spin" />
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  {lang === 'pl' ? 'Generowanie nowej listy...' : 'Generating new list...'}
+                </p>
+                <span className="sr-only">{lang === 'pl' ? 'Proszę czekać' : 'Please wait'}</span>
+              </div>
+            )}
+            {regenStage === 'preview' && regeneratedPreview && regeneratedPreview.length > 0 && (
+              <div className="space-y-4">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {lang === 'pl'
+                    ? 'Nowa lista została wygenerowana. Możesz dodać całość albo wybrane pozycje.'
+                    : 'A new list has been generated. You can add all or select individual items.'}
+                </p>
+                <PackingRegenerationPreview
+                  items={regeneratedPreview}
+                  onAddAll={() => {
+                    applyRegeneratedPreview('all');
+                    setRegenerateModalOpen(false);
+                  }}
+                  onDiscard={() => {
+                    discardRegeneratedPreview();
+                    setRegenStage('form');
+                  }}
+                  onAddSingle={(id) => addSingleFromPreview(id)}
+                />
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      discardRegeneratedPreview();
+                      setRegenerateModalOpen(false);
+                    }}
+                    className="px-4 py-2 text-sm font-medium rounded-md bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100"
+                  >
+                    {lang === 'pl' ? 'Zamknij' : 'Close'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      applyRegeneratedPreview('all');
+                      setRegenerateModalOpen(false);
+                    }}
+                    className="px-4 py-2 text-sm font-semibold rounded-md bg-purple-600 hover:bg-purple-700 text-white shadow"
+                  >
+                    {regenDict?.addAll || (lang === 'pl' ? 'Dodaj wszystkie' : 'Add all')}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
