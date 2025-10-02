@@ -28,7 +28,7 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lan
 
 	if (loading) {
 		return (
-			<div className="grid gap-4 md:grid-cols-5">
+			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
 				{Array.from({length:5}).map((_,i)=>(<div key={i} className="h-24 rounded-lg bg-slate-800/40 animate-pulse"/>))}
 			</div>
 		);
@@ -48,7 +48,7 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lan
 		accent?: string
 	) => (
 		<Card className="bg-slate-900/60 border-slate-700">
-			<CardContent className="p-4 space-y-1">
+			<CardContent className="p-3 sm:p-4 space-y-1">
 				<p className="text-[11px] uppercase tracking-wide text-slate-400">{title}</p>
 				<p className={`text-sm font-semibold text-slate-100 ${accent || ''}`}>{primary}</p>
 				{secondary && <p className="text-[11px] text-slate-500 font-mono">{secondary}</p>}
@@ -58,7 +58,7 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lan
 
 	return (
 		<div className="space-y-6">
-			<div className="grid gap-4 md:grid-cols-5">
+			<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
 				{STAT(dict.summary.totalBudget, summary.totalBudget?.toFixed(2) ?? '—', summary.totalPlannedCategories ? `${dict.summary.plannedCategoriesShort} ${summary.totalPlannedCategories.toFixed(2)}` : undefined)}
 				{STAT(budgetMode === 'simple' ? dict.summary.spent : dict.summary.spent, effectiveSpent.toFixed(2), budgetMode === 'simple' ? `${dict.summary.exclPreShort}${summary.totalSpentOnTrip.toFixed(2)}` : (summary.totalSpentPrepaid ? `${dict.summary.spentPrepaidShort} ${summary.totalSpentPrepaid.toFixed(2)}` : undefined), 'text-emerald-300')}
 				{STAT(dict.summary.remaining, effectiveRemaining != null ? effectiveRemaining.toFixed(2) : '—', summary.totalBudget ? `${percent.toFixed(0)}${dict.summary.percentUsed}` : undefined, 'text-amber-300')}

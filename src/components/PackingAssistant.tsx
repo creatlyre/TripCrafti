@@ -175,17 +175,17 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang,
 
   // Modal components
   const ConfirmationModal = ({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void; }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center" aria-modal="true" role="dialog">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md m-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-5 sm:p-6 w-full max-w-md">
         <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{dictionary.confirmation.title}</h3>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           {dictionary.confirmation.body}
         </p>
-        <div className="mt-4 flex justify-end gap-3">
-          <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-300 rounded-md hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-600">
+        <div className="mt-5 sm:mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+          <button onClick={onCancel} className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-300 rounded-md hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-600">
             {dictionary.confirmation.cancel}
           </button>
-          <button onClick={onConfirm} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+          <button onClick={onConfirm} className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
             {dictionary.confirmation.confirm}
           </button>
         </div>
@@ -196,10 +196,10 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang,
   const ValidationModal = ({ onConfirm, onCancel }: { onConfirm: (context: string) => void; onCancel: () => void; }) => {
     const [context, setContext] = useState('');
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center" aria-modal="true" role="dialog">
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md m-4">
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-5 sm:p-6 w-full max-w-md">
           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{dictionary.validation.title}</h3>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             {dictionary.validation.body}
           </p>
           <textarea 
@@ -209,9 +209,9 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang,
             className="mt-4 w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200" 
             rows={3}
           />
-          <div className="mt-4 flex justify-end gap-3">
-            <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-300 rounded-md hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-600">{dictionary.validation.cancel}</button>
-            <button onClick={() => onConfirm(context)} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">{dictionary.validation.confirm}</button>
+          <div className="mt-5 sm:mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+            <button onClick={onCancel} className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-300 rounded-md hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-600">{dictionary.validation.cancel}</button>
+            <button onClick={() => onConfirm(context)} className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">{dictionary.validation.confirm}</button>
           </div>
         </div>
       </div>
@@ -223,7 +223,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang,
     if (!suggestions) return null;
 
     const ActionButton: React.FC<{onClick: () => void, className: string, children: React.ReactNode}> = ({ onClick, className, children }) => (
-      <button onClick={onClick} className={`ml-2 px-2 py-0.5 text-xs font-semibold rounded-md transition-colors ${className}`}>
+      <button onClick={onClick} className={`ml-2 px-3 py-1 text-xs font-semibold rounded-md transition-colors ${className}`}>
         {children}
       </button>
     );
@@ -349,22 +349,22 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang,
         </div>
       )}
 
-      <main className={`container mx-auto transition-all duration-300 ${isFullScreen ? 'p-0 md:p-0 max-w-full' : 'p-4 md:p-8'}`}>
-        <div className="w-full flex justify-end mb-4 no-print">
+      <main className={`container mx-auto transition-all duration-300 ${isFullScreen ? 'p-0 md:p-0 max-w-full' : 'p-2 sm:p-4 md:p-8'}`}>
+        <div className="w-full flex justify-end mb-4 no-print px-2 sm:px-0">
           <button
             type="button"
             onClick={() => setAddModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow px-5 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg px-4 py-2 sm:px-5 sm:py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
           >
-            <span className="text-lg leading-none">＋</span>
-            <span>Dodaj przedmiot</span>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            <span className="hidden sm:inline">Dodaj przedmiot</span>
           </button>
         </div>
         {/* Layout behavior changes:
             - If there are no packing items AND no checklist items, we focus on generation / quick add (left panel only)
             - If there are items, we hide the left panel and expand the list to full width (user requested) */}
-        <div className={`${isFullScreen ? '' : 'grid grid-cols-1 lg:grid-cols-3 gap-8'}`}>
-          <div className={`lg:col-span-1 space-y-6 no-print ${isFullScreen || (packingItems.length > 0 || checklistItems.length > 0) ? 'hidden' : ''}`}>
+        <div className={`grid grid-cols-1 ${isFullScreen ? '' : 'lg:grid-cols-3'} gap-8`}>
+          <div className={`lg:col-span-1 space-y-6 no-print ${isFullScreen || (packingItems.length > 0 || checklistItems.length > 0) ? 'hidden lg:block' : ''}`}>
             <CollapsibleSection title={dictionary.generateTitle}>
               <PackingListGenerator onGenerate={handleGenerateList} isLoading={isLoading} trip={trip} />
             </CollapsibleSection>
@@ -393,7 +393,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang,
             {suggestions && renderSuggestions()}
           </div>
 
-          <div className={`space-y-6 transition-all duration-300 ${isFullScreen ? 'lg:col-span-3' : (packingItems.length > 0 || checklistItems.length > 0 ? 'lg:col-span-3' : 'lg:col-span-2')}`}>
+          <div className={`space-y-6 transition-all duration-300 ${isFullScreen || (packingItems.length > 0 || checklistItems.length > 0) ? 'lg:col-span-3' : 'lg:col-span-2'}`}>
             {listMeta && listMeta.archetype && !isFullScreen && (
               <div className="bg-indigo-50 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-r-lg shadow dark:bg-indigo-900/20 dark:border-indigo-500 dark:text-indigo-200">
                 <p className="font-bold text-lg">{dictionary.archetype.replace('{archetype}', listMeta.archetype)}</p>
@@ -406,14 +406,16 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang,
                 </p>
               </div>
             )}
-            {checklistItems.length > 0 && !isFullScreen && (
-              <PackingChecklist
-                items={checklistItems}
-                onToggleItem={toggleChecklistItem}
-                onAddItem={addChecklistItem}
-                onUpdateItem={updateChecklistItem}
-                onDeleteItem={deleteChecklistItem}
-              />
+            {checklistItems.length > 0 && (
+              <div className={isFullScreen ? 'px-2 sm:px-4' : ''}>
+                <PackingChecklist
+                  items={checklistItems}
+                  onToggleItem={toggleChecklistItem}
+                  onAddItem={addChecklistItem}
+                  onUpdateItem={updateChecklistItem}
+                  onDeleteItem={deleteChecklistItem}
+                />
+              </div>
             )}
             <PackingList
               items={filteredPackingItems}
@@ -449,7 +451,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang,
             <button
               type="button"
               onClick={() => setBulkDeleteOpen(true)}
-              className="w-full md:w-auto inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-5 py-2.5 rounded-md shadow focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-colors"
+              className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-5 py-2.5 rounded-md shadow focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0h8m-9 0h10l-1-3H9l-1 3z" />
@@ -469,7 +471,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang,
           <div className="w-full max-w-md rounded-lg bg-white dark:bg-slate-800 border border-red-500/30 shadow-xl relative">
             <div className="p-5 space-y-4">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center text-red-600 dark:text-red-400">
+                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center text-red-600 dark:text-red-400 flex-shrink-0">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -487,14 +489,14 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang,
                 <button
                   type="button"
                   onClick={() => setBulkDeleteOpen(false)}
-                  className="inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full sm:w-auto inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {lang === 'pl' ? 'Anuluj' : 'Cancel'}
                 </button>
                 <button
                   type="button"
                   onClick={() => { clearList(); setBulkDeleteOpen(false); }}
-                  className="inline-flex justify-center items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold bg-red-600 hover:bg-red-500 text-white shadow focus:outline-none focus:ring-2 focus:ring-red-400"
+                  className="w-full sm:w-auto inline-flex justify-center items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold bg-red-600 hover:bg-red-500 text-white shadow focus:outline-none focus:ring-2 focus:ring-red-400"
                   autoFocus
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

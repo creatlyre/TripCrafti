@@ -309,7 +309,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
           <h1 className="text-3xl font-bold tracking-tight text-slate-100">{dict.heading}</h1>
           <p className="text-sm text-slate-400 mt-1">{dict.sub}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <Button onClick={() => loadTrips(true)} variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white" disabled={loading && trips !== null}>
             {loading && trips !== null ? dict.loading : dict.refresh}
           </Button>
@@ -337,7 +337,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
             </div>
           )}
 
-          <form onSubmit={submitCreate} className="grid gap-4 py-4 md:grid-cols-2" noValidate>
+          <form onSubmit={submitCreate} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4" noValidate>
             <div className="flex flex-col gap-1.5 md:col-span-2">
               <label htmlFor="title" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {dict.create.title}
@@ -364,7 +364,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                 placeholder={dict.form?.placeholders.lodgingPlaceholder}
               />
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 md:col-span-2">
               <label
                 htmlFor="destination"
                 className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
@@ -498,46 +498,58 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
               </DialogTitle>
               <div className="flex flex-col">
                 {/* Header with close button (sticky remains for scrollable parent) */}
-                <div className="flex items-center justify-between p-6 border-b bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-10">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{selectedTrip.title}</h2>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">{selectedTrip.destination}</p>
-                    </div>
-                  </div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 sm:p-6 border-b bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-10 gap-4">
+                  <div className="flex items-center justify-between w-full sm:w-auto">
                     <div className="flex items-center gap-3">
-                      {selectedTrip?.lodging && (
-                        <span className="text-xs text-slate-500 dark:text-slate-400 max-w-[240px] truncate" title={selectedTrip.lodging || undefined}>
-                          {lang==='pl' ? 'Nocleg:' : 'Lodging:'} {selectedTrip.lodging}
-                        </span>
-                      )}
-                      <button
-                        onClick={() => setSelectedTrip(null)}
-                        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg flex-shrink-0">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                      </button>
+                      </div>
+                      <div>
+                        <h2 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100 truncate" title={selectedTrip.title}>{selectedTrip.title}</h2>
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 truncate">{selectedTrip.destination}</p>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => setSelectedTrip(null)}
+                      className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition-colors sm:hidden flex-shrink-0"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3 justify-between">
+                    {selectedTrip?.lodging && (
+                      <span className="text-xs text-slate-500 dark:text-slate-400 truncate" title={selectedTrip.lodging || undefined}>
+                        <span className="font-medium">{lang === 'pl' ? 'Nocleg:' : 'Lodging:'}</span> {selectedTrip.lodging}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => setSelectedTrip(null)}
+                      className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 hidden sm:flex items-center justify-center transition-colors flex-shrink-0"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Main content area */}
                 <div>
                   <Tabs value={activeTab} onValueChange={handleTabChange} className="flex flex-col">
-                    <TabsList className="mx-6 mt-4 w-fit bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200 dark:border-slate-700">
-                      <TabsTrigger value="overview">{dict.tabs?.overview}</TabsTrigger>
-                      <TabsTrigger value="itinerary">{dict.tabs?.itinerary}</TabsTrigger>
-                      <TabsTrigger value="budget">{dict.tabs?.budget}</TabsTrigger>
-                      <TabsTrigger value="packing">{dict.tabs?.packing}</TabsTrigger>
-                      <TabsTrigger value="settings">{dict.tabs?.settings}</TabsTrigger>
-                    </TabsList>
+                    <div className="overflow-x-auto">
+                      <TabsList className="mx-4 sm:mx-6 mt-4 w-fit bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200 dark:border-slate-700">
+                        <TabsTrigger value="overview">{dict.tabs?.overview}</TabsTrigger>
+                        <TabsTrigger value="itinerary">{dict.tabs?.itinerary}</TabsTrigger>
+                        <TabsTrigger value="budget">{dict.tabs?.budget}</TabsTrigger>
+                        <TabsTrigger value="packing">{dict.tabs?.packing}</TabsTrigger>
+                        <TabsTrigger value="settings">{dict.tabs?.settings}</TabsTrigger>
+                      </TabsList>
+                    </div>
 
                     <div>
                       <TabsContent value="overview" className="p-6 space-y-6 m-0">
