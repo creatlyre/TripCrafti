@@ -780,7 +780,15 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
         >
           <div className="w-full max-w-3xl bg-gradient-to-br from-slate-800 via-slate-850 to-slate-900 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950 rounded-2xl shadow-2xl border border-slate-700/60 relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none opacity-[0.07] bg-[radial-gradient(circle_at_30%_20%,#6366f1,transparent_60%),radial-gradient(circle_at_70%_80%,#8b5cf6,transparent_65%)]" />
-            <div className="relative p-6 max-h-[80vh] flex flex-col">
+            {/* Container gets scroll only in form stage so long forms are reachable; preview stage already manages its own scroll area */}
+            <div
+              className={`relative p-6 flex flex-col max-h-[85vh] ${
+                regenStage === 'form'
+                  ? 'overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-600/60 hover:scrollbar-thumb-slate-500/60'
+                  : ''
+              }`}
+              aria-label={regenStage === 'form' ? 'Regeneration form scrollable region' : undefined}
+            >
               {regenStage !== 'loading' && (
                 <button
                   onClick={() => {
@@ -790,7 +798,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
                     setRegenerateModalOpen(false);
                   }}
                   className="absolute top-3 right-3 text-slate-400 hover:text-slate-200 transition-colors"
-                  aria-label="Close"
+                  aria-label={dictAll.ui?.common.close || 'Close modal'}
                 >
                   ✕
                 </button>
@@ -799,26 +807,28 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
                 {regenDict?.title || 'Re-generate list'}
               </h3>
               {regenStage === 'form' && (
-                <PackingListGenerator
-                  onGenerate={async (d) => {
-                    try {
-                      setRegenStage('loading');
-                      await regenerateList(d);
-                      setRegenStage('preview');
-                    } catch (e) {
-                      showToast(
-                        (e as Error).message ||
-                          (lang === 'pl' ? 'Błąd podczas regeneracji listy' : 'Error regenerating list'),
-                        'error'
-                      );
-                      setRegenStage('form');
-                    }
-                  }}
-                  isLoading={regenStage !== 'form' || isLoading}
-                  trip={trip}
-                  regenerateMode
-                  uiLang={lang}
-                />
+                <div className="mt-2">
+                  <PackingListGenerator
+                    onGenerate={async (d) => {
+                      try {
+                        setRegenStage('loading');
+                        await regenerateList(d);
+                        setRegenStage('preview');
+                      } catch (e) {
+                        showToast(
+                          (e as Error).message ||
+                            (lang === 'pl' ? 'Błąd podczas regeneracji listy' : 'Error regenerating list'),
+                          'error'
+                        );
+                        setRegenStage('form');
+                      }
+                    }}
+                    isLoading={regenStage !== 'form' || isLoading}
+                    trip={trip}
+                    regenerateMode
+                    uiLang={lang}
+                  />
+                </div>
               )}
               {regenStage === 'loading' && (
                 <div

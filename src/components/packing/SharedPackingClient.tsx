@@ -140,10 +140,10 @@ const SharedPackingClient: React.FC<{ token?: string }> = ({ token }) => {
     optimisticUpdate(id, { packed: newPacked });
     setUpdatingIds((s) => new Set(s).add(id));
     try {
-      const res = await fetch(`/api/packing/share/${token}/items`, {
+      const res = await fetch(`/api/packing/share/${token}/items?id=${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, packed: newPacked }),
+        body: JSON.stringify({ packed: newPacked }),
       });
       if (!res.ok) throw new Error('Toggle failed');
     } catch (e) {
@@ -163,10 +163,10 @@ const SharedPackingClient: React.FC<{ token?: string }> = ({ token }) => {
     optimisticUpdate(id, { name: newName, qty: newQty });
     setUpdatingIds((s) => new Set(s).add(id));
     try {
-      const res = await fetch(`/api/packing/share/${token}/items`, {
+      const res = await fetch(`/api/packing/share/${token}/items?id=${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, name: newName, qty: newQty }),
+        body: JSON.stringify({ name: newName, qty: newQty }),
       });
       if (!res.ok) throw new Error('Update failed');
     } catch (e) {
@@ -180,6 +180,14 @@ const SharedPackingClient: React.FC<{ token?: string }> = ({ token }) => {
       });
     }
   };
+
+  // Polling sync every 5s (skips if tab hidden)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchAll();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [fetchAll]);
 
   const expiresInfo = link?.expires_at ? new Date(link.expires_at) : null;
   const expired = expiresInfo ? Date.now() > expiresInfo.getTime() : false;
