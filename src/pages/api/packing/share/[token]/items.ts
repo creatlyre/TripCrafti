@@ -71,13 +71,11 @@ export const PATCH: APIRoute = async (context) => {
   const { params, locals, request } = context;
   const client = getClient(locals);
   const token = params.token;
-  const idStr = new URL(request.url).searchParams.get('id');
   if (!token) return new Response(JSON.stringify({ error: 'Missing token' }), { status: 400 });
-  if (!idStr) return new Response(JSON.stringify({ error: 'Missing id query param' }), { status: 400 });
-  const id = Number(idStr);
-  if (Number.isNaN(id)) return new Response(JSON.stringify({ error: 'Invalid id' }), { status: 400 });
 
+  // Parse body first to allow id fallback
   let body: {
+    id?: number;
     name?: string;
     qty?: string;
     category?: string;
@@ -91,9 +89,24 @@ export const PATCH: APIRoute = async (context) => {
     return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 });
   }
 
+  const url = new URL(request.url);
+  const idStr = url.searchParams.get('id') || (body.id != null ? String(body.id) : null);
+  if (!idStr) return new Response(JSON.stringify({ error: 'Missing id' }), { status: 400 });
+  const id = Number(idStr);
+  if (Number.isNaN(id)) return new Response(JSON.stringify({ error: 'Invalid id' }), { status: 400 });
+
   const link = await getShareLinkByToken(client, token);
   if (!link) return new Response(JSON.stringify({ error: 'Invalid or expired link' }), { status: 404 });
   if (!link.can_modify) return new Response(JSON.stringify({ error: 'Read-only link' }), { status: 403 });
+
+  // Ensure the item belongs to the list for this trip
+  const { data: listRow } = await client.from('packing_lists').select('id').eq('trip_id', link.trip_id).single();
+  if (!listRow) return new Response(JSON.stringify({ error: 'List not found' }), { status: 404 });
+
+  const { data: itemRow } = await client.from('packing_items').select('id, list_id').eq('id', id).single();
+  if (!itemRow || itemRow.list_id !== listRow.id) {
+    return new Response(JSON.stringify({ error: 'Item not in list' }), { status: 404 });
+  }
 
   const updatePayload: Record<string, unknown> = {};
   (['name', 'qty', 'category', 'packed', 'notes', 'optional'] as const).forEach((k) => {
