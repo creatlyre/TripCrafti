@@ -29,6 +29,7 @@ interface UsePackingReturn {
   checklistItems: ChecklistItem[];
   categories: string[];
   listMeta: PackingListMeta | null;
+  regeneratedPreview: PackingItem[] | null; // holds preview items from re-generation (not yet merged)
 
   // Loading states
   isLoading: boolean;
@@ -60,6 +61,10 @@ interface UsePackingReturn {
 
   // List generation and validation
   generateList: (details: GenerateDetails) => Promise<void>;
+  regenerateList: (details: GenerateDetails) => Promise<void>; // does not override current until applied
+  applyRegeneratedPreview: (mode: 'all' | 'newOnly') => void; // merge preview into list
+  discardRegeneratedPreview: () => void; // drop preview
+  addSingleFromPreview: (id: number) => void; // add only one preview item
   validateList: (context?: string) => Promise<void>;
   categorizeList: () => Promise<void>;
   clearList: () => void;
@@ -104,16 +109,11 @@ interface UsePackingReturn {
 }
 
 // Debounce hook
-function useDebounce<T extends (...args: any[]) => void>(callback: T, delay: number, deps: React.DependencyList): void {
+function useDebounce(callback: () => void, delay: number): void {
   useEffect(() => {
-    const handler = setTimeout(() => {
-      callback();
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [...deps, delay]);
+    const handler = setTimeout(callback, delay);
+    return () => clearTimeout(handler);
+  }, [callback, delay]); // caller ensures stable callback via useCallback with deps
 }
 
 export function usePacking({
@@ -126,6 +126,7 @@ export function usePacking({
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [listMeta, setListMeta] = useState<PackingListMeta | null>(null);
+  const [regeneratedPreview, setRegeneratedPreview] = useState<PackingItem[] | null>(null);
 
   // Loading and error states
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -152,6 +153,15 @@ export function usePacking({
   const packingStats = useMemo(() => PackingService.getPackingStats(packingItems), [packingItems]);
 
   // Data fetching
+  // Toast management (moved up so it is defined before callbacks using it)
+  const showToast = useCallback((message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+  }, []);
+
+  const clearToast = useCallback(() => {
+    setToast(null);
+  }, []);
+
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -175,7 +185,7 @@ export function usePacking({
       setIsLoading(false);
       setInitialLoad(false);
     }
-  }, [tripId]);
+  }, [tripId, showToast]);
 
   // Data saving
   const saveData = useCallback(async () => {
@@ -206,19 +216,12 @@ export function usePacking({
     } finally {
       setIsSaving(false);
     }
-  }, [tripId, packingItems, checklistItems, categories, listMeta, initialLoad, autoSave]);
+  }, [tripId, packingItems, checklistItems, categories, listMeta, initialLoad, autoSave, showToast]);
 
   // Auto-save with debounce
-  useDebounce(saveData, autoSaveDelay, [packingItems, checklistItems, categories, listMeta]);
+  useDebounce(saveData, autoSaveDelay);
 
-  // Toast management
-  const showToast = useCallback((message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-  }, []);
-
-  const clearToast = useCallback(() => {
-    setToast(null);
-  }, []);
+  // (Toast functions defined earlier)
 
   // Auto-clear toast
   useEffect(() => {
@@ -234,52 +237,179 @@ export function usePacking({
   }, []);
 
   // List generation and AI features
-  const generateList = useCallback(async (details: GenerateDetails) => {
-    setIsLoading(true);
-    setError(null);
-    setSuggestions(null);
+  const generateList = useCallback(
+    async (details: GenerateDetails) => {
+      setIsLoading(true);
+      setError(null);
+      setSuggestions(null);
 
-    try {
-      const response = await fetch('/api/ai/packing', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'generate', payload: { details } }),
-      });
+      try {
+        const response = await fetch('/api/ai/packing', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'generate', payload: { details } }),
+        });
 
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: 'Failed to generate list' }));
-        throw new Error(err.error);
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({ error: 'Failed to generate list' }));
+          throw new Error(err.error);
+        }
+
+        const newList = await response.json();
+
+        // Transform AI response to match our state
+        const newItems: PackingItem[] = newList.items.map((item: Omit<PackingItem, 'id' | 'packed'>) => ({
+          ...item,
+          id: PackingService.generateItemId(),
+          packed: false,
+        }));
+        const newChecklistItems = newList.checklist.map((item: { task: string; done: boolean }) => ({
+          ...item,
+          id: PackingService.generateItemId(),
+        }));
+
+        setPackingItems(newItems);
+        setChecklistItems(newChecklistItems);
+
+        const generatedCategories = [...new Set(newItems.map((item: PackingItem) => item.category))];
+        setCategories((prevCats) => [...new Set([...DEFAULT_CATEGORIES, ...generatedCategories, ...prevCats])]);
+        setListMeta(newList.meta);
+        // Initialize regenerationCount if undefined
+        setListMeta((prevMeta) => ({ ...(newList.meta || prevMeta || {}), regenerationCount: 0 }));
+
+        showToast('New packing list generated!', 'success');
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during generation.';
+        setError(errorMessage);
+        showToast('Error generating list.', 'error');
+      } finally {
+        setIsLoading(false);
       }
+    },
+    [showToast]
+  );
 
-      const newList = await response.json();
+  // Re-generate list without replacing existing one; enforce limit (max 2 for a trip)
+  const regenerateList = useCallback(
+    async (details: GenerateDetails) => {
+      // Determine current regeneration count (fallback 0 when meta missing)
+      const currentCount = listMeta?.regenerationCount ?? 0;
+      if (currentCount >= 2) {
+        showToast('Limit re-generacji osiągnięty / Regeneration limit reached.', 'error');
+        return;
+      }
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch('/api/ai/packing', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'generate', payload: { details } }),
+        });
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({ error: 'Failed to regenerate list' }));
+          throw new Error(err.error);
+        }
+        const regenerated = await response.json();
+        const previewItems: PackingItem[] = regenerated.items.map((item: Omit<PackingItem, 'id' | 'packed'>) => ({
+          ...item,
+          id: PackingService.generateItemId(),
+          packed: false,
+        }));
+        // Filter out items that already exist (case-insensitive name match) for 'newOnly' application later
+        setRegeneratedPreview(previewItems);
+        // If meta already exists just increment count, otherwise bootstrap a synthetic meta using provided details
+        setListMeta((prev) => {
+          if (prev) {
+            return { ...prev, regenerationCount: (prev.regenerationCount || 0) + 1 };
+          }
+          // Build minimal meta from regeneration form details so future limits apply & persistence works
+          const childrenCount = details.childrenAges
+            ? details.childrenAges
+                .split(',')
+                .map((c) => c.trim())
+                .filter(Boolean).length
+            : 0;
+          const activitiesArr = details.activities
+            ? details.activities
+                .split(',')
+                .map((a) => a.trim())
+                .filter(Boolean)
+            : undefined;
+          return {
+            destination: details.destination,
+            days: parseInt(details.days, 10) || 1,
+            people: { adults: parseInt(details.adults, 10) || 1, children: childrenCount },
+            season: details.season || 'Unknown',
+            transport: details.transport || undefined,
+            accommodation: details.accommodation || undefined,
+            activities: activitiesArr,
+            regenerationCount: 1,
+          };
+        });
+        showToast('Preview list generated', 'success');
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during regeneration.';
+        setError(errorMessage);
+        showToast('Error regenerating list.', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [listMeta, showToast]
+  );
 
-      // Transform AI response to match our state
-      const newItems = newList.items.map((item: any) => ({
-        ...item,
-        id: PackingService.generateItemId(),
-        packed: false,
-      }));
+  const applyRegeneratedPreview = useCallback(
+    (mode: 'all' | 'newOnly') => {
+      if (!regeneratedPreview) return;
+      setPackingItems((prev) => {
+        const existingLower = new Set(prev.map((i) => i.name.toLowerCase()));
+        const itemsToAdd = regeneratedPreview.filter((i) =>
+          mode === 'all' ? true : !existingLower.has(i.name.toLowerCase())
+        );
+        if (itemsToAdd.length === 0) {
+          showToast('Brak nowych elementów do dodania / No new items.', 'error');
+          return prev;
+        }
+        // Merge categories from preview items
+        const previewCategories = [...new Set(itemsToAdd.map((i) => i.category))];
+        setCategories((prevCats) => [...new Set([...prevCats, ...previewCategories])]);
+        showToast(`Dodano ${itemsToAdd.length} pozycji z podglądu`, 'success');
+        return [...prev, ...itemsToAdd];
+      });
+      setRegeneratedPreview(null);
+    },
+    [regeneratedPreview, showToast]
+  );
 
-      const newChecklistItems = newList.checklist.map((item: any) => ({
-        ...item,
-        id: PackingService.generateItemId(),
-      }));
+  const addSingleFromPreview = useCallback(
+    (id: number) => {
+      setRegeneratedPreview((prevPreview) => {
+        if (!prevPreview) return prevPreview;
+        const target = prevPreview.find((i) => i.id === id);
+        if (!target) return prevPreview;
+        // Prevent duplicate by name
+        setPackingItems((prev) => {
+          if (prev.some((p) => p.name.toLowerCase() === target.name.toLowerCase())) {
+            showToast('Element już istnieje / Item already exists.', 'error');
+            return prev;
+          }
+          // ensure category present
+          setCategories((cats) =>
+            cats.some((c) => c.toLowerCase() === target.category.toLowerCase()) ? cats : [...cats, target.category]
+          );
+          showToast(`Dodano 1 pozycję: ${target.name}`, 'success');
+          return [...prev, target];
+        });
+        // Remove added item from preview (keep remaining for further selection)
+        return prevPreview.filter((i) => i.id !== id);
+      });
+    },
+    [showToast]
+  );
 
-      setPackingItems(newItems);
-      setChecklistItems(newChecklistItems);
-
-      const generatedCategories = [...new Set(newItems.map((item: PackingItem) => item.category))];
-      setCategories((prev) => [...new Set([...DEFAULT_CATEGORIES, ...generatedCategories])] as string[]);
-      setListMeta(newList.meta);
-
-      showToast('New packing list generated!', 'success');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during generation.';
-      setError(errorMessage);
-      showToast('Error generating list.', 'error');
-    } finally {
-      setIsLoading(false);
-    }
+  const discardRegeneratedPreview = useCallback(() => {
+    setRegeneratedPreview(null);
   }, []);
 
   const validateList = useCallback(
@@ -364,7 +494,7 @@ export function usePacking({
     } finally {
       setIsLoading(false);
     }
-  }, [packingItems, categories]);
+  }, [packingItems, categories, showToast]);
 
   const clearList = useCallback(() => {
     setPackingItems([]);
@@ -374,27 +504,30 @@ export function usePacking({
     setError(null);
     setListMeta(null);
     showToast('List cleared!', 'success');
-  }, []);
+  }, [showToast]);
 
-  const loadTemplate = useCallback((items: PackingItem[], checklist: ChecklistItem[], templateName: string) => {
-    // Clear existing data first
-    setPackingItems([]);
-    setChecklistItems([]);
-    setSuggestions(null);
-    setError(null);
-    setListMeta(null);
+  const loadTemplate = useCallback(
+    (items: PackingItem[], checklist: ChecklistItem[], templateName: string) => {
+      // Clear existing data first
+      setPackingItems([]);
+      setChecklistItems([]);
+      setSuggestions(null);
+      setError(null);
+      setListMeta(null);
 
-    // Load template data
-    setPackingItems(items);
-    setChecklistItems(checklist);
+      // Load template data
+      setPackingItems(items);
+      setChecklistItems(checklist);
 
-    // Update categories based on loaded items
-    const newCategories = [...new Set(items.map((item) => item.category))];
-    const mergedCategories = [...new Set([...DEFAULT_CATEGORIES, ...newCategories])];
-    setCategories(mergedCategories);
+      // Update categories based on loaded items
+      const newCategories = [...new Set(items.map((item) => item.category))];
+      const mergedCategories = [...new Set([...DEFAULT_CATEGORIES, ...newCategories])];
+      setCategories(mergedCategories);
 
-    showToast(`Załadowano szablon: ${templateName}`, 'success');
-  }, []);
+      showToast(`Załadowano szablon: ${templateName}`, 'success');
+    },
+    [showToast]
+  );
 
   // Item management
   const addItem = useCallback(
@@ -418,7 +551,7 @@ export function usePacking({
 
       setError(null);
     },
-    [packingItems, categories]
+    [packingItems, categories, showToast]
   );
 
   const addItemFromLibrary = useCallback(
@@ -431,7 +564,7 @@ export function usePacking({
       addItem(item.name, item.category, item.defaultQty, item.notes);
       showToast(`Dodano: ${item.name}`, 'success');
     },
-    [packingItems, addItem]
+    [packingItems, addItem, showToast]
   );
 
   const updateItem = useCallback((itemId: number, name: string, qty: string) => {
@@ -592,6 +725,7 @@ export function usePacking({
     checklistItems,
     categories,
     listMeta,
+    regeneratedPreview,
 
     // Loading states
     isLoading,
@@ -619,6 +753,10 @@ export function usePacking({
 
     // List generation and validation
     generateList,
+    regenerateList,
+    applyRegeneratedPreview,
+    discardRegeneratedPreview,
+    addSingleFromPreview,
     validateList,
     categorizeList,
     clearList,

@@ -276,6 +276,17 @@ export interface Dictionary {
       cancel: string;
       confirm: string;
     };
+    regenerate?: {
+      button: string;
+      title: string;
+      info: string;
+      limitReached: string;
+      previewHeading: string;
+      addAll: string;
+      addItem: string;
+      discard: string;
+      empty: string;
+    };
     validation: {
       title: string;
       body: string;
@@ -790,6 +801,17 @@ export const dictionaries: Record<Lang, Dictionary> = {
         cancel: 'Anuluj',
         confirm: 'Tak, wygeneruj nową',
       },
+      regenerate: {
+        button: 'Wygeneruj ponownie (AI)',
+        title: 'Ponowne generowanie listy',
+        info: 'Możesz wygenerować nową propozycję listy maksymalnie 2 razy. Nowe pozycje pojawią się w sekcji podglądu i możesz dodać je pojedynczo lub wszystkie naraz.',
+        limitReached: 'Osiągnięto limit ponownych generowań dla tej podróży (2/2).',
+        previewHeading: 'Podgląd nowych propozycji',
+        addAll: 'Dodaj wszystkie',
+        addItem: 'Dodaj',
+        discard: 'Odrzuć podgląd',
+        empty: 'Brak nowych elementów do dodania.',
+      },
       validation: {
         title: 'Sprawdź listę z kontekstem',
         body: 'Czy coś się zmieniło w Twoich planach? Opisz to, a AI uwzględni to w sugestiach.',
@@ -846,7 +868,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
     },
     packing: {
       header: {
-        title: 'Asystent Pakowaniaaaa',
+        title: 'Asystent Pakowania',
         subtitle: 'Twoja inteligentna lista wyjazdowa',
       },
       checklist: {
@@ -1321,6 +1343,17 @@ export const dictionaries: Record<Lang, Dictionary> = {
         body: 'You already have a list. Generating a new one will replace the current list. Are you sure you want to continue?',
         cancel: 'Cancel',
         confirm: 'Yes, generate new',
+      },
+      regenerate: {
+        button: 'Re-generate (AI)',
+        title: 'Re-generate packing list',
+        info: 'You can request up to 2 alternative AI generations. New items will appear in a preview area where you can add them individually or all at once.',
+        limitReached: 'Generation limit reached for this trip (2/2).',
+        previewHeading: 'Preview of new suggestions',
+        addAll: 'Add all',
+        addItem: 'Add',
+        discard: 'Discard preview',
+        empty: 'No new items to add.',
       },
       validation: {
         title: 'Check list with context',

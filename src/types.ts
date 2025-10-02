@@ -93,6 +93,7 @@ export interface PackingListMeta {
   accommodation?: string;
   activities?: string[];
   archetype?: string;
+  regenerationCount?: number; // number of times user requested AI regeneration (persisted)
 }
 
 // The direct response from the AI
@@ -114,6 +115,7 @@ export interface GenerateDetails {
   special: string;
   region?: string;
   travelStyle?: string;
+  language?: string; // desired output language for AI generated packing list (e.g. "Polish", "English")
 }
 
 export interface ValidationResult {

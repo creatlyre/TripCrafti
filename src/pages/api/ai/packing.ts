@@ -2,6 +2,8 @@ import type { APIContext } from 'astro';
 
 import { z } from 'zod';
 
+import type { PackingItem } from '@/types';
+
 import { AIPackingActionSchema } from '@/lib/schemas/packingSchemas';
 import { generatePackingList, validatePackingList, categorizePackingList } from '@/lib/services/geminiService';
 
@@ -24,7 +26,11 @@ export async function POST({ request }: APIContext) {
           });
         }
 
-        const generatedList = await generatePackingList(payload.details);
+        // Determine target language: prefer explicit details.language else derive from Accept-Language header (pl/en fallback)
+        const acceptLang = request.headers.get('accept-language') || '';
+        const headerLang = /pl/i.test(acceptLang) ? 'Polish' : /en/i.test(acceptLang) ? 'English' : 'Polish';
+        const targetLanguage = payload.details.language || headerLang;
+        const generatedList = await generatePackingList(payload.details, targetLanguage);
         return new Response(JSON.stringify(generatedList), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
@@ -38,8 +44,19 @@ export async function POST({ request }: APIContext) {
             headers: { 'Content-Type': 'application/json' },
           });
         }
-
-        const validationResult = await validatePackingList(payload.currentList, payload.changes || {});
+        const normalizedCurrent: PackingItem[] = payload.currentList.map((raw: unknown, idx: number) => {
+          const i = raw as Partial<PackingItem> & Record<string, unknown>;
+          return {
+            name: String(i.name),
+            qty: typeof i.qty === 'number' || typeof i.qty === 'string' ? i.qty : '1',
+            category: String(i.category || 'Inne'),
+            notes: typeof i.notes === 'string' ? i.notes : undefined,
+            optional: typeof i.optional === 'boolean' ? i.optional : false,
+            packed: typeof i.packed === 'boolean' ? i.packed : false,
+            id: typeof i.id === 'number' ? i.id : idx + 1,
+          };
+        });
+        const validationResult = await validatePackingList(normalizedCurrent, payload.changes || {});
         return new Response(JSON.stringify(validationResult), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
@@ -53,8 +70,19 @@ export async function POST({ request }: APIContext) {
             headers: { 'Content-Type': 'application/json' },
           });
         }
-
-        const categorizationResult = await categorizePackingList(payload.items, payload.categories);
+        const normalizedItems: PackingItem[] = payload.items.map((raw: unknown, idx: number) => {
+          const i = raw as Partial<PackingItem> & Record<string, unknown>;
+          return {
+            name: String(i.name),
+            qty: typeof i.qty === 'number' || typeof i.qty === 'string' ? i.qty : '1',
+            category: String(i.category || 'Inne'),
+            notes: typeof i.notes === 'string' ? i.notes : undefined,
+            optional: typeof i.optional === 'boolean' ? i.optional : false,
+            packed: typeof i.packed === 'boolean' ? i.packed : false,
+            id: typeof i.id === 'number' ? i.id : idx + 1,
+          };
+        });
+        const categorizationResult = await categorizePackingList(normalizedItems, payload.categories);
         return new Response(JSON.stringify(categorizationResult), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
@@ -67,8 +95,11 @@ export async function POST({ request }: APIContext) {
           headers: { 'Content-Type': 'application/json' },
         });
     }
-  } catch (error: any) {
-    console.error(`Error in /api/ai/packing:`, error);
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.error('Error in /api/ai/packing:', error);
+    }
 
     if (error instanceof z.ZodError) {
       return new Response(
@@ -82,7 +113,7 @@ export async function POST({ request }: APIContext) {
 
     return new Response(
       JSON.stringify({
-        error: error.message || 'An internal server error occurred.',
+        error: (error as Error).message || 'An internal server error occurred.',
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );

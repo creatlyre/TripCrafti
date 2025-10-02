@@ -40,6 +40,10 @@ export const PackingListMetaSchema = z.object({
     .union([z.string(), z.null()])
     .optional()
     .transform((v) => (v === null ? undefined : v)),
+  regenerationCount: z
+    .union([z.number(), z.null()])
+    .optional()
+    .transform((v) => (v === null ? undefined : v)),
 });
 
 export const ChecklistItemSchema = z.object({
@@ -60,6 +64,7 @@ export const GenerateDetailsSchema = z.object({
   special: z.string(),
   region: z.string().optional(),
   travelStyle: z.string().optional(),
+  language: z.string().optional(),
 });
 
 export const SavedListSchema = z.object({

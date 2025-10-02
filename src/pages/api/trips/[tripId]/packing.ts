@@ -231,6 +231,17 @@ export async function PUT({ params, request, locals }: APIContext) {
       }
     }
 
+    // Step 4: Persist regeneration count to trips table if present
+    if (listMeta && typeof listMeta.regenerationCount === 'number') {
+      const { error: tripUpdateError } = await supabase
+        .from('trips')
+        .update({ packing_regenerations: listMeta.regenerationCount })
+        .eq('id', validatedTripId);
+      if (tripUpdateError) {
+        console.warn('Failed to update packing_regenerations in trips table', tripUpdateError.message);
+      }
+    }
+
     return new Response(JSON.stringify({ success: true, listId }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

@@ -9,12 +9,25 @@ interface AddItemModalProps {
   onAddItem: (name: string, category: string, qty: string) => void;
   categories: string[];
   QuickAddSlot?: React.ReactNode; // for embedding quick add buttons
+  onRegenerate?: () => void; // trigger AI regeneration preview
+  canRegenerate?: boolean; // whether regeneration allowed
+  regenerateInfo?: string; // info / limit text
 }
 
-const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onAddItem, categories, QuickAddSlot }) => {
+const AddItemModal: React.FC<AddItemModalProps> = ({
+  isOpen,
+  onClose,
+  onAddItem,
+  categories,
+  QuickAddSlot,
+  onRegenerate,
+  canRegenerate = true,
+  regenerateInfo,
+}) => {
   const dict = useDictionary();
   const t = dict.packing?.addItemModal;
   const ui = dict.ui?.common;
+  const regenDict = dict.packingAssistant?.regenerate;
   const [name, setName] = useState('');
   const [qty, setQty] = useState('1');
   const [category, setCategory] = useState('');
@@ -87,6 +100,19 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onAddItem,
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
+          {onRegenerate && (
+            <div className="flex items-start gap-2 p-3 rounded-md bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700">
+              <div className="flex-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{regenerateInfo}</div>
+              <button
+                type="button"
+                disabled={!canRegenerate}
+                onClick={onRegenerate}
+                className="px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-600 disabled:bg-indigo-300 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                {regenDict?.button || 'AI'}
+              </button>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="col-span-1">
               <label className="block text-xs font-medium mb-1 text-slate-500 dark:text-slate-400" htmlFor="item-name">

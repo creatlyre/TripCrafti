@@ -12,6 +12,7 @@ import PackingHeader from '@/components/PackingHeader';
 import PackingList from '@/components/PackingList';
 import PackingListActions from '@/components/PackingListActions';
 import PackingListGenerator from '@/components/PackingListGenerator';
+import PackingRegenerationPreview from '@/components/PackingRegenerationPreview';
 import QuickAddItem from '@/components/QuickAddItem';
 
 interface PackingAssistantProps {
@@ -32,17 +33,14 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
   enableBulkDelete = false,
 }) => {
   const dictAll = useDictionary();
-  const dictionary = dictAll.packingAssistant;
-  if (!dictionary) {
-    // Fallback: shouldn't happen because dictionaries are static, but guard for type narrowing
-    return null;
-  }
+  const dictionary = dictAll.packingAssistant; // treat as optional downstream
   const {
     // State
     packingItems,
     checklistItems,
-    categories,
+    // categories (unused)
     listMeta,
+    regeneratedPreview,
     filteredPackingItems,
     filteredCategories,
     packingStats,
@@ -65,6 +63,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
 
     // Actions
     generateList,
+    regenerateList,
     validateList,
     categorizeList,
     clearList,
@@ -78,7 +77,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
     toggleItem,
 
     // Category management
-    addCategory, // currently unused; keep if future UI exposes category creation here
+    // addCategory (unused)
     deleteCategory,
     updateCategory,
     sortCategories,
@@ -96,7 +95,12 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
     // Toast and error handling
     showToast,
     clearError,
+    applyRegeneratedPreview,
+    discardRegeneratedPreview,
+    addSingleFromPreview,
   } = usePacking({ tripId });
+
+  const regenDict = dictionary?.regenerate;
 
   // UI state
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
@@ -108,6 +112,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
   const [pendingDetails, setPendingDetails] = useState<GenerateDetails | null>(null);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [isBulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [isRegenerateModalOpen, setRegenerateModalOpen] = useState(false);
 
   // Theme state (remains client-side)
   const [theme, setTheme] = useState(() => {
@@ -129,8 +134,8 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
     }
     try {
       localStorage.setItem('theme', theme);
-    } catch (e) {
-      console.error('Could not save theme to localStorage', e);
+    } catch {
+      /* ignore */
     }
   }, [theme]);
 
@@ -165,9 +170,11 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
     setPendingDetails(null);
   };
 
+  // Regenerate handled via list generator re-use (future improvement)
+
   const handleValidateList = async () => {
     if (packingItems.length === 0) {
-      showToast(dictionary.listEmptyError, 'error');
+      showToast(dictionary?.listEmptyError || 'List empty', 'error');
       return;
     }
     setValidationModalOpen(true);
@@ -188,62 +195,67 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
       role="dialog"
     >
       <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md m-4">
-        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{dictionary.confirmation.title}</h3>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{dictionary.confirmation.body}</p>
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{dictionary?.confirmation?.title}</h3>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{dictionary?.confirmation?.body}</p>
         <div className="mt-4 flex justify-end gap-3">
           <button
             onClick={onCancel}
             className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-300 rounded-md hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-600"
           >
-            {dictionary.confirmation.cancel}
+            {dictionary?.confirmation.cancel}
           </button>
           <button
             onClick={onConfirm}
             className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            {dictionary.confirmation.confirm}
+            {dictionary?.confirmation.confirm}
           </button>
         </div>
       </div>
     </div>
   );
 
-  const ValidationModal = ({ onConfirm, onCancel }: { onConfirm: (context: string) => void; onCancel: () => void }) => {
-    const [context, setContext] = useState('');
-    return (
-      <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center"
-        aria-modal="true"
-        role="dialog"
-      >
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md m-4">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{dictionary.validation.title}</h3>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{dictionary.validation.body}</p>
-          <textarea
-            value={context}
-            onChange={(e) => setContext(e.target.value)}
-            placeholder={dictionary.validation.placeholder}
-            className="mt-4 w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200"
-            rows={3}
-          />
-          <div className="mt-4 flex justify-end gap-3">
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-300 rounded-md hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-600"
-            >
-              {dictionary.validation.cancel}
-            </button>
-            <button
-              onClick={() => onConfirm(context)}
-              className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              {dictionary.validation.confirm}
-            </button>
-          </div>
+  interface ValidationModalProps {
+    context: string;
+    setContext: (v: string) => void;
+    onConfirm: (context: string) => void;
+    onCancel: () => void;
+  }
+  const ValidationModal: React.FC<ValidationModalProps> = ({ context, setContext, onConfirm, onCancel }) => (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md m-4">
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{dictionary?.validation?.title}</h3>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{dictionary?.validation?.body}</p>
+        <textarea
+          value={context}
+          onChange={(e) => setContext(e.target.value)}
+          placeholder={dictionary?.validation?.placeholder}
+          className="mt-4 w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200"
+          rows={3}
+        />
+        <div className="mt-4 flex justify-end gap-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-300 rounded-md hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-600"
+          >
+            {dictionary?.validation?.cancel}
+          </button>
+          <button
+            onClick={() => onConfirm(context)}
+            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            {dictionary?.validation?.confirm}
+          </button>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
+
+  const [validationContext, setValidationContext] = useState('');
 
   // Suggestions rendering
   const renderSuggestions = () => {
@@ -264,30 +276,37 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
 
     const handleApplyAddSuggestion = (item: { name: string; category: string }) => {
       addItem(item.name, item.category, '1');
-      showToast(dictionary.itemAdded.replace('{itemName}', item.name), 'success');
+      showToast(dictionary?.itemAdded?.replace('{itemName}', item.name) || 'Added', 'success');
     };
 
     const handleApplyRemoveSuggestion = (item: { name: string }) => {
       const itemToRemove = packingItems.find((p) => p.name.toLowerCase() === item.name.toLowerCase());
       if (itemToRemove) {
         deleteItem(itemToRemove.id);
-        showToast(dictionary.itemRemoved.replace('{itemName}', item.name), 'success');
+        showToast(dictionary?.itemRemoved?.replace('{itemName}', item.name) || 'Removed', 'success');
       } else {
-        showToast(dictionary.itemNotFound.replace('{itemName}', item.name), 'error');
+        showToast(dictionary?.itemNotFound?.replace('{itemName}', item.name) || 'Not found', 'error');
       }
     };
 
-    const handleApplyAdjustSuggestion = (item: { name: string; field: string; suggested: any }) => {
+    interface AdjustSuggestion {
+      name: string;
+      field: 'name' | 'qty';
+      suggested: string | number;
+      current: string | number;
+      reason: string;
+    }
+    const handleApplyAdjustSuggestion = (item: AdjustSuggestion) => {
       const targetItem = packingItems.find((p) => p.name.toLowerCase() === item.name.toLowerCase());
       if (targetItem) {
         if (item.field === 'name' || item.field === 'qty') {
           updateItem(
             targetItem.id,
-            item.field === 'name' ? item.suggested : targetItem.name,
-            item.field === 'qty' ? item.suggested : targetItem.qty
+            item.field === 'name' ? String(item.suggested) : targetItem.name,
+            item.field === 'qty' ? String(item.suggested) : String(targetItem.qty)
           );
         }
-        showToast(dictionary.itemUpdated.replace('{itemName}', item.name), 'success');
+        showToast(dictionary?.itemUpdated?.replace('{itemName}', item.name) || 'Updated', 'success');
       }
     };
 
@@ -297,14 +316,18 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
 
       itemsToRemove.forEach((itemToRemove) => deleteItem(itemToRemove.id));
       addItem(item.suggested_item.name, item.suggested_item.category, '1');
-      showToast(dictionary.itemsReplaced.replace('{itemName}', item.suggested_item.name), 'success');
+      showToast(dictionary?.itemsReplaced?.replace('{itemName}', item.suggested_item.name) || 'Replaced', 'success');
     };
 
-    const renderList = (
-      title: string,
-      items: { name: string; reason?: string; category?: string }[],
-      action?: (item: any) => React.ReactNode
-    ) =>
+    interface ListItem {
+      name: string;
+      reason?: string;
+      category?: string;
+      field?: 'name' | 'qty';
+      suggested?: string | number;
+      current?: string | number;
+    }
+    const renderList = (title: string, items: ListItem[], action?: (item: ListItem) => React.ReactNode) =>
       items.length > 0 && (
         <div key={title}>
           <h4 className="font-bold text-md mt-2 text-slate-700 dark:text-slate-200">{title}</h4>
@@ -331,9 +354,9 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
             {items.map((item, index) => (
               <li key={index} className="flex justify-between items-center">
                 <div>
-                  <div>{dictionary.replaceItems.replace('{items}', item.items_to_remove.join(', '))}</div>
+                  <div>{dictionary?.replaceItems?.replace('{items}', item.items_to_remove.join(', '))}</div>
                   <div>
-                    {dictionary.replaceWith.replace(
+                    {dictionary?.replaceWith?.replace(
                       '{item}',
                       `${item.suggested_item.name} (${item.suggested_item.category})`
                     )}
@@ -344,7 +367,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
                   onClick={() => handleApplyReplaceSuggestion(item)}
                   className="bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 self-center"
                 >
-                  {dictionary.suggestions.apply}
+                  {dictionary?.suggestions?.apply}
                 </ActionButton>
               </li>
             ))}
@@ -354,43 +377,56 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
 
     return (
       <div className="bg-blue-100 border border-blue-400 text-blue-800 px-4 py-3 rounded-lg relative dark:bg-blue-900/20 dark:border-blue-500/30 dark:text-blue-200">
-        <strong className="font-bold block mb-2">{dictionary.suggestionsAITitle}</strong>
-        {renderList(dictionary.suggestions.add, suggestions.missing, (item) => (
+        <strong className="font-bold block mb-2">{dictionary?.suggestionsAITitle}</strong>
+        {renderList(dictionary?.suggestions?.add || 'Add', suggestions.missing, (item) => (
           <ActionButton
-            onClick={() => handleApplyAddSuggestion(item)}
+            onClick={() => item.category && handleApplyAddSuggestion({ name: item.name, category: item.category })}
             className="bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800"
           >
-            {dictionary.suggestions.addActionButton}
+            {dictionary?.suggestions?.addActionButton}
           </ActionButton>
         ))}
-        {renderList(dictionary.suggestions.remove, suggestions.remove, (item) => (
+        {renderList(dictionary?.suggestions?.remove || 'Remove', suggestions.remove, (item) => (
           <ActionButton
             onClick={() => handleApplyRemoveSuggestion(item)}
             className="bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800"
           >
-            {dictionary.suggestions.removeActionButton}
+            {dictionary?.suggestions?.removeActionButton}
           </ActionButton>
         ))}
         {renderList(
-          dictionary.suggestions.adjust,
+          dictionary?.suggestions?.adjust || 'Adjust',
           suggestions.adjust.map((a) => ({
-            ...a,
-            reason: dictionary.suggestions.adjustReason
+            name: a.name,
+            field: a.field as 'name' | 'qty',
+            current: a.current,
+            suggested: a.suggested,
+            reason: dictionary?.suggestions?.adjustReason
               .replace('{field}', a.field)
-              .replace('{current}', a.current)
-              .replace('{suggested}', a.suggested)
+              .replace('{current}', String(a.current))
+              .replace('{suggested}', String(a.suggested))
               .replace('{reason}', a.reason),
           })),
-          (item) => (
-            <ActionButton
-              onClick={() => handleApplyAdjustSuggestion(item)}
-              className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800"
-            >
-              {dictionary.suggestions.changeActionButton}
-            </ActionButton>
-          )
+          (item) => {
+            if (!item.field || item.suggested === undefined || item.current === undefined) return null;
+            const adjusted: AdjustSuggestion = {
+              name: item.name,
+              field: item.field,
+              suggested: item.suggested,
+              current: item.current,
+              reason: item.reason || '',
+            };
+            return (
+              <ActionButton
+                onClick={() => handleApplyAdjustSuggestion(adjusted)}
+                className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800"
+              >
+                {dictionary?.suggestions?.changeActionButton}
+              </ActionButton>
+            );
+          }
         )}
-        {renderReplaceList(dictionary.suggestions.replace, suggestions.replace)}
+        {renderReplaceList(dictionary?.suggestions?.replace || 'Replace', suggestions.replace)}
       </div>
     );
   };
@@ -398,7 +434,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
   if (initialLoad) {
     return (
       <div className="flex justify-center items-center h-64">
-        <p className="text-slate-500 dark:text-slate-400">{dictionary.loading}</p>
+        <p className="text-slate-500 dark:text-slate-400">{dictionary?.loading}</p>
       </div>
     );
   }
@@ -419,30 +455,56 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
         className={`container mx-auto transition-all duration-300 ${isFullScreen ? 'p-0 md:p-0 max-w-full' : 'p-4 md:p-8'}`}
       >
         <div className="w-full flex justify-end mb-4 no-print">
-          <button
-            type="button"
-            onClick={() => setAddModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow px-5 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          >
-            <span className="text-lg leading-none">＋</span>
-            <span>
-              {dictAll.packing?.addItemModal.title ||
-                dictAll.ui?.common.add ||
-                (lang === 'pl' ? 'Dodaj przedmiot' : 'Add item')}
-            </span>
-          </button>
+          <div className="flex flex-wrap gap-3">
+            {(listMeta?.regenerationCount ?? 0) < 2 && (
+              <button
+                type="button"
+                onClick={() => setRegenerateModalOpen(true)}
+                className="inline-flex items-center gap-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow px-5 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-400"
+              >
+                <span className="text-lg leading-none">♻</span>
+                <span>{regenDict?.button || (lang === 'pl' ? 'Re-generuj (AI)' : 'Re-generate (AI)')}</span>
+                <span className="text-[10px] bg-purple-500/60 px-2 py-0.5 rounded-full">
+                  {(listMeta?.regenerationCount ?? 0) + 1}/2
+                </span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setAddModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow px-5 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+              <span className="text-lg leading-none">＋</span>
+              <span>
+                {dictAll.packing?.addItemModal.title ||
+                  dictAll.ui?.common.add ||
+                  (lang === 'pl' ? 'Dodaj przedmiot' : 'Add item')}
+              </span>
+            </button>
+          </div>
         </div>
         {/* Layout behavior changes:
             - If there are no packing items AND no checklist items, we focus on generation / quick add (left panel only)
             - If there are items, we hide the left panel and expand the list to full width (user requested) */}
         <div className={`${isFullScreen ? '' : 'grid grid-cols-1 lg:grid-cols-3 gap-8'}`}>
           <div
-            className={`lg:col-span-1 space-y-6 no-print ${isFullScreen || packingItems.length > 0 || checklistItems.length > 0 ? 'hidden' : ''}`}
+            className={`lg:col-span-1 space-y-6 no-print ${isFullScreen || packingItems.length > 0 ? 'hidden' : ''}`}
           >
-            <CollapsibleSection title={dictionary.generateTitle}>
-              <PackingListGenerator onGenerate={handleGenerateList} isLoading={isLoading} trip={trip} />
+            <CollapsibleSection title={dictionary?.generateTitle || 'Generate'}>
+              <PackingListGenerator onGenerate={handleGenerateList} isLoading={isLoading} trip={trip} uiLang={lang} />
             </CollapsibleSection>
-            <CollapsibleSection title={dictionary.manageTitle}>
+            {(listMeta?.regenerationCount ?? 0) < 2 && (
+              <CollapsibleSection title={regenDict?.title || 'Re-generate'}>
+                <PackingListGenerator
+                  onGenerate={regenerateList}
+                  isLoading={isLoading}
+                  trip={trip}
+                  regenerateMode
+                  uiLang={lang}
+                />
+              </CollapsibleSection>
+            )}
+            <CollapsibleSection title={dictionary?.manageTitle || 'Manage'}>
               <PackingListActions
                 onCheckList={handleValidateList}
                 onClearList={clearList}
@@ -452,9 +514,10 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
                 onLoadTemplate={loadTemplate}
               />
             </CollapsibleSection>
-            <CollapsibleSection title={dictionary.quickAddTitle}>
+            <CollapsibleSection title={dictionary?.quickAddTitle || 'Quick add'}>
               <QuickAddItem onAddItem={addItemFromLibrary} />
             </CollapsibleSection>
+            {/* Preview intentionally moved to main column for visibility after initial generation */}
             {error && (
               <div
                 className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative dark:bg-red-900/20 dark:border-red-500/30 dark:text-red-200"
@@ -462,7 +525,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
               >
                 {error}
                 <button onClick={clearError} className="absolute top-0 bottom-0 right-0 px-4 py-3">
-                  <span className="sr-only">{dictionary.errorDismiss}</span>×
+                  <span className="sr-only">{dictionary?.errorDismiss}</span>×
                 </button>
               </div>
             )}
@@ -474,14 +537,24 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
           >
             {listMeta && listMeta.archetype && !isFullScreen && (
               <div className="bg-indigo-50 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-r-lg shadow dark:bg-indigo-900/20 dark:border-indigo-500 dark:text-indigo-200">
-                <p className="font-bold text-lg">{dictionary.archetype.replace('{archetype}', listMeta.archetype)}</p>
+                <p className="font-bold text-lg">{dictionary?.archetype?.replace('{archetype}', listMeta.archetype)}</p>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  {dictionary.metaDetails
+                  {dictionary?.metaDetails
                     .replace('{destination}', listMeta.destination)
                     .replace('{days}', String(listMeta.days))
                     .replace('{adults}', String(listMeta.people.adults))
                     .replace('{children}', String(listMeta.people.children))}
                 </p>
+              </div>
+            )}
+            {regeneratedPreview && regeneratedPreview.length > 0 && (
+              <div className="no-print">
+                <PackingRegenerationPreview
+                  items={regeneratedPreview}
+                  onAddAll={() => applyRegeneratedPreview('all')}
+                  onDiscard={discardRegeneratedPreview}
+                  onAddSingle={(id) => addSingleFromPreview(id)}
+                />
               </div>
             )}
             {checklistItems.length > 0 && !isFullScreen && (
@@ -587,7 +660,6 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
                     setBulkDeleteOpen(false);
                   }}
                   className="inline-flex justify-center items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold bg-red-600 hover:bg-red-500 text-white shadow focus:outline-none focus:ring-2 focus:ring-red-400"
-                  autoFocus
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -609,7 +681,42 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
         <ConfirmationModal onConfirm={handleConfirmGeneration} onCancel={handleCancelGeneration} />
       )}
       {isValidationModalOpen && (
-        <ValidationModal onConfirm={handleConfirmValidation} onCancel={handleCancelValidation} />
+        <ValidationModal
+          context={validationContext}
+          setContext={setValidationContext}
+          onConfirm={handleConfirmValidation}
+          onCancel={handleCancelValidation}
+        />
+      )}
+      {isRegenerateModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-lg bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 relative">
+            <button
+              onClick={() => setRegenerateModalOpen(false)}
+              className="absolute top-2 right-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+            <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-100">
+              {regenDict?.title || (lang === 'pl' ? 'Re-generuj listę' : 'Re-generate list')}
+            </h3>
+            <PackingListGenerator
+              onGenerate={(d) => {
+                regenerateList(d);
+                setRegenerateModalOpen(false);
+              }}
+              isLoading={isLoading}
+              trip={trip}
+              regenerateMode
+              uiLang={lang}
+            />
+          </div>
+        </div>
       )}
       <AddItemModal
         isOpen={isAddModalOpen}
@@ -617,6 +724,9 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({
         onAddItem={addItem}
         categories={filteredCategories}
         QuickAddSlot={<QuickAddItem onAddItem={addItemFromLibrary} />}
+        onRegenerate={() => setRegenerateModalOpen(true)}
+        canRegenerate={(listMeta?.regenerationCount ?? 0) < 2}
+        regenerateInfo={(listMeta?.regenerationCount ?? 0) >= 2 ? regenDict?.limitReached : regenDict?.info || ''}
       />
     </div>
   );

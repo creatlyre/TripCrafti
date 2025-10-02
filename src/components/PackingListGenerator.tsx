@@ -187,9 +187,17 @@ interface ListGeneratorProps {
   onGenerate: (details: GenerateDetails) => void;
   isLoading: boolean;
   trip?: Trip & { itineraries: GeneratedItinerary[] };
+  regenerateMode?: boolean; // when true acts as re-generate form
+  uiLang?: 'pl' | 'en'; // current UI/page language
 }
 
-const PackingListGenerator: React.FC<ListGeneratorProps> = ({ onGenerate, isLoading, trip }) => {
+const PackingListGenerator: React.FC<ListGeneratorProps> = ({
+  onGenerate,
+  isLoading,
+  trip,
+  regenerateMode = false,
+  uiLang,
+}) => {
   const [details, setDetails] = useState<GenerateDetails>({
     destination: '',
     days: '',
@@ -202,7 +210,16 @@ const PackingListGenerator: React.FC<ListGeneratorProps> = ({ onGenerate, isLoad
     special: '',
     region: 'Europa',
     travelStyle: 'Standardowy',
+    language: uiLang === 'en' ? 'English' : 'Polish',
   });
+  const [languageManuallySet, setLanguageManuallySet] = useState(false);
+
+  // Sync when uiLang changes and user hasn't overridden
+  useEffect(() => {
+    if (!languageManuallySet && uiLang) {
+      setDetails((prev) => ({ ...prev, language: uiLang === 'en' ? 'English' : 'Polish' }));
+    }
+  }, [uiLang, languageManuallySet]);
 
   // Pre-populate form with trip data when available
   useEffect(() => {
@@ -228,6 +245,7 @@ const PackingListGenerator: React.FC<ListGeneratorProps> = ({ onGenerate, isLoad
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setDetails((prev) => ({ ...prev, [name]: value }));
+    if (name === 'language') setLanguageManuallySet(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -238,9 +256,11 @@ const PackingListGenerator: React.FC<ListGeneratorProps> = ({ onGenerate, isLoad
   return (
     <>
       <p className="text-slate-500 dark:text-slate-400 mb-4 text-sm">
-        {trip
-          ? 'Dane z podróży zostały automatycznie uzupełnione. Możesz je dostosować.'
-          : 'Opisz swój wyjazd, a AI stworzy dla Ciebie spersonalizowaną listę.'}
+        {regenerateMode
+          ? 'Zmodyfikuj parametry aby ponownie wygenerować alternatywne propozycje. Obecna lista nie zostanie nadpisana dopóki nie dodasz pozycji.'
+          : trip
+            ? 'Dane z podróży zostały automatycznie uzupełnione. Możesz je dostosować.'
+            : 'Opisz swój wyjazd, a AI stworzy dla Ciebie spersonalizowaną listę.'}
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <InputField
@@ -268,6 +288,26 @@ const PackingListGenerator: React.FC<ListGeneratorProps> = ({ onGenerate, isLoad
             value={details.adults}
             onChange={handleChange}
           />
+          <div>
+            <label htmlFor="language" className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+              {uiLang === 'pl' ? 'Język listy' : 'List language'}
+            </label>
+            <select
+              id="language"
+              name="language"
+              value={details.language || (uiLang === 'en' ? 'English' : 'Polish')}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="Polish">{uiLang === 'pl' ? 'Polski' : 'Polish'}</option>
+              <option value="English">English</option>
+            </select>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              {uiLang === 'pl'
+                ? 'Określa język nazw przedmiotów i kategorii generowanych przez AI.'
+                : 'Sets the language of generated item/category names.'}
+            </p>
+          </div>
         </div>
         <InputField
           name="childrenAges"
@@ -368,8 +408,10 @@ const PackingListGenerator: React.FC<ListGeneratorProps> = ({ onGenerate, isLoad
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              Generowanie...
+              {regenerateMode ? 'Generowanie podglądu...' : 'Generowanie...'}
             </>
+          ) : regenerateMode ? (
+            'Re-generuj (podgląd)'
           ) : (
             'Generuj listę'
           )}

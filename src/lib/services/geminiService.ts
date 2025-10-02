@@ -11,23 +11,23 @@ import type {
 } from '@/types';
 
 // This service should only be called from server-side code (e.g., API routes)
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-  // This will only log on the server, which is safe.
-  console.error('GEMINI_API_KEY environment variable is not set.');
-  // We don't throw an error here, but functions will fail if the key is missing.
+// Prefer Vite/Astro style env access; fallback to process.env for tests or node scripts
+const resolvedApiKey = import.meta?.env?.GEMINI_API_KEY;
+if (!resolvedApiKey) {
+  console.error('GEMINI_API_KEY environment variable is not set (checked import.meta.env and process.env).');
 }
 
-const ai = new GoogleGenerativeAI(apiKey || '');
+const resolvedModel = 'gemini-2.5-flash';
+const ai = new GoogleGenerativeAI(resolvedApiKey || '');
 
 const getModel = () => {
-  if (!apiKey) {
+  if (!resolvedApiKey) {
     throw new Error('Gemini API Key is not configured on the server.');
   }
-  return ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  return ai.getGenerativeModel({ model: resolvedModel });
 };
 
-const getGeneratePrompt = (details: GenerateDetails): string => {
+const getGeneratePrompt = (details: GenerateDetails, language: string): string => {
   const {
     destination,
     days,
@@ -43,9 +43,15 @@ const getGeneratePrompt = (details: GenerateDetails): string => {
   } = details;
 
   return `
-<Persona>
-Jesteś precyzyjnym AI, ekspertem od logistyki podróży. Twoim jedynym celem jest wygenerowanie perfekcyjnej, zoptymalizowanej i minimalistycznej listy pakowania w formacie JSON, ściśle przestrzegając podanych reguł i schematu. Działasz w sposób deterministyczny, unikając kreatywnych dewiacji.
-</Persona>
+<persona>
+Jesteś "TripCrafti Packing Architect" – wyspecjalizowany moduł AI platformy TripCrafti odpowiedzialny WYŁĄCZNIE za tworzenie zoptymalizowanych list pakowania. Nie jesteś ogólnym modelem – masz wąską domenę: minimalizm, kompletność krytycznych elementów, brak dublowania funkcji oraz kontekst podróży. Twoje odpowiedzi są zawsze deterministyczne.
+</persona>
+
+<language>${language}</language>
+
+<critical_language_rule>
+WSZYSTKIE pola tekstowe (nazwy przedmiotów, kategorie, notatki, zadania checklisty, archetype) MUSZĄ być w języku: ${language}. Niedozwolone jest mieszanie języków, transliteracje czy pozostawianie anglicyzmów (chyba że dana nazwa jest standardem, np. "Powerbank"). Jeśli model nie jest pewien tłumaczenia – wybiera najbardziej rozpowszechnioną formę w ${language}. Naruszenie tej reguły = błąd krytyczny.
+</critical_language_rule>
 
 <InputData>
   <Destination>${destination}</Destination>
@@ -140,6 +146,9 @@ Jesteś precyzyjnym AI, ekspertem od logistyki podróży. Twoim jedynym celem je
 
   <Rule id="buy_on_arrival_strategy">
     Dla podróży > 7 dni do zurbanizowanych regionów, dla przedmiotów łatwo dostępnych i zajmujących dużo miejsca (np. żel pod prysznic, szampon, krem do opalania, pieluchy), dodaj w polu "notes" sugestię: 'Rozważ zakup na miejscu, aby oszczędzić miejsce.'.
+  </Rule>
+  <Rule id="language_enforcement">
+    Każdy string (zarówno w polu name, notes, category, task, archetype) musi być w ${language}. Jeśli w danych wejściowych pojawiły się inne języki – znormalizuj do ${language}.
   </Rule>
 </Rules>
 
@@ -279,12 +288,13 @@ Jesteś precyzyjnym i doświadczonym AI, ekspertem od optymalizacji list podró�
 };
 
 export const generatePackingList = async (
-  details: GenerateDetails
+  details: GenerateDetails,
+  language: string
 ): Promise<{ meta: PackingListMeta; items: PackingItem[]; checklist: ChecklistItem[] }> => {
   try {
     const model = getModel();
-    const generationConfig = { responseMimeType: 'application/json' };
-    const result = await model.generateContent(getGeneratePrompt(details));
+    const chosenLanguage = language || details.language || 'Polish';
+    const result = await model.generateContent(getGeneratePrompt(details, chosenLanguage));
 
     const response = result.response;
     const jsonText = response.text();
@@ -303,7 +313,10 @@ export const generatePackingList = async (
 
     return { meta: parsedList.meta, items: itemsWithClientProps, checklist: checklistWithClientProps };
   } catch (error) {
-    console.error('Błąd podczas generowania listy przez Gemini:', error);
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.error('Błąd podczas generowania listy przez Gemini:', error);
+    }
     throw new Error('Nie udało się wygenerować listy. Sprawdź format danych i spróbuj ponownie.');
   }
 };
@@ -324,7 +337,10 @@ export const validatePackingList = async (currentList: PackingItem[], changes: o
       replace: parsedResult.replace || [],
     };
   } catch (error) {
-    console.error('Błąd podczas sprawdzania listy przez Gemini:', error);
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.error('Błąd podczas sprawdzania listy przez Gemini:', error);
+    }
     throw new Error('Nie udało się sprawdzić listy. Spróbuj ponownie.');
   }
 };
@@ -379,7 +395,10 @@ export const categorizePackingList = async (
 
     return parsedResult.categorization;
   } catch (error) {
-    console.error('Błąd podczas kategoryzacji listy przez Gemini:', error);
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.error('Błąd podczas kategoryzacji listy przez Gemini:', error);
+    }
     throw new Error('Nie udało się skategoryzować listy. Spróbuj ponownie.');
   }
 };

@@ -24,6 +24,8 @@ CREATE TABLE trips (
   lodging TEXT,
   lodging_lat DOUBLE PRECISION,
   lodging_lon DOUBLE PRECISION,
+  -- Tracks how many times the user re-generated the packing list (AI) for this trip
+  packing_regenerations INT NOT NULL DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
