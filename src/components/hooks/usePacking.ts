@@ -9,6 +9,7 @@ import type {
   ItemDefinition,
 } from '@/types';
 
+import { POLISH_CATEGORY_TO_KEY } from '@/lib/categoryLocalization';
 import { DEFAULT_CATEGORIES, AUTO_SAVE_DELAY, TOAST_DURATION } from '@/lib/constants';
 import { PackingService } from '@/lib/services/packingService';
 
@@ -258,11 +259,53 @@ export function usePacking({
         const newList = await response.json();
 
         // Transform AI response to match our state
-        const newItems: PackingItem[] = newList.items.map((item: Omit<PackingItem, 'id' | 'packed'>) => ({
-          ...item,
-          id: PackingService.generateItemId(),
-          packed: false,
-        }));
+        // Normalize categories to stored Polish canonical labels when model returns English for known keys.
+        // We treat stored source-of-truth as Polish labels for now.
+        const reverseCategoryMap: Record<string, string> = Object.fromEntries(
+          Object.entries(POLISH_CATEGORY_TO_KEY).map(([pl, key]) => [key, pl])
+        );
+        const englishKeyGuesses: Record<string, string> = {
+          Documents: 'documents_finance',
+          'Documents & Finance': 'documents_finance',
+          Clothing: 'clothing',
+          Clothes: 'clothing',
+          Footwear: 'footwear',
+          Electronics: 'electronics',
+          Hygiene: 'hygiene_beauty',
+          Toiletries: 'hygiene_beauty',
+          'Hygiene & Toiletries': 'hygiene_beauty',
+          'First Aid': 'first_aid',
+          Other: 'other',
+          Misc: 'other',
+          Baby: 'child',
+          Child: 'child',
+          Kids: 'child',
+          'Comfort & Sleep': 'comfort_sleep',
+          'Organization & Security': 'organization_security',
+          'Beach & Summer': 'beach_summer',
+          'Cold & Winter Gear': 'cold_winter',
+          'In Transit': 'travel_accessories',
+          'In Transit (Carry-on)': 'travel_accessories',
+          'Special Activities': 'special_activities',
+        };
+        const normalizeCategory = (raw: string): string => {
+          if (!raw) return raw;
+          // Already a known Polish label
+          if (POLISH_CATEGORY_TO_KEY[raw]) return raw;
+          // If raw corresponds to an English guess, map to key then to Polish label
+          const key = englishKeyGuesses[raw] || englishKeyGuesses[raw.replace(/\s+/g, ' ')] || undefined;
+          if (key && reverseCategoryMap[key]) return reverseCategoryMap[key];
+          return raw; // leave custom/unknown as-is
+        };
+        const newItems: PackingItem[] = newList.items.map((item: Omit<PackingItem, 'id' | 'packed'>) => {
+          const normalizedCat = normalizeCategory(item.category);
+          return {
+            ...item,
+            category: normalizedCat,
+            id: PackingService.generateItemId(),
+            packed: false,
+          };
+        });
         const newChecklistItems = newList.checklist.map((item: { task: string; done: boolean }) => ({
           ...item,
           id: PackingService.generateItemId(),
@@ -311,8 +354,42 @@ export function usePacking({
           throw new Error(err.error);
         }
         const regenerated = await response.json();
+        const reverseCategoryMap: Record<string, string> = Object.fromEntries(
+          Object.entries(POLISH_CATEGORY_TO_KEY).map(([pl, key]) => [key, pl])
+        );
+        const englishKeyGuesses: Record<string, string> = {
+          Documents: 'documents_finance',
+          'Documents & Finance': 'documents_finance',
+          Clothing: 'clothing',
+          Clothes: 'clothing',
+          Footwear: 'footwear',
+          Electronics: 'electronics',
+          Hygiene: 'hygiene_beauty',
+          Toiletries: 'hygiene_beauty',
+          'Hygiene & Toiletries': 'hygiene_beauty',
+          'First Aid': 'first_aid',
+          Other: 'other',
+          Misc: 'other',
+          Baby: 'child',
+          Child: 'child',
+          Kids: 'child',
+          'Comfort & Sleep': 'comfort_sleep',
+          'Organization & Security': 'organization_security',
+          'Beach & Summer': 'beach_summer',
+          'Cold & Winter Gear': 'cold_winter',
+          'In Transit': 'travel_accessories',
+          'In Transit (Carry-on)': 'travel_accessories',
+          'Special Activities': 'special_activities',
+        };
+        const normalizeCategory = (raw: string): string => {
+          if (POLISH_CATEGORY_TO_KEY[raw]) return raw;
+          const key = englishKeyGuesses[raw] || englishKeyGuesses[raw.replace(/\s+/g, ' ')] || undefined;
+          if (key && reverseCategoryMap[key]) return reverseCategoryMap[key];
+          return raw;
+        };
         const previewItems: PackingItem[] = regenerated.items.map((item: Omit<PackingItem, 'id' | 'packed'>) => ({
           ...item,
+          category: normalizeCategory(item.category),
           id: PackingService.generateItemId(),
           packed: false,
         }));

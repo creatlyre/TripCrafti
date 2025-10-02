@@ -286,6 +286,29 @@ export interface Dictionary {
       addItem: string;
       discard: string;
       empty: string;
+      loadingOverlay?: { message: string; costProtection: string };
+      generatingNewList?: string;
+      previewIntro?: string;
+      error?: string;
+    };
+    share?: {
+      button: string; // Share list
+      title: string; // Share packing list
+      allowEdits: string; // Allow edits toggle label
+      expiryLabel: string; // Expiration (hours, optional)
+      create: string; // Create link
+      creating: string; // Creating...
+      copy: string; // Copy link
+      copied: string; // Copied!
+      viewOnlyBadge: string; // View only
+      collaborateBadge: string; // Collaborate
+      revoke: string; // Revoke
+      revoking: string; // Revoking...
+      revokeConfirm: string; // Are you sure revoke?
+      success: string; // Link created
+      error: string; // Generic error
+      allowEditsHelp?: string; // help text
+      expiryHelp?: string; // help text
     };
     validation: {
       title: string;
@@ -294,6 +317,7 @@ export interface Dictionary {
       cancel: string;
       confirm: string;
     };
+    bulkDelete?: { openButton: string; title: string; body: string; deleteAll: string };
     listEmptyError: string;
     itemAdded: string;
     itemRemoved: string;
@@ -461,6 +485,7 @@ export interface Dictionary {
       yes: string;
       no: string;
       confirm: string;
+      pleaseWait?: string;
     };
   };
   attribution?: {
@@ -811,6 +836,32 @@ export const dictionaries: Record<Lang, Dictionary> = {
         addItem: 'Dodaj',
         discard: 'Odrzuć podgląd',
         empty: 'Brak nowych elementów do dodania.',
+        loadingOverlay: {
+          message: 'AI generuje nową listę. Proszę nie zamykaj ani nie odświeżaj strony...',
+          costProtection: 'Zabezpieczenie kosztów',
+        },
+        generatingNewList: 'Generowanie nowej listy...',
+        previewIntro: 'Nowa lista została wygenerowana. Możesz dodać wszystkie nowe pozycje lub wybrać tylko niektóre.',
+        error: 'Błąd podczas ponownego generowania listy. Spróbuj ponownie.',
+      },
+      share: {
+        button: 'Udostępnij',
+        title: 'Udostępnij listę pakowania',
+        allowEdits: 'Pozwól na edycję (zaznaczanie / dodawanie / zmiany)',
+        expiryLabel: 'Wygaśnięcie (godziny, opcjonalnie)',
+        create: 'Utwórz link',
+        creating: 'Tworzenie...',
+        copy: 'Kopiuj link',
+        copied: 'Skopiowano!',
+        viewOnlyBadge: 'Podgląd',
+        collaborateBadge: 'Współpraca',
+        revoke: 'Unieważnij',
+        revoking: 'Unieważnianie...',
+        revokeConfirm: 'Unieważnić ten link? Osoby z linkiem stracą dostęp.',
+        success: 'Link utworzony',
+        error: 'Błąd tworzenia linku',
+        allowEditsHelp: 'Gdy wyłączone – tylko podgląd listy bez zmian.',
+        expiryHelp: 'Pozostaw puste aby link nie wygasał.',
       },
       validation: {
         title: 'Sprawdź listę z kontekstem',
@@ -1023,6 +1074,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         yes: 'Tak',
         no: 'Nie',
         confirm: 'Potwierdź',
+        pleaseWait: 'Proszę czekać...',
       },
     },
     attribution: {
@@ -1354,6 +1406,32 @@ export const dictionaries: Record<Lang, Dictionary> = {
         addItem: 'Add',
         discard: 'Discard preview',
         empty: 'No new items to add.',
+        loadingOverlay: {
+          message: 'AI is generating a new list. Please do not close or refresh the page...',
+          costProtection: 'Cost protection',
+        },
+        generatingNewList: 'Generating new list...',
+        previewIntro: 'A new list has been generated. You can add all new items or choose selected ones.',
+        error: 'Error regenerating list. Please try again.',
+      },
+      share: {
+        button: 'Share',
+        title: 'Share packing list',
+        allowEdits: 'Allow edits (check off / add / modify)',
+        expiryLabel: 'Expiry (hours, optional)',
+        create: 'Create link',
+        creating: 'Creating...',
+        copy: 'Copy link',
+        copied: 'Copied!',
+        viewOnlyBadge: 'View only',
+        collaborateBadge: 'Collaborate',
+        revoke: 'Revoke',
+        revoking: 'Revoking...',
+        revokeConfirm: 'Revoke this link? People with it will lose access.',
+        success: 'Link created',
+        error: 'Link creation failed',
+        allowEditsHelp: 'When off – viewers cannot modify or mark items.',
+        expiryHelp: 'Leave empty for no expiry.',
       },
       validation: {
         title: 'Check list with context',
@@ -1566,6 +1644,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         yes: 'Yes',
         no: 'No',
         confirm: 'Confirm',
+        pleaseWait: 'Please wait...',
       },
     },
     attribution: {

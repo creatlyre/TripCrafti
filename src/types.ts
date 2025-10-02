@@ -238,3 +238,15 @@ export interface BudgetReport {
 
 // Budget display mode for UI (purely front-end, does not affect API responses)
 export type BudgetMode = 'simple' | 'full';
+
+// ========================= Packing Share Links =========================
+// Represents a temporary collaborative access grant to a trip's packing list.
+export interface PackingShareLink {
+  id: string;
+  trip_id: string;
+  token: string; // opaque random string
+  can_modify: boolean;
+  expires_at?: string | null; // ISO timestamp or null for no expiry
+  created_at?: string;
+  revoked?: boolean;
+}

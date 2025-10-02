@@ -1,0 +1,13 @@
+---
+import Layout from '@/layouts/Layout.astro';
+
+import SharedPackingClient from '@/components/packing/SharedPackingClient';
+
+const { token } = Astro.params;
+---
+
+<Layout title="Tryb Pakowania - Udostępniona Lista">
+  <div class="container mx-auto px-4 py-8">
+    <SharedPackingClient client:load token={token} />
+  </div>
+</Layout>

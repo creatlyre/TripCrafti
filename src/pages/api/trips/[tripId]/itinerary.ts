@@ -249,10 +249,35 @@ async function generateItinerary({ itineraryId, trip, preferences, supabase, lan
       throw new Error('ModelReturnedInvalidJSON');
     }
 
-    // Basic token estimation (SDK may expose usage metrics in future; placeholder logic)
-    // We'll approximate: input tokens ~ prompt length / 4, output tokens ~ response text length / 4
-    const inputTokens = Math.round(prompt.length / 4);
-    const thoughtTokens = Math.round(text.length / 4);
+    // Prefer official usage metadata if available; fall back to rough estimates.
+    // Gemini SDK (>= mid 2025) returns usageMetadata with token counts including thoughts.
+    // Example structure:
+    // result.response.candidates[0]. ... AND result.response.usageMetadata = {
+    //   promptTokenCount, candidatesTokenCount, totalTokenCount, thoughtsTokenCount }
+    let inputTokens = 0;
+    let thoughtTokens = 0;
+    try {
+      interface GeminiUsageMeta {
+        promptTokenCount?: number;
+        candidatesTokenCount?: number;
+        totalTokenCount?: number;
+        thoughtsTokenCount?: number; // newer field
+        prompt_tokens?: number; // legacy fallback
+      }
+      const usage =
+        (result as unknown as { response?: { usageMetadata?: GeminiUsageMeta } })?.response?.usageMetadata ||
+        (response as unknown as { usageMetadata?: GeminiUsageMeta })?.usageMetadata;
+      if (usage) {
+        inputTokens = usage.promptTokenCount ?? usage.prompt_tokens ?? 0;
+        thoughtTokens = usage.thoughtsTokenCount ?? usage.candidatesTokenCount ?? 0;
+      } else {
+        inputTokens = Math.round(prompt.length / 4);
+        thoughtTokens = Math.round(text.length / 4);
+      }
+    } catch {
+      inputTokens = Math.round(prompt.length / 4);
+      thoughtTokens = Math.round(text.length / 4);
+    }
 
     const updateOk = await supabase
       .from(tableName)
@@ -264,11 +289,14 @@ async function generateItinerary({ itineraryId, trip, preferences, supabase, lan
         updated_at: new Date().toISOString(),
       })
       .eq('id', itineraryId);
+    // eslint-disable-next-line no-console
     console.timeEnd('[itinerary-ai] total_generation');
     if (updateOk.error) {
+      // eslint-disable-next-line no-console
       console.error('[itinerary-ai] Failed to update itinerary after generation', updateOk.error);
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error generating itinerary:', error);
     const failUpdate = await supabase
       .from(tableName)
@@ -278,6 +306,7 @@ async function generateItinerary({ itineraryId, trip, preferences, supabase, lan
       })
       .eq('id', itineraryId);
     if (failUpdate.error) {
+      // eslint-disable-next-line no-console
       console.error('[itinerary-ai] Failed to mark FAILED', failUpdate.error);
     }
   }
