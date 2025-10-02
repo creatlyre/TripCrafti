@@ -1,10 +1,12 @@
-TripCrafti - Twój Inteligentny Asystent Podróży
-🌟 Wizja Projektu
+**TripCrafti – Twój Inteligentny Asystent Podróży**  
+_Język:_ **Polski** | [English](./README.en.md)
+
+🌟 **Wizja Projektu**
 
 TripCrafti to inteligentny asystent podróży, którego misją jest zrewolucjonizowanie sposobu, w jaki planujemy i przeżywamy wyjazdy. Naszym celem jest zredukowanie stresu związanego z organizacją do minimum, pozwalając podróżnikom czerpać czystą radość z odkrywania świata.
 
 Aplikacja kompleksowo wspiera użytkownika na każdym etapie: od inspiracji i automatycznego planowania, przez precyzyjne zarządzanie budżetem i rezerwacjami, aż po inteligentne spakowanie walizki z pomocą AI.
-✨ Główne Funkcjonalności
+✨ **Główne Funkcjonalności**
 
 TripCrafti to nie tylko planer, to zintegrowany ekosystem, który dba o każdy detal Twojej podróży.
 
@@ -20,156 +22,116 @@ TripCrafti to nie tylko planer, to zintegrowany ekosystem, który dba o każdy d
 
     📱 Pełna Responsywność: Korzystaj z aplikacji wygodnie na komputerze, tablecie i smartfonie.
 
-🛠️ Stos Technologiczny
+🛠️ **Stos Technologiczny**
+
+Projekt jest aplikacją typu Single Repo opartą o:
+
+| Obszar | Technologia |
+|--------|-------------|
+| Runtime / SSR | Astro 5 (hybrydowy rendering + server endpoints) |
+| UI / Interaktywność | React 18 (przygotowane pod 19) + TypeScript |
+| Stylowanie | Tailwind CSS 4 |
+| Baza / Auth | Supabase (PostgreSQL + row level security + auth) |
+| AI | Google Gemini (itinerary + packing: generowanie, walidacja, kategoryzacja) |
+| Waluty (FX) | exchangerate.host (public API z opcjonalnym kluczem) |
+| Testy | Vitest + @testing-library/react |
+| Lint / Format | ESLint (niestandardowe reguły + `no-hardcoded-jsx-text`), Prettier |
+| Ikony / UI | shadcn/ui + Radix Primitives + lucide-react |
+| I18n | Lekki słownik PL/EN (`src/lib/i18n.ts`) |
+| Obrazy destynacji | Unsplash API (opcjonalny klucz) |
+
+Brak osobnego backendu typu NestJS – logika biznesowa zaimplementowana w Astro server endpoints (`/src/pages/api/**`).
+🏗️ **Architektura**
+
+Monorepo aplikacyjne (Astro) + Supabase jako BaaS:
+
+```
+[*] Astro (SSR + React wyspy)
+    ├─ Pages & Layouts (routing / SSR)
+    ├─ API Endpoints (server only logic)
+    │    /api/trips/...         (CRUD + itinerary AI)
+    │    /api/ai/packing        (generowanie / walidacja / kategoryzacja listy)
+    │    /api/trips/:id/packing/share (linki współdzielenia)
+    ├─ lib/ (FX, i18n, AI prompty, usługi Gemini)
+    └─ components/ (UI + hooki)
+
+Supabase (PostgreSQL + Auth)
+    ├─ Tabele: trips, expenses, budget_categories, itineraries
+    └─ Row Level Security (izolacja użytkowników)
+
+Zewnętrzne:
+    • Google Gemini (itinerary JSON + packing list / suggestions / categorization)
+    • exchangerate.host (kursy walut z cache 6h, fallback = rate 1)
+    • Unsplash (opcjonalnie obrazy destynacji)
+```
+
+Mechanizmy:
+* AI Itinerary: fallback lista modeli, pierwsze dostępne; token usage zapisywany (input, output, thought approx).
+* AI Packing: generacja bazowa → do 2 regeneracji (podgląd różnic) → walidacja kontekstowa (sugestie: add/remove/adjust/replace) → kategoryzacja → udostępnianie listy.
+* FX: pamięciowy cache (TTL 6h, źródło: identity | cache | live | fallback).
+* Budżet: normalizacja wydatków do waluty podróży, raport post-trip.
+* I18n: middleware ustawia `lang` (PL/EN).
+
+🚀 **Roadmap (aktualny status)**
+
+Etap 1: MVP
+    [x] Auth (Supabase)
+    [x] CRUD Trips
+    [x] Wydatki + kategorie budżetu
+    [x] Podsumowanie budżetu
+
+Etap 2: AI Itinerary
+    [x] Formularz preferencji
+    [x] Prompt + fallback modeli Gemini
+    [x] Generowanie planu (JSON) + token usage
+    [ ] Zaawansowana wizualizacja timeline
+    [x] Ręczna edycja / integracja
+
+Etap 3: AI Packing
+    [x] Generacja listy
+    [x] Limit 2 regeneracji (preview diff)
+    [x] Walidacja kontekstowa (sugestie)
+    [x] Kategoryzacja automatyczna
+    [x] Szybkie dodawanie z biblioteki
+    [x] Udostępnienie przez link (view/collab)
+    [ ] Wersjonowanie list (future)
+
+Etap 4: Budżet rozszerzony
+    [x] FX konwersje (cache 6h)
+    [x] Post-trip raport
+    [x] Eksport CSV
+    [ ] Historyczne kursy
+    [ ] Persist fx_rate
+
+Etap 5: Społecznościowe / UX
+    [ ] Publiczne itineraries
+    [ ] Notatki / załączniki
+    [ ] Powiadomienia
+    [ ] Tryb offline / PWA
+
+⚙️ **Instalacja i Uruchomienie**
+
+Wymagania:
+* Node 20+
+* Konto Supabase (URL + anon key)
+* (Opcjonalnie) Klucze: GEMINI_API_KEY, UNSPLASH_ACCESS_KEY, EXCHANGERATE_API_KEY
+
+Kroki:
+1. Sklonuj repo: `git clone <repo_url>`
+2. Wejdź do katalogu projektu: `cd 10x-devs-project`
+3. Zainstaluj zależności: `npm install`
+4. Skopiuj `.env.example` → `.env` i uzupełnij wymagane pola
+5. Uruchom dev serwer: `npm run dev`
+6. Testy: `npm test`
+7. Build produkcyjny: `npm run build` + `npm run preview`
 
-Aplikacja zbudowana jest w oparciu o nowoczesny i skalowalny stos technologiczny, zapewniający wydajność i bezpieczeństwo.
+Brak osobnych kroków frontend/backend – wszystko w jednym pakiecie Astro.
 
-Kategoria
-	
+Migracje: struktura tabel utrzymywana w Supabase (SQL w `db_schema.sql` lub panel). Planowane automatyczne migracje.
 
-Technologia
+Hot Reload: Astro + React Fast Refresh.
 
-Frontend
-	
-
-React z TypeScriptem dla interaktywnego i bezpiecznego UI.
-
-Styling
-	
-
-Tailwind CSS dla szybkiego budowania nowoczesnych i responsywnych interfejsów.
-
-Backend
-	
-
-Node.js z frameworkiem NestJS, zapewniającym modułową i uporządkowaną architekturę.
-
-Baza Danych
-	
-
-PostgreSQL – potężna, relacyjna baza danych, idealna do przechowywania złożonych, powiązanych ze sobą danych.
-
-AI
-	
-
-Google Gemini API do napędzania inteligentnych funkcji planowania i pakowania.
-
-CI/CD
-	
-
-GitHub Actions do automatyzacji procesów testowania, budowania i wdrażania aplikacji.
-🏗️ Architektura Aplikacji
-
-TripCrafti wykorzystuje architekturę zorientowaną na usługi. Aplikacja kliencka (frontend) komunikuje się z serwerem (backend) poprzez bezpieczne API REST. Backend zarządza całą logiką biznesową, danymi oraz integracją z usługami zewnętrznymi, takimi jak Google Gemini.
-
-[Frontend: React] <--- (API REST) ---> [Backend: NestJS] <--- (Integracja) ---> [Baza Danych: PostgreSQL]
-                                              ^
-                                              |
-                                              v
-                                      [Google Gemini API]
-
-🚀 Plan Rozwoju (Roadmap)
-
-Projekt rozwijany jest iteracyjnie. Poniżej znajdują się kluczowe etapy wdrożenia:
-
-    [x] Etap 1: MVP - Rdzeń Planera Podróży
-
-        [x] System uwierzytelniania użytkowników.
-
-        [x] Pełny CRUD dla podróży (Trips).
-
-        [x] Zarządzanie elementami podróży (TripItems) - wydatki, rezerwacje.
-
-        [x] Podstawowe podsumowanie budżetu.
-
-        [x] Konfiguracja infrastruktury (DB, CI/CD).
-
-    [x] Etap 2: Integracja z Inteligentnym Planerem Podróży AI
-
-        [x] Formularz preferencji użytkownika (zainteresowania, styl podróży).
-
-        [x] Implementacja zaawansowanych promptów dla Gemini.
-
-        [ ] Wizualizacja planu podróży (np. w formie osi czasu).
-
-        [x] Możliwość ręcznej edycji planu (np. metodą "przeciągnij i upuść").
-	[ ] Etap 3: Integracja z Asystentem Pakowania AI
-
-        [ ] Interfejs do generowania listy rzeczy do spakowania.
-
-        [ ] Integracja backendu z Gemini API.
-
-        [ ] Wyświetlanie i zarządzanie wygenerowaną listą (CRUD).
-
-    [ ] Etap 4: Udoskonalenia i Funkcje Społecznościowe
-
-        [ ] Udostępnianie planów podróży za pomocą linku.
-
-        [ ] Powiadomienia (np. o nadchodzącym locie).
-
-        [ ] Możliwość dodawania zdjęć i notatek do podróży.
-
-        [ ] Tryb offline.
-
-⚙️ Instalacja i Uruchomienie
-
-Projekt składa się z dwóch głównych części: aplikacji backendowej i frontendowej.
-Wymagania
-
-    Node.js (wersja 20.x lub wyższa)
-
-    NPM lub Yarn
-
-    Działająca instancja PostgreSQL
-
-    Klucz API do Google Gemini
-
-Backend (NestJS)
-
-    Sklonuj repozytorium:
-
-    git clone [https://github.com/twoja-nazwa-uzytkownika/TripCrafti.git](https://github.com/twoja-nazwa-uzytkownika/TripCrafti.git)
-    cd TripCrafti/backend
-
-    Zainstaluj zależności:
-
-    npm install
-
-    Skonfiguruj zmienne środowiskowe:
-
-        Stwórz plik .env na podstawie .env.example.
-
-        Uzupełnij dane dostępowe do bazy danych (DATABASE_URL) oraz klucz API (GEMINI_API_KEY).
-
-    Uruchom migracje bazy danych (jeśli używasz ORM np. Prisma/TypeORM):
-
-    npm run migrate:dev
-    
-    Uruchom serwer deweloperski:
-
-    npm run start:dev
-
-Frontend (React)
-
-    Przejdź do katalogu frontend:
-
-    cd ../frontend
-
-    Zainstaluj zależności:
-
-    npm install
-
-    Skonfiguruj zmienne środowiskowe:
-
-        Stwórz plik .env.local na podstawie .env.example.
-
-        Wskaż adres URL działającego backendu (VITE_API_BASE_URL).
-
-    Uruchom aplikację kliencką:
-
-    npm run dev
-
-🤝 Współtworzenie
+🤝 **Współtworzenie**
 
 Jesteś pasjonatem podróży i kodowania? Chcesz pomóc w rozwoju TripCrafti? Twoja pomoc jest mile widziana!
 
@@ -186,81 +148,163 @@ Jesteś pasjonatem podróży i kodowania? Chcesz pomóc w rozwoju TripCrafti? Tw
     Otwórz Pull Request, opisując wprowadzone zmiany.
 
 Stworzone z ❤️ dla wszystkich podróżników.
-## BudgetCraft Phase 3 Additions
+## **Środowisko (Environment Variables)**
 
-The project now includes foreign exchange (FX) conversion, post-trip budget reports, and CSV export.
+Zmiennie w `.env`. Prefiks `PUBLIC_` = dostępne w kliencie (nie dla sekretów!).
 
-### Environment Variable
-
-Set a public FX API base (no key required for exchangerate.host):
-
+Obowiązkowe:
 ```
-PUBLIC_FX_API_BASE=https://api.exchangerate.host
+PUBLIC_SUPABASE_URL=...
+PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
-If unset, the utility defaults to `https://api.exchangerate.host`.
-
-### FX Conversion
-
-When creating or updating an expense where `expense.currency !== trip.currency`, the API:
-
-1. Fetches the live rate (cached 6h) via `/latest?base={from}&symbols={to}`.
-2. Converts `amount` into `amount_in_home_currency` stored with the expense.
-3. Falls back to rate=1 with a warning if the fetch fails (avoids blocking the user).
-
-> NOTE: To persist exact historical FX, add migration: `ALTER TABLE expenses ADD COLUMN fx_rate NUMERIC;`
-
-### New Endpoints
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/trips/:tripId/expenses` | POST | Create expense with FX conversion |
-| `/api/trips/:tripId/expenses/:expenseId` | PUT | Update expense with recalculated FX |
-| `/api/trips/:tripId/budget/report` | GET | Planned vs actual per category & totals |
-| `/api/trips/:tripId/expenses/export.csv` | GET | CSV export of expenses |
-
-### Report Structure (`BudgetReport`)
-
+AI (itinerary + packing):
 ```
-{
-  trip_id: string,
-  currency: string | null,
-  plannedTotal: number,
-  totalSpent: number,
-  totalPrepaid: number,
-  totalOnTrip: number,
-  deltaTotal: number,
-  categories: [{ category_id, name, planned, spent, delta, utilization }],
-  generated_at: string
-}
+GEMINI_API_KEY=...
+# GEMINI_MODEL=gemini-2.5-flash
 ```
 
-### UI Enhancements
+Waluty (FX):
+```
+# PUBLIC_FX_API_BASE=https://api.exchangerate.host
+# EXCHANGERATE_API_KEY=opcjonalny_klucz
+```
 
-* Budget dashboard: CSV export button.
-* Post-trip (`end_date` passed) displays a consolidated report card.
-* Summary widget already surfaces daily safe-to-spend.
+Unsplash (opcjonalne):
+```
+# UNSPLASH_ACCESS_KEY=...
+```
 
-### Testing
+Legacy (opcjonalne):
+```
+# SUPABASE_URL=...
+# SUPABASE_KEY=...
+```
 
-`tests/unit/fx.service.test.ts` covers:
+Uwagi:
+* `EXCHANGERATE_API_KEY` tylko serwer (bez PUBLIC_)
+* Fallback FX = rate 1 + warning
+* Dostawcy alternatywni w `docs/fx-providers.md`
 
-* Identity rate
-* Live fetch & subsequent cache hit
-* Fallback on provider error
-* Conversion calculation
+## **Moduły Funkcjonalne**
 
-Run tests:
+### **Trips**
+CRUD podróży (tytuł, destination, daty, budżet, waluta, lodging meta).
 
+### **Budget & Expenses**
+* Kategorie (planned_amount)
+* Wydatki z konwersją do waluty podróży (`amount_in_home_currency`)
+* Prepaid vs on-trip
+* Raport `/api/trips/:id/budget/report` (planned vs actual + prepaid)
+* Eksport CSV `/api/trips/:id/expenses/export.csv`
+* Tryby widoku: simple / full
+
+### **FX System**
+* Cache 6h (para walut)
+* Źródło: identity | cache | live | fallback
+* Fallback zapewnia odporność przy błędach sieci
+
+### **AI Itinerary Assistant**
+* Wejście: interests, travelStyle, budget level, lodging, maxDistanceKm, travel party
+* Wyjście: JSON dni → aktywności (czas, nazwa, opis, koszt, waluta)
+* Fallback modeli (override `GEMINI_MODEL`)
+* Token usage (input/output/thought approx) zapisywany
+
+### **AI Packing Assistant**
+Flow: generacja → (max 2) regeneracje z podglądem → walidacja (add/remove/adjust/replace) → kategoryzacja → edycje ręczne → sharing
+* Biblioteka szybkich itemów
+* Drag & drop / zmiana kategorii / ilości
+* Ochrona kosztów: limit regeneracji
+
+### **Sharing (Packing)**
+Link z tokenem, `can_modify`, opcjonalny expiry (godziny). Możliwość kopiowania do schowka.
+
+### **I18n**
+Middleware ustala `lang`; słowniki w `src/lib/i18n.ts`. Dodanie języka = rozszerzenie enum + obiekt w `dictionaries`.
+
+### **Unsplash**
+Opcjonalny klucz dla obrazów destynacji kart podróży.
+
+### **Testy**
 ```
 npm test
 ```
+Zakres: FX (cache/fallback), parsing JSON Gemini packingu, budżet utils, komponenty UI.
 
-### Future Extensions
+### **Endpointy (wybór)**
+| Endpoint | Metoda | Opis |
+|----------|--------|------|
+| /api/trips | GET/POST | Lista / tworzenie podróży |
+| /api/trips/:id/itinerary | POST | Generacja itinerarium (AI) |
+| /api/ai/packing | POST | Generacja / walidacja / kategoryzacja listy |
+| /api/trips/:id/expenses | POST | Dodanie wydatku (FX) |
+| /api/trips/:id/budget/report | GET | Raport post-trip |
+| /api/trips/:id/expenses/export.csv | GET | Eksport CSV |
+| /api/trips/:id/packing/share | POST | Utworzenie linku do listy |
 
-* Persist `fx_rate` per expense.
-* Historical date-based rate lookup.
-* Reconciliation & revaluation tool.
-* Multi-currency reporting (group by source currency).
+### **Struktura BudgetReport**
+```
+{
+    trip_id: string,
+    currency: string | null,
+    plannedTotal: number,
+    totalSpent: number,
+    totalPrepaid: number,
+    totalOnTrip: number,
+    deltaTotal: number,
+    categories: [{ category_id, name, planned, spent, delta, utilization }],
+    generated_at: string
+}
+```
 
-=======
+### **Zasady Env / Bezpieczeństwo**
+* Sekrety bez prefiksu PUBLIC_
+* Klucze AI i FX przechowuj lokalnie lub w CI (sekrety)
+* Prompty Gemini zwracają czysty JSON – brak Markdown fence
+
+### **Następne Kroki (propozycje)**
+
+---
+## **Konwencje Commitów & Styl Kodowania**
+
+### Konwencje Commitów (Conventional Commits)
+Format:
+```
+<type>(scope?): opis w trybie rozkazującym
+```
+**Typy**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`.
+
+**Przykłady**:
+```
+feat(packing): limit 2 regeneracje listy AI
+fix(fx): popraw fallback przy HTTP 500
+refactor(itinerary): uproszczony parser JSON
+docs(readme): dodano sekcję env
+```
+
+### Styl Kodowania
+* **TypeScript** – nowe typy współdzielone w `src/types.ts`.
+* **Early returns** – ogranicz zagnieżdżenia.
+* **Hooki** dla logiki UI (`src/components/hooks`).
+* **Serwisy** w `src/lib/services` dla integracji (Gemini, FX, itd.).
+* **i18n** – tekst user‑facing w słownikach (`src/lib/i18n.ts`).
+* **Tailwind** – korzystaj z utility-first; unikaj nadmiarowych klas custom.
+* **Prompty AI** – bez markdown fence, deterministyczne JSON contracty.
+* **ESLint** – uruchom `npm run lint` przed PR.
+
+### Branch Naming
+`feat/`, `fix/`, `docs/`, `refactor/`, `chore/`, np. `feat/fx-historical-rates`.
+
+### PR Checklist (skrót)
+- [ ] Testy zielone (`npm test`)
+- [ ] Lint bez błędów
+- [ ] Zmiany w docs / README jeśli wymagane
+- [ ] i18n: klucze dla PL i EN
+- [ ] Brak przypadkowych `console.log`
+
+---
+* Persist `fx_rate` w DB
+* Timeline wizualizacja itinerarium
+* Public share itineraries (read-only)
+* Historia wersji listy pakowania
+* PWA / offline (cache itinerary + packing)
