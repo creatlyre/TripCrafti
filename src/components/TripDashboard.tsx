@@ -652,6 +652,7 @@ export function TripDashboard({ lang = "pl" }: TripDashboardProps) {
                               {lang==='pl' ? 'Pełny widok pakowania' : 'Full packing view'}
                             </a>
                           )}
+                          enableBulkDelete
                         />
                       </TabsContent>
 
