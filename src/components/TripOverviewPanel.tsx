@@ -1,33 +1,55 @@
-import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import type { Trip, GeneratedItinerary } from "@/types";
-import type { Lang } from "@/lib/i18n";
+import React from 'react';
+
+import type { Lang } from '@/lib/i18n';
+import type { Trip, GeneratedItinerary } from '@/types';
+
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 // Icons as components
 const CalendarIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+    />
   </svg>
 );
 
 const CurrencyIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+    />
   </svg>
 );
 
 const MapIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+    />
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 );
 
 const ClockIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
   </svg>
 );
 
@@ -37,39 +59,35 @@ interface TripOverviewPanelProps {
   lang: Lang;
 }
 
-export const TripOverviewPanel: React.FC<TripOverviewPanelProps> = ({
-  trip,
-  itineraries,
-  lang
-}) => {
+export const TripOverviewPanel: React.FC<TripOverviewPanelProps> = ({ trip, itineraries, lang }) => {
   // Calculate trip duration
   const startDate = new Date(trip.start_date);
   const endDate = new Date(trip.end_date);
   const durationDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-  
+
   // Calculate days until trip
   const today = new Date();
   const daysUntilTrip = Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  
+
   // Determine trip status
   const getStatus = () => {
-    if (daysUntilTrip < 0) return { text: lang === "pl" ? "Zakończona" : "Completed", variant: "default" as const };
-    if (daysUntilTrip === 0) return { text: lang === "pl" ? "Dzisiaj!" : "Today!", variant: "success" as const };
-    if (daysUntilTrip <= 7) return { text: lang === "pl" ? "Nadchodząca" : "Upcoming", variant: "warning" as const };
-    return { text: lang === "pl" ? "Planowana" : "Planned", variant: "info" as const };
+    if (daysUntilTrip < 0) return { text: lang === 'pl' ? 'Zakończona' : 'Completed', variant: 'default' as const };
+    if (daysUntilTrip === 0) return { text: lang === 'pl' ? 'Dzisiaj!' : 'Today!', variant: 'success' as const };
+    if (daysUntilTrip <= 7) return { text: lang === 'pl' ? 'Nadchodząca' : 'Upcoming', variant: 'warning' as const };
+    return { text: lang === 'pl' ? 'Planowana' : 'Planned', variant: 'info' as const };
   };
 
   const status = getStatus();
-  
+
   // Calculate planning progress (based on having itinerary)
   const planningProgress = itineraries.length > 0 ? 100 : 20;
 
   // Format dates for display
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString(lang === "pl" ? "pl-PL" : "en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric"
+    return new Date(date).toLocaleDateString(lang === 'pl' ? 'pl-PL' : 'en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
     });
   };
 
@@ -90,16 +108,14 @@ export const TripOverviewPanel: React.FC<TripOverviewPanelProps> = ({
               {status.text}
             </Badge>
           </div>
-          
+
           {daysUntilTrip > 0 && (
             <div className="text-sm text-slate-500 dark:text-slate-400">
-              {lang === "pl" 
-                ? `${daysUntilTrip} dni do wyjazdu` 
-                : `${daysUntilTrip} days until departure`}
+              {lang === 'pl' ? `${daysUntilTrip} dni do wyjazdu` : `${daysUntilTrip} days until departure`}
             </div>
           )}
         </div>
-        
+
         {/* Decorative background pattern */}
         <div className="absolute top-0 right-0 w-32 h-32 opacity-5 text-slate-400">
           <svg viewBox="0 0 100 100" fill="currentColor">
@@ -118,9 +134,11 @@ export const TripOverviewPanel: React.FC<TripOverviewPanelProps> = ({
               </div>
               <div>
                 <p className="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
-                  {lang === "pl" ? "Początek" : "Start Date"}
+                  {lang === 'pl' ? 'Początek' : 'Start Date'}
                 </p>
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatDate(trip.start_date)}</p>
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {formatDate(trip.start_date)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -134,7 +152,7 @@ export const TripOverviewPanel: React.FC<TripOverviewPanelProps> = ({
               </div>
               <div>
                 <p className="text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wide">
-                  {lang === "pl" ? "Koniec" : "End Date"}
+                  {lang === 'pl' ? 'Koniec' : 'End Date'}
                 </p>
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatDate(trip.end_date)}</p>
               </div>
@@ -150,10 +168,10 @@ export const TripOverviewPanel: React.FC<TripOverviewPanelProps> = ({
               </div>
               <div>
                 <p className="text-xs font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wide">
-                  {lang === "pl" ? "Długość" : "Duration"}
+                  {lang === 'pl' ? 'Długość' : 'Duration'}
                 </p>
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {durationDays} {lang === "pl" ? "dni" : "days"}
+                  {durationDays} {lang === 'pl' ? 'dni' : 'days'}
                 </p>
               </div>
             </div>
@@ -168,10 +186,10 @@ export const TripOverviewPanel: React.FC<TripOverviewPanelProps> = ({
               </div>
               <div>
                 <p className="text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wide">
-                  {lang === "pl" ? "Budżet" : "Budget"}
+                  {lang === 'pl' ? 'Budżet' : 'Budget'}
                 </p>
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {trip.budget ? `${trip.budget}` : (lang === "pl" ? "Nie ustalono" : "Not set")}
+                  {trip.budget ? `${trip.budget}` : lang === 'pl' ? 'Nie ustalono' : 'Not set'}
                 </p>
               </div>
             </div>
@@ -184,22 +202,27 @@ export const TripOverviewPanel: React.FC<TripOverviewPanelProps> = ({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base text-slate-900 dark:text-slate-100">
-              {lang === "pl" ? "Postęp planowania" : "Planning Progress"}
+              {lang === 'pl' ? 'Postęp planowania' : 'Planning Progress'}
             </CardTitle>
             <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{planningProgress}%</span>
           </div>
         </CardHeader>
         <CardContent>
-          <Progress value={planningProgress} className="mb-3" variant={planningProgress === 100 ? "success" : "default"} />
+          <Progress
+            value={planningProgress}
+            className="mb-3"
+            variant={planningProgress === 100 ? 'success' : 'default'}
+          />
           <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span>{lang === 'pl' ? 'Podstawowe informacje' : 'Basic information'}</span>
             <span>
-              {lang === "pl" ? "Podstawowe informacje" : "Basic information"}
-            </span>
-            <span>
-              {itineraries.length > 0 
-                ? (lang === "pl" ? "Plan podróży gotowy" : "Itinerary ready")
-                : (lang === "pl" ? "Brak planu podróży" : "No itinerary yet")
-              }
+              {itineraries.length > 0
+                ? lang === 'pl'
+                  ? 'Plan podróży gotowy'
+                  : 'Itinerary ready'
+                : lang === 'pl'
+                  ? 'Brak planu podróży'
+                  : 'No itinerary yet'}
             </span>
           </div>
         </CardContent>

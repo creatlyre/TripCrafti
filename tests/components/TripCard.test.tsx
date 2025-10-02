@@ -1,8 +1,11 @@
 import { render, screen } from '@testing-library/react';
+
 import userEvent from '@testing-library/user-event';
-import { TripCard } from '@/components/TripCard';
 import { describe, it, expect, vi } from 'vitest';
+
 import type { Trip, GeneratedItinerary } from '@/types';
+
+import { TripCard } from '@/components/TripCard';
 
 // Mock the child TripImage component
 vi.mock('@/components/TripImage', () => ({
@@ -111,7 +114,9 @@ describe('TripCard', () => {
 
   it('does not render the delete button if dict.deleteAction is not provided', () => {
     const dictWithoutDelete = { ...mockDict, deleteAction: undefined };
-    render(<TripCard trip={tripWithoutItinerary} onOpen={mockOnOpen} onDelete={mockOnDelete} dict={dictWithoutDelete} />);
+    render(
+      <TripCard trip={tripWithoutItinerary} onOpen={mockOnOpen} onDelete={mockOnDelete} dict={dictWithoutDelete} />
+    );
 
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
   });

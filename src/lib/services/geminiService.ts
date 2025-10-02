@@ -1,27 +1,48 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { AIPackingListResponse, GenerateDetails, PackingItem, PackingListMeta, ValidationResult, ChecklistItem, CategorizationResult } from '@/types';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+import type {
+  AIPackingListResponse,
+  GenerateDetails,
+  PackingItem,
+  PackingListMeta,
+  ValidationResult,
+  ChecklistItem,
+  CategorizationResult,
+} from '@/types';
 
 // This service should only be called from server-side code (e.g., API routes)
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
-    // This will only log on the server, which is safe.
-    console.error("GEMINI_API_KEY environment variable is not set.");
-    // We don't throw an error here, but functions will fail if the key is missing.
+  // This will only log on the server, which is safe.
+  console.error('GEMINI_API_KEY environment variable is not set.');
+  // We don't throw an error here, but functions will fail if the key is missing.
 }
 
-const ai = new GoogleGenerativeAI(apiKey || "");
+const ai = new GoogleGenerativeAI(apiKey || '');
 
 const getModel = () => {
-    if (!apiKey) {
-        throw new Error("Gemini API Key is not configured on the server.");
-    }
-    return ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-}
+  if (!apiKey) {
+    throw new Error('Gemini API Key is not configured on the server.');
+  }
+  return ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+};
 
 const getGeneratePrompt = (details: GenerateDetails): string => {
-    const { destination, days, adults, childrenAges, season, transport, accommodation, activities, special, region, travelStyle } = details;
+  const {
+    destination,
+    days,
+    adults,
+    childrenAges,
+    season,
+    transport,
+    accommodation,
+    activities,
+    special,
+    region,
+    travelStyle,
+  } = details;
 
-    return `
+  return `
 <Persona>
 Jesteś precyzyjnym AI, ekspertem od logistyki podróży. Twoim jedynym celem jest wygenerowanie perfekcyjnej, zoptymalizowanej i minimalistycznej listy pakowania w formacie JSON, ściśle przestrzegając podanych reguł i schematu. Działasz w sposób deterministyczny, unikając kreatywnych dewiacji.
 </Persona>
@@ -162,7 +183,7 @@ Jesteś precyzyjnym AI, ekspertem od logistyki podróży. Twoim jedynym celem je
 };
 
 const getValidatePrompt = (currentList: PackingItem[], changes: object): string => {
-    return `
+  return `
 <Persona>
 Jesteś precyzyjnym i doświadczonym AI, ekspertem od optymalizacji list podróżnych. Twoim celem jest nie tylko walidacja, ale proaktywne doradztwo. Analizujesz listę i zmiany, aby uczynić ją mądrzejszą, lżejszą i lepiej dopasowaną do realnych potrzeb podróżnika. Twoje sugestie są konstruktywne, logiczne i zawsze poparte rzeczowym uzasadnieniem.
 </Persona>
@@ -257,69 +278,69 @@ Jesteś precyzyjnym i doświadczonym AI, ekspertem od optymalizacji list podró�
 `;
 };
 
-export const generatePackingList = async (details: GenerateDetails): Promise<{ meta: PackingListMeta, items: PackingItem[], checklist: ChecklistItem[] }> => {
-    try {
-        const model = getModel();
-        const generationConfig = { responseMimeType: "application/json" };
-        const result = await model.generateContent(getGeneratePrompt(details));
+export const generatePackingList = async (
+  details: GenerateDetails
+): Promise<{ meta: PackingListMeta; items: PackingItem[]; checklist: ChecklistItem[] }> => {
+  try {
+    const model = getModel();
+    const generationConfig = { responseMimeType: 'application/json' };
+    const result = await model.generateContent(getGeneratePrompt(details));
 
-        const response = result.response;
-        const jsonText = response.text();
-        const parsedList: AIPackingListResponse = JSON.parse(jsonText);
+    const response = result.response;
+    const jsonText = response.text();
+    const parsedList: AIPackingListResponse = JSON.parse(jsonText);
 
-        const itemsWithClientProps = parsedList.items.map((item, index) => ({
-            ...item,
-            id: Date.now() + index,
-            packed: false,
-        }));
+    const itemsWithClientProps = parsedList.items.map((item, index) => ({
+      ...item,
+      id: Date.now() + index,
+      packed: false,
+    }));
 
-        const checklistWithClientProps = (parsedList.checklist || []).map((task, index) => ({
-            ...task,
-            id: Date.now() + 10000 + index,
-        }));
+    const checklistWithClientProps = (parsedList.checklist || []).map((task, index) => ({
+      ...task,
+      id: Date.now() + 10000 + index,
+    }));
 
-        return { meta: parsedList.meta, items: itemsWithClientProps, checklist: checklistWithClientProps };
-
-    } catch (error) {
-        console.error("Błąd podczas generowania listy przez Gemini:", error);
-        throw new Error("Nie udało się wygenerować listy. Sprawdź format danych i spróbuj ponownie.");
-    }
+    return { meta: parsedList.meta, items: itemsWithClientProps, checklist: checklistWithClientProps };
+  } catch (error) {
+    console.error('Błąd podczas generowania listy przez Gemini:', error);
+    throw new Error('Nie udało się wygenerować listy. Sprawdź format danych i spróbuj ponownie.');
+  }
 };
 
 export const validatePackingList = async (currentList: PackingItem[], changes: object): Promise<ValidationResult> => {
-    try {
-        const model = getModel();
-        const result = await model.generateContent(getValidatePrompt(currentList, changes));
+  try {
+    const model = getModel();
+    const result = await model.generateContent(getValidatePrompt(currentList, changes));
 
-        const response = result.response;
-        const jsonText = response.text();
-        const parsedResult = JSON.parse(jsonText);
+    const response = result.response;
+    const jsonText = response.text();
+    const parsedResult = JSON.parse(jsonText);
 
-        return {
-            missing: parsedResult.missing || [],
-            remove: parsedResult.remove || [],
-            adjust: parsedResult.adjust || [],
-            replace: parsedResult.replace || [],
-        };
-
-    } catch (error) {
-        console.error("Błąd podczas sprawdzania listy przez Gemini:", error);
-        throw new Error("Nie udało się sprawdzić listy. Spróbuj ponownie.");
-    }
+    return {
+      missing: parsedResult.missing || [],
+      remove: parsedResult.remove || [],
+      adjust: parsedResult.adjust || [],
+      replace: parsedResult.replace || [],
+    };
+  } catch (error) {
+    console.error('Błąd podczas sprawdzania listy przez Gemini:', error);
+    throw new Error('Nie udało się sprawdzić listy. Spróbuj ponownie.');
+  }
 };
 
 const getRecategorizePrompt = (items: PackingItem[], categories: string[]): string => {
-    return `
+  return `
 <Persona>
 Jesteś inteligentnym asystentem do organizacji. Twoim zadaniem jest przypisanie każdej rzeczy z listy do najbardziej pasującej kategorii z podanej listy kategorii. Działaj precyzyznie.
 </Persona>
 
 <InputData>
   <AvailableCategories>
-    ${JSON.stringify(categories.filter(c => c !== 'Nieskategoryzowane'))}
+    ${JSON.stringify(categories.filter((c) => c !== 'Nieskategoryzowane'))}
   </AvailableCategories>
   <ItemsToCategorize>
-    ${JSON.stringify(items.map(i => ({ id: i.id, name: i.name, notes: i.notes || '', current_category: i.category })))}
+    ${JSON.stringify(items.map((i) => ({ id: i.id, name: i.name, notes: i.notes || '', current_category: i.category })))}
   </ItemsToCategorize>
 </InputData>
 
@@ -340,22 +361,25 @@ Przeanalizuj każdy przedmiot z <ItemsToCategorize>. Dla każdego przedmiotu, wy
 `;
 };
 
-export const categorizePackingList = async (items: PackingItem[], categories: string[]): Promise<CategorizationResult[]> => {
-    try {
-        const model = getModel();
-        const result = await model.generateContent(getRecategorizePrompt(items, categories));
+export const categorizePackingList = async (
+  items: PackingItem[],
+  categories: string[]
+): Promise<CategorizationResult[]> => {
+  try {
+    const model = getModel();
+    const result = await model.generateContent(getRecategorizePrompt(items, categories));
 
-        const response = result.response;
-        const jsonText = response.text();
-        const parsedResult = JSON.parse(jsonText);
+    const response = result.response;
+    const jsonText = response.text();
+    const parsedResult = JSON.parse(jsonText);
 
-        if (!parsedResult.categorization || !Array.isArray(parsedResult.categorization)) {
-            throw new Error("Invalid response structure from AI.");
-        }
-
-        return parsedResult.categorization;
-    } catch (error) {
-        console.error("Błąd podczas kategoryzacji listy przez Gemini:", error);
-        throw new Error("Nie udało się skategoryzować listy. Spróbuj ponownie.");
+    if (!parsedResult.categorization || !Array.isArray(parsedResult.categorization)) {
+      throw new Error('Invalid response structure from AI.');
     }
+
+    return parsedResult.categorization;
+  } catch (error) {
+    console.error('Błąd podczas kategoryzacji listy przez Gemini:', error);
+    throw new Error('Nie udało się skategoryzować listy. Spróbuj ponownie.');
+  }
 };

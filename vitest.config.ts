@@ -1,15 +1,15 @@
-import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
+import tsconfigPaths from 'vite-tsconfig-paths';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {
-    environment: "jsdom",
-    setupFiles: ["./src/test/setupTests.ts"],
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setupTests.ts'],
     globals: true,
     coverage: {
-      reporter: ["text", "lcov"],
+      reporter: ['text', 'lcov'],
     },
-    include: ["tests/**/*.{test,spec}.{ts,tsx}"],
+    include: ['tests/**/*.{test,spec}.{ts,tsx}'],
   },
 });

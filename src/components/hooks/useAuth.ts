@@ -1,6 +1,8 @@
-import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
-import type { Session, User } from "@supabase/supabase-js";
+import type { Session, User } from '@supabase/supabase-js';
+
+import { useEffect, useState, useCallback } from 'react';
+
+import { supabase } from '@/lib/supabase';
 
 interface AuthState {
   loading: boolean;
@@ -25,7 +27,7 @@ export function useAuth(): AuthState {
       setUser(data.session?.user ?? null);
       setError(null);
     } catch (e: any) {
-      setError(e.message || "Auth error");
+      setError(e.message || 'Auth error');
       setSession(null);
       setUser(null);
     } finally {

@@ -1,5 +1,17 @@
 import React from 'react';
-import { PassportIcon, TShirtIcon, ShoeIcon, CosmeticIcon, PillIcon, PlugIcon, BabyIcon, ActivityIcon, BagIcon, DefaultIcon } from '@/components/icons/CategoryIcons';
+
+import {
+  PassportIcon,
+  TShirtIcon,
+  ShoeIcon,
+  CosmeticIcon,
+  PillIcon,
+  PlugIcon,
+  BabyIcon,
+  ActivityIcon,
+  BagIcon,
+  DefaultIcon,
+} from '@/components/icons/CategoryIcons';
 
 // Packing Constants
 
@@ -21,26 +33,26 @@ export const DEFAULT_CATEGORIES: string[] = [
   'Rozrywka',
 ].sort((a, b) => a.localeCompare(b));
 
-export const CATEGORY_ICONS: { [key: string]: React.FC } = {
+export const CATEGORY_ICONS: Record<string, React.FC> = {
   'Dokumenty i Finanse': PassportIcon,
-  'Ubrania': TShirtIcon,
-  'Obuwie': ShoeIcon,
+  Ubrania: TShirtIcon,
+  Obuwie: ShoeIcon,
   'Higiena i Kosmetyki': CosmeticIcon,
-  'Apteczka': PillIcon,
-  'Elektronika': PlugIcon,
-  'Dzieci': BabyIcon,
-  'Nati': BabyIcon,
+  Apteczka: PillIcon,
+  Elektronika: PlugIcon,
+  Dzieci: BabyIcon,
+  Nati: BabyIcon,
   'Aktywności Specjalne': ActivityIcon,
   'W Podróży (Podręczne)': BagIcon,
-  'Inne': DefaultIcon,
-  'My': TShirtIcon,
-  'Psy': DefaultIcon,
-  'Nieskategoryzowane': DefaultIcon,
-  'Plaża': ActivityIcon,
-  'Narty': ActivityIcon,
-  'Trekking': ActivityIcon,
-  'Rozrywka': DefaultIcon,
-  'default': DefaultIcon,
+  Inne: DefaultIcon,
+  My: TShirtIcon,
+  Psy: DefaultIcon,
+  Nieskategoryzowane: DefaultIcon,
+  Plaża: ActivityIcon,
+  Narty: ActivityIcon,
+  Trekking: ActivityIcon,
+  Rozrywka: DefaultIcon,
+  default: DefaultIcon,
 };
 
 // Default debounce delay for auto-saving

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+import { useDictionary } from '@/components/hooks/useDictionary';
+
 // Define the structure of the image data we expect from our API
 interface ImageAttribution {
   name: string;
@@ -21,6 +23,10 @@ interface TripImageProps {
  * It handles loading and error states and displays attribution on hover.
  */
 export const TripImage: React.FC<TripImageProps> = ({ destination }) => {
+  // i18n dictionary (hook must be before early returns)
+  const dict = useDictionary();
+  const unsplashT = dict.attribution?.unsplash;
+
   const [imageData, setImageData] = useState<ImageData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,10 +35,10 @@ export const TripImage: React.FC<TripImageProps> = ({ destination }) => {
     async function fetchImage() {
       if (!destination) {
         setIsLoading(false);
-        setError("No destination provided.");
+        setError('No destination provided.');
         return;
       }
-      
+
       // Reset state for new destination prop
       setIsLoading(true);
       setError(null);
@@ -46,8 +52,12 @@ export const TripImage: React.FC<TripImageProps> = ({ destination }) => {
         }
         const data: ImageData = await response.json();
         setImageData(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Image load failed');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -58,9 +68,7 @@ export const TripImage: React.FC<TripImageProps> = ({ destination }) => {
 
   // Loading state
   if (isLoading) {
-    return (
-      <div className="w-full h-32 bg-secondary/50 rounded-t-lg flex items-center justify-center animate-pulse" />
-    );
+    return <div className="w-full h-32 bg-secondary/50 rounded-t-lg flex items-center justify-center animate-pulse" />;
   }
 
   // Error state
@@ -71,7 +79,7 @@ export const TripImage: React.FC<TripImageProps> = ({ destination }) => {
       </div>
     );
   }
-  
+
   // Success state
   return (
     <div
@@ -81,7 +89,7 @@ export const TripImage: React.FC<TripImageProps> = ({ destination }) => {
       aria-label={imageData.alt}
     >
       <div className="absolute bottom-1 right-1 bg-black/60 backdrop-blur-sm text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        Photo by{' '}
+        {unsplashT?.photoBy || 'Photo by'}{' '}
         <a
           href={`${imageData.attribution.link}?utm_source=trip-planner&utm_medium=referral`}
           target="_blank"
@@ -93,13 +101,13 @@ export const TripImage: React.FC<TripImageProps> = ({ destination }) => {
         </a>
         {' on '}
         <a
-          href="https://unsplash.com?utm_source=trip-planner&utm_medium=referral"
+          href={unsplashT?.attributionUrl || 'https://unsplash.com?utm_source=trip-planner&utm_medium=referral'}
           target="_blank"
           rel="noopener noreferrer"
           className="underline hover:text-blue-300"
-           onClick={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
-          Unsplash
+          {unsplashT?.providerName || 'Unsplash'}
         </a>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+
 import { z } from 'zod';
 
 export const prerender = false;
@@ -17,7 +18,9 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
 
   if (!tripId) return json({ error: 'TripIdRequired' }, 400);
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return json({ error: 'Unauthorized' }, 401);
 
   // Ensure trip belongs to user (and exists)
@@ -33,11 +36,11 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
   }
 
   // Deleting trip will cascade to generated itineraries due to FK ON DELETE CASCADE
-  const { error: delError, status, statusText } = await supabase
-    .from('trips')
-    .delete()
-    .eq('id', tripId)
-    .eq('user_id', user.id);
+  const {
+    error: delError,
+    status,
+    statusText,
+  } = await supabase.from('trips').delete().eq('id', tripId).eq('user_id', user.id);
   if (delError) {
     return json({ error: 'DeleteFailed', details: delError.message, status, statusText }, 500);
   }

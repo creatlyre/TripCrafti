@@ -1,8 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
+
 import userEvent from '@testing-library/user-event';
-import BudgetDashboard from '@/components/budget/BudgetDashboard';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import type { Trip, Expense, BudgetCategory } from '@/types';
+
+import BudgetDashboard from '@/components/budget/BudgetDashboard';
 
 // Polyfill for Radix UI components in JSDOM
 if (typeof Element.prototype.scrollIntoView === 'undefined') {
@@ -23,25 +26,36 @@ vi.mock('@/components/budget/BudgetSummary', () => ({
   default: () => <div data-testid="budget-summary-widget" />,
 }));
 
-const mockAddedExpense: Expense = { id: 'exp-new', trip_id: 'trip1', amount: 10, currency: 'USD', description: 'New Snack', category_id: 'cat1', is_prepaid: false, expense_date: '2024-01-04T10:00:00Z', amount_in_home_currency: 10, fx_rate: 1, fx_source: 'live' };
+const mockAddedExpense: Expense = {
+  id: 'exp-new',
+  trip_id: 'trip1',
+  amount: 10,
+  currency: 'USD',
+  description: 'New Snack',
+  category_id: 'cat1',
+  is_prepaid: false,
+  expense_date: '2024-01-04T10:00:00Z',
+  amount_in_home_currency: 10,
+  fx_rate: 1,
+  fx_source: 'live',
+};
 
 vi.mock('@/components/budget/QuickAddExpense', () => ({
-    __esModule: true,
-    default: ({ onAdded }: { onAdded: (e: Expense) => void }) => (
-      <button data-testid="quick-add-expense" onClick={() => onAdded(mockAddedExpense)}>
-        Add Expense
-      </button>
-    ),
-  }));
+  __esModule: true,
+  default: ({ onAdded }: { onAdded: (e: Expense) => void }) => (
+    <button data-testid="quick-add-expense" onClick={() => onAdded(mockAddedExpense)}>
+      Add Expense
+    </button>
+  ),
+}));
 vi.mock('@/components/budget/CategoryManagement', () => ({
   __esModule: true,
   default: () => <div data-testid="category-management" />,
 }));
 vi.mock('@/components/budget/BudgetPostTripReport', () => ({
-    __esModule: true,
-    default: () => <div data-testid="budget-post-trip-report" />,
+  __esModule: true,
+  default: () => <div data-testid="budget-post-trip-report" />,
 }));
-
 
 // Mock fetch
 global.fetch = vi.fn();
@@ -59,14 +73,50 @@ const mockTrip: Trip = {
 };
 
 const mockCategories: BudgetCategory[] = [
-    { id: 'cat1', name: 'Food', trip_id: 'trip1', user_id: 'user1' },
-    { id: 'cat2', name: 'Transport', trip_id: 'trip1', user_id: 'user1' },
+  { id: 'cat1', name: 'Food', trip_id: 'trip1', user_id: 'user1' },
+  { id: 'cat2', name: 'Transport', trip_id: 'trip1', user_id: 'user1' },
 ];
 
 const mockExpenses: Expense[] = [
-  { id: 'exp1', trip_id: 'trip1', amount: 100, currency: 'USD', description: 'Dinner', category: mockCategories[0], is_prepaid: false, expense_date: '2024-01-02T19:00:00Z', amount_in_home_currency: 100, fx_rate: 1, fx_source: 'live' },
-  { id: 'exp2', trip_id: 'trip1', amount: 50, currency: 'USD', description: 'Taxi', category: mockCategories[1], is_prepaid: true, expense_date: '2024-01-02T12:00:00Z', amount_in_home_currency: 50, fx_rate: 1, fx_source: 'live' },
-  { id: 'exp3', trip_id: 'trip1', amount: 25, currency: 'EUR', description: 'Coffee', category: mockCategories[0], is_prepaid: false, expense_date: '2024-01-03T09:00:00Z', amount_in_home_currency: 30, fx_rate: 1.2, fx_source: 'live' },
+  {
+    id: 'exp1',
+    trip_id: 'trip1',
+    amount: 100,
+    currency: 'USD',
+    description: 'Dinner',
+    category: mockCategories[0],
+    is_prepaid: false,
+    expense_date: '2024-01-02T19:00:00Z',
+    amount_in_home_currency: 100,
+    fx_rate: 1,
+    fx_source: 'live',
+  },
+  {
+    id: 'exp2',
+    trip_id: 'trip1',
+    amount: 50,
+    currency: 'USD',
+    description: 'Taxi',
+    category: mockCategories[1],
+    is_prepaid: true,
+    expense_date: '2024-01-02T12:00:00Z',
+    amount_in_home_currency: 50,
+    fx_rate: 1,
+    fx_source: 'live',
+  },
+  {
+    id: 'exp3',
+    trip_id: 'trip1',
+    amount: 25,
+    currency: 'EUR',
+    description: 'Coffee',
+    category: mockCategories[0],
+    is_prepaid: false,
+    expense_date: '2024-01-03T09:00:00Z',
+    amount_in_home_currency: 30,
+    fx_rate: 1.2,
+    fx_source: 'live',
+  },
 ];
 
 const mockDict = {
@@ -80,9 +130,9 @@ const mockDict = {
       expenses: { heading: 'Expenses', empty: 'No expenses yet.', fallbackTitle: 'Expense', prepaidBadge: 'Prepaid' },
     },
     errors: {
-        loadExpenses: 'Failed to load expenses',
-        deleteFailed: 'Delete failed',
-    }
+      loadExpenses: 'Failed to load expenses',
+      deleteFailed: 'Delete failed',
+    },
   },
 };
 
@@ -98,13 +148,13 @@ describe('BudgetDashboard', () => {
     (fetch as vi.Mock).mockClear();
     window.confirm = vi.fn(() => true);
     (fetch as vi.Mock).mockImplementation((url, options) => {
-        if (url.toString().includes('expenses') && options?.method === 'DELETE') {
-            return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
-        }
-        if (url.toString().includes('expenses')) {
-            return Promise.resolve({ ok: true, json: () => Promise.resolve({ expenses: mockExpenses }) });
-        }
-        return Promise.reject(new Error(`Unhandled fetch: ${url}`));
+      if (url.toString().includes('expenses') && options?.method === 'DELETE') {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+      }
+      if (url.toString().includes('expenses')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ expenses: mockExpenses }) });
+      }
+      return Promise.reject(new Error(`Unhandled fetch: ${url}`));
     });
   });
 
@@ -132,7 +182,7 @@ describe('BudgetDashboard', () => {
     // After loading, check that the lists no longer have the pulse class.
     const finalLists = screen.getAllByRole('list');
     expect(finalLists.length).toBe(2); // Two lists, one for each day
-    finalLists.forEach(list => {
+    finalLists.forEach((list) => {
       expect(list).not.toHaveClass('animate-pulse');
     });
   });
@@ -201,7 +251,7 @@ describe('BudgetDashboard', () => {
     await user.click(refreshButton);
 
     await waitFor(() => {
-        expect(fetch).toHaveBeenCalledTimes(2);
+      expect(fetch).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -215,7 +265,7 @@ describe('BudgetDashboard', () => {
     await user.click(addButton);
 
     await waitFor(() => {
-        expect(screen.getByText('New Snack')).toBeInTheDocument();
+      expect(screen.getByText('New Snack')).toBeInTheDocument();
     });
   });
 });

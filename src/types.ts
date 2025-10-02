@@ -145,15 +145,15 @@ export interface ItemDefinition {
 }
 
 export interface ItemLibraryCategory {
-    title: string;
-    itemIds: string[];
+  title: string;
+  itemIds: string[];
 }
 
 export interface SavedList {
-    packingItems: PackingItem[];
-    checklistItems: ChecklistItem[];
-    categories: string[];
-    listMeta: PackingListMeta | null;
+  packingItems: PackingItem[];
+  checklistItems: ChecklistItem[];
+  categories: string[];
+  listMeta: PackingListMeta | null;
 }
 
 export interface CategorizationResult {

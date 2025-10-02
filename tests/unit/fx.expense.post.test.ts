@@ -3,7 +3,6 @@ import { describe, it, expect } from 'vitest';
 // NOTE: This is a placeholder illustrating the intent to test FX normalization logic.
 // In current setup, calling the actual POST endpoint would require a running Supabase instance.
 // Here we simply assert that the convertAmount helper behaves as expected for identity and fallback semantics.
-
 import { convertAmount } from '@/lib/fx';
 
 describe('FX conversion helper', () => {

@@ -1,21 +1,22 @@
 ---
-import Layout from "../layouts/Layout.astro";
+import Layout from '../layouts/Layout.astro';
 export const prerender = false;
-import { getDictionary } from "../lib/i18n";
-import TestimonialCard from "../components/TestimonialCard";
-import { Map, BaggageClaim, Wallet } from "lucide-react";
+import { Map, BaggageClaim, Wallet } from 'lucide-react';
+
+import TestimonialCard from '../components/TestimonialCard';
+import { getDictionary } from '../lib/i18n';
 
 const lang = Astro.locals.lang;
 const dict = getDictionary(lang);
 
 function switchUrl(target: string) {
   const url = new URL(Astro.request.url);
-  url.searchParams.set("lang", target);
-  return url.pathname + "?" + url.searchParams.toString();
+  url.searchParams.set('lang', target);
+  return url.pathname + '?' + url.searchParams.toString();
 }
 ---
 
-<Layout title="TripCrafti – Plan. Optimize. Travel.">
+<Layout title={dict.homepage?.titleTagline || dict.hero.heading}>
   <main class="relative min-h-screen flex flex-col overflow-hidden bg-slate-950 text-slate-50">
     <!-- Decorative gradients -->
     <div aria-hidden="true" class="pointer-events-none absolute inset-0">
@@ -26,23 +27,23 @@ function switchUrl(target: string) {
     <!-- Top bar -->
     <header class="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-5">
       <div class="flex items-center gap-3">
-        <img src="/Logo_TripCrafti.png" alt="TripCrafti Logo" class="h-10" />
-        <h1 class="text-xl font-semibold tracking-tight">TripCrafti</h1>
+        <img src="/Logo_TripCrafti.png" alt={dict.homepage?.brandAlt} class="h-10" />
+        <h1 class="text-xl font-semibold tracking-tight">{dict.homepage?.brandName}</h1>
       </div>
       <nav aria-label="Primary" class="flex items-center gap-3">
         <div class="flex items-center gap-1" aria-label={dict.langSwitcher.label}>
           <a
-            href={switchUrl("pl")}
+            href={switchUrl('pl')}
             lang="pl"
             hreflang="pl"
-            class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium border transition ${lang === "pl" ? "border-indigo-400/60 text-white bg-slate-800/60" : "border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50"}`}
+            class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium border transition ${lang === 'pl' ? 'border-indigo-400/60 text-white bg-slate-800/60' : 'border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50'}`}
             >🇵🇱 <span class="hidden sm:inline">PL</span></a
           >
           <a
-            href={switchUrl("en")}
+            href={switchUrl('en')}
             lang="en"
             hreflang="en"
-            class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium border transition ${lang === "en" ? "border-indigo-400/60 text-white bg-slate-800/60" : "border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50"}`}
+            class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium border transition ${lang === 'en' ? 'border-indigo-400/60 text-white bg-slate-800/60' : 'border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50'}`}
             >🇬🇧 <span class="hidden sm:inline">EN</span></a
           >
         </div>
@@ -94,6 +95,7 @@ function switchUrl(target: string) {
         <div class="grid grid-cols-1 gap-x-12 gap-y-16 lg:grid-cols-3">
           <!-- Feature 1 -->
           <div class="flex flex-col items-center text-center">
+            <Map class="mb-4 text-white" size={48} />
             <h3 class="text-2xl font-bold tracking-tight text-white">
               {dict.detailedFeatures.feature1.headline}
             </h3>
@@ -103,6 +105,7 @@ function switchUrl(target: string) {
           </div>
           <!-- Feature 2 -->
           <div class="flex flex-col items-center text-center">
+            <BaggageClaim class="mb-4 text-white" size={48} />
             <h3 class="text-2xl font-bold tracking-tight text-white">
               {dict.detailedFeatures.feature2.headline}
             </h3>
@@ -112,6 +115,7 @@ function switchUrl(target: string) {
           </div>
           <!-- Feature 3 -->
           <div class="flex flex-col items-center text-center">
+            <Wallet class="mb-4 text-white" size={48} />
             <h3 class="text-2xl font-bold tracking-tight text-white">{dict.detailedFeatures.feature3.headline}</h3>
             <p class="mt-4 text-base leading-7 text-slate-300">
               {dict.detailedFeatures.feature3.body}
@@ -158,7 +162,7 @@ function switchUrl(target: string) {
 
 <style>
   .hero-section {
-    background-image: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95)), url("/Banner_TripCrafti.png");
+    background-image: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95)), url('/Banner_TripCrafti.png');
     background-size: cover;
     background-position: center;
   }

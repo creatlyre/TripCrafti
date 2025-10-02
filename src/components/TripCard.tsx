@@ -1,7 +1,8 @@
-import type { Trip, GeneratedItinerary } from "@/types";
-import { Button } from "./ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "./ui/card";
-import { TripImage } from "./TripImage";
+import type { Trip, GeneratedItinerary } from '@/types';
+
+import { TripImage } from './TripImage';
+import { Button } from './ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from './ui/card';
 
 interface TripCardProps {
   trip: Trip & { itineraries: GeneratedItinerary[] };
@@ -23,9 +24,7 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onOpen, onDelete, dict
 
   return (
     <li className="group list-none">
-      <Card
-        className="h-full flex flex-col transition-all duration-300 ease-in-out bg-slate-900/50 border-slate-800 hover:border-indigo-500/70 hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer"
-      >
+      <Card className="h-full flex flex-col transition-all duration-300 ease-in-out bg-slate-900/50 border-slate-800 hover:border-indigo-500/70 hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer">
         <div onClick={() => onOpen()} className="cursor-pointer">
           <TripImage destination={trip.destination} />
           <CardHeader>
@@ -38,12 +37,17 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onOpen, onDelete, dict
             </p>
             {trip.budget != null && (
               <p>
-                <strong className="font-medium text-slate-300">{dict.budget}:</strong> {trip.budget.toLocaleString()} {trip.currency}
+                <strong className="font-medium text-slate-300">{dict.budget}:</strong> {trip.budget.toLocaleString()}{' '}
+                {trip.currency}
               </p>
             )}
             <p>
-              <a href={`/app/${trip.id}`} onClick={e=>e.stopPropagation()} className="text-[11px] uppercase tracking-wide text-indigo-400 hover:text-indigo-300 font-medium">
-                {dict.open} {"→"}
+              <a
+                href={`/app/${trip.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-[11px] uppercase tracking-wide text-indigo-400 hover:text-indigo-300 font-medium"
+              >
+                {dict.open} {'→'}
               </a>
             </p>
           </CardContent>
@@ -60,10 +64,12 @@ export const TripCard: React.FC<TripCardProps> = ({ trip, onOpen, onDelete, dict
           )}
           <a
             href={`/app/budget/${trip.id}`}
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-300 hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-colors"
             aria-label={dict.budgetAria || 'Budget'}
-          >{dict.budgetLink || dict.budget}</a>
+          >
+            {dict.budgetLink || dict.budget}
+          </a>
           {hasItinerary ? (
             <Button
               size="sm"

@@ -1,8 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
+
 import userEvent from '@testing-library/user-event';
-import QuickAddExpense from '@/components/budget/QuickAddExpense';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
 import type { BudgetCategory, Expense } from '@/types';
+
+import QuickAddExpense from '@/components/budget/QuickAddExpense';
 
 // Polyfill for Radix UI components in JSDOM
 if (typeof Element.prototype.scrollIntoView === 'undefined') {
@@ -136,22 +139,22 @@ describe('QuickAddExpense', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-        expect(fetch).toHaveBeenCalledWith(`/api/trips/${tripId}/expenses`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                amount: 12.34,
-                currency: 'USD',
-                description: 'Lunch',
-                category_id: 'cat1',
-                is_prepaid: true,
-            }),
-        });
+      expect(fetch).toHaveBeenCalledWith(`/api/trips/${tripId}/expenses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: 12.34,
+          currency: 'USD',
+          description: 'Lunch',
+          category_id: 'cat1',
+          is_prepaid: true,
+        }),
+      });
     });
 
     expect(onAdded).toHaveBeenCalledWith(newExpense);
     await waitFor(() => {
-        expect(screen.queryByText(mockDict.budget.quickAdd.title)).not.toBeInTheDocument();
+      expect(screen.queryByText(mockDict.budget.quickAdd.title)).not.toBeInTheDocument();
     });
   });
 
