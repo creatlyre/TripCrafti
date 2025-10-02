@@ -1,0 +1,86 @@
+---
+import { getSharedItineraryByToken } from '@/lib/services/itineraryShare';
+import { createClient } from '@supabase/supabase-js';
+import PublicItineraryView from '@/components/itinerary/PublicItineraryView';
+import Layout from '@/layouts/Layout.astro';
+import { getDictionary, type Lang } from '@/lib/i18n';
+import type { GeneratedItinerary, Trip } from '@/types';
+
+export const prerender = false;
+
+const { token } = Astro.params;
+const langHeader = Astro.request.headers.get('accept-language');
+const preferredLang: Lang = langHeader?.startsWith('pl') ? 'pl' : 'en';
+const dictionary = getDictionary(preferredLang);
+
+if (!token) {
+  return Astro.redirect('/404');
+}
+
+// Use service role client to bypass RLS for token lookup
+const supabaseServiceRole = createClient(
+  import.meta.env.PUBLIC_SUPABASE_URL,
+  import.meta.env.SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { persistSession: false } }
+);
+
+let trip: Trip | null = null;
+let itinerary: GeneratedItinerary | null = null;
+
+try {
+  // 1. Validate the token
+  const sharedLink = await getSharedItineraryByToken(supabaseServiceRole, token);
+
+  if (!sharedLink) {
+    return new Response(null, { status: 404, statusText: 'Not Found' });
+  }
+
+  // 2. Fetch the associated trip
+  const { data: tripData, error: tripError } = await supabaseServiceRole
+    .from('trips')
+    .select('*')
+    .eq('id', sharedLink.trip_id)
+    .single();
+
+  if (tripError || !tripData) {
+    console.error('Error fetching trip for shared itinerary:', tripError?.message);
+    return new Response(null, { status: 404, statusText: 'Not Found' });
+  }
+  trip = tripData;
+
+  // 3. Fetch the generated itinerary for the trip
+  const { data: itineraryData, error: itineraryError } = await supabaseServiceRole
+    .from('GeneratedItineraries')
+    .select('*')
+    .eq('trip_id', sharedLink.trip_id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (itineraryError || !itineraryData) {
+    // It's possible a trip exists but has no itinerary yet. Treat as not found.
+    console.error('Error fetching itinerary for shared link:', itineraryError?.message);
+    return new Response(null, { status: 404, statusText: 'Not Found' });
+  }
+  itinerary = itineraryData;
+
+} catch (e) {
+  console.error(`Error processing share token ${token}:`, e);
+  return new Response(null, { status: 500, statusText: 'Internal Server Error' });
+}
+
+if (!trip || !itinerary || !itinerary.generated_plan_json) {
+    return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+---
+
+<Layout title={`${dictionary.itineraryView?.share?.publicPageTitle} | ${trip.title}`}>
+  <main class="bg-gray-50 dark:bg-gray-900 min-h-screen">
+    <PublicItineraryView
+      trip={trip}
+      itinerary={itinerary.generated_plan_json}
+      dictionary={dictionary}
+      client:load
+    />
+  </main>
+</Layout>

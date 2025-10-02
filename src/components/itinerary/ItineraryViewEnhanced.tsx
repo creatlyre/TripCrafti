@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-
+import { Share2, Copy, Check, Loader2 } from 'lucide-react';
+import { useItineraryShare } from '@/components/hooks/useItineraryShare';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { getDictionary } from '@/lib/i18n';
+import { getDictionary, type Lang } from '@/lib/i18n';
 
 // This should match the JSON structure from the AI
 interface Activity {
@@ -31,9 +39,9 @@ interface ItineraryViewProps {
   itineraryId: string;
   initialPlan: Itinerary;
   onSave: (itineraryId: string, plan: Itinerary) => void;
-  tripId?: string; // needed for adding expenses
-  tripCurrency?: string | null; // optional base currency
-  lang?: 'pl' | 'en';
+  tripId: string; // Required for sharing and adding expenses
+  tripCurrency?: string | null;
+  lang?: Lang;
 }
 
 export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({
@@ -45,10 +53,26 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({
   lang = 'pl',
 }) => {
   const [plan, setPlan] = useState<Itinerary>(initialPlan);
-  const [isEditing, setIsEditing] = useState<string | null>(null); // e.g., "day-1-activity-0"
-  // Track which activities have been added as expenses (client-only; id composed from indices + name + cost)
+  const [isEditing, setIsEditing] = useState<string | null>(null);
   const [added, setAdded] = useState<Set<string>>(new Set());
   const dict = getDictionary(lang);
+  const { isSharing, shareUrl, error, createShareLink, reset } = useItineraryShare({ tripId, lang });
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleShareClick = async () => {
+    reset(); // Clear previous state
+    setIsShareDialogOpen(true);
+    await createShareLink();
+  };
+
+  const handleCopy = () => {
+    if (shareUrl) {
+      navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset after 2s
+    }
+  };
 
   const handleActivityChange = (
     dayIndex: number,
@@ -152,13 +176,53 @@ export const ItineraryViewEnhanced: React.FC<ItineraryViewProps> = ({
             </p>
           </div>
         </div>
-        <Badge
-          variant="outline"
-          className="text-xs font-medium border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-300"
-        >
-          {dict.itineraryView?.statusReady}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge
+            variant="outline"
+            className="text-xs font-medium border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-300"
+          >
+            {dict.itineraryView?.statusReady}
+          </Badge>
+          <Button
+            onClick={handleShareClick}
+            size="sm"
+            variant="outline"
+            className="gap-2"
+            aria-label={dict.itineraryView?.share?.button}
+          >
+            <Share2 className="w-4 h-4" />
+            <span className="hidden sm:inline">{dict.itineraryView?.share?.button}</span>
+          </Button>
+        </div>
       </div>
+
+      {/* Share Dialog */}
+      <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{dict.itineraryView?.share?.title}</DialogTitle>
+            <DialogDescription>{dict.itineraryView?.share?.description}</DialogDescription>
+          </DialogHeader>
+          {isSharing && (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+              <span className="sr-only">{dict.itineraryView?.share?.creating}</span>
+            </div>
+          )}
+          {error && <p className="text-red-500 text-sm">{dict.itineraryView?.share?.error}</p>}
+          {shareUrl && (
+            <div className="flex items-center space-x-2 pt-4">
+              <div className="grid flex-1 gap-2">
+                <Input id="link" defaultValue={shareUrl} readOnly className="h-9" />
+              </div>
+              <Button onClick={handleCopy} size="sm" className="px-3">
+                <span className="sr-only">{copied ? dict.itineraryView?.share?.copied : dict.itineraryView?.share?.copy}</span>
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Days Timeline */}
       <div className="space-y-8">

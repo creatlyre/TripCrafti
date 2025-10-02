@@ -217,3 +217,28 @@ CREATE POLICY "Delete own share links" ON packing_share_links
 --   4. Allow only allowed mutation set (no deletes) when can_modify = true.
 --   5. Reject if token invalid, expired, revoked.
 -- Consider scheduled cleanup of expired tokens.
+
+-- =============================================================
+-- Itinerary Share Links (Read-only public access)
+-- =============================================================
+-- A share link grants read-only access to a trip's itinerary via a random token.
+CREATE TABLE IF NOT EXISTS shared_itineraries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  share_token TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  expires_at TIMESTAMPTZ, -- null = no expiration
+  created_by UUID REFERENCES auth.users(id)
+);
+
+ALTER TABLE shared_itineraries ENABLE ROW LEVEL SECURITY;
+
+-- Only the trip owner can create, view, and revoke their own itinerary share links.
+CREATE POLICY "Users can manage share links for their own trips"
+  ON shared_itineraries
+  FOR ALL
+  USING (EXISTS (SELECT 1 FROM trips WHERE trips.id = shared_itineraries.trip_id AND trips.user_id = auth.uid()))
+  WITH CHECK (EXISTS (SELECT 1 FROM trips WHERE trips.id = shared_itineraries.trip_id AND trips.user_id = auth.uid()));
+
+-- Public, token-based access is handled at the application level (Astro endpoint), not via RLS.
+-- The endpoint will use a service role key to bypass RLS, find the token, and then fetch the itinerary.

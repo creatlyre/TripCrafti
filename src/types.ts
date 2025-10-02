@@ -250,3 +250,14 @@ export interface PackingShareLink {
   created_at?: string;
   revoked?: boolean;
 }
+
+// ========================= Itinerary Share Links =========================
+// Represents a read-only access grant to a trip's itinerary.
+export interface SharedItineraryLink {
+  id: string;
+  trip_id: string;
+  share_token: string;
+  created_at: string;
+  expires_at?: string | null;
+  created_by: string;
+}

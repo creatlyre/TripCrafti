@@ -359,6 +359,17 @@ export interface Dictionary {
       free: string;
       edit: string;
     };
+        share?: {
+            button: string;
+            title: string;
+            description: string;
+            create: string;
+            creating: string;
+            copy: string;
+            copied: string;
+            error: string;
+            publicPageTitle: string;
+        };
   };
   homepage?: {
     brandAlt: string; // Alt text for logo
@@ -910,6 +921,17 @@ export const dictionaries: Record<Lang, Dictionary> = {
         save: 'Zapisz',
         free: 'Darmowe',
         edit: 'Edytuj',
+      },
+      share: {
+        button: 'Udostępnij plan',
+        title: 'Udostępnij plan podróży',
+        description: 'Wygeneruj publiczny link (tylko do odczytu), który możesz wysłać znajomym.',
+        create: 'Utwórz link',
+        creating: 'Tworzenie...',
+        copy: 'Kopiuj link',
+        copied: 'Skopiowano!',
+        error: 'Błąd tworzenia linku',
+        publicPageTitle: 'Plan podróży',
       },
     },
     homepage: {
@@ -1480,6 +1502,17 @@ export const dictionaries: Record<Lang, Dictionary> = {
         save: 'Save',
         free: 'Free',
         edit: 'Edit',
+      },
+      share: {
+        button: 'Share Itinerary',
+        title: 'Share Itinerary',
+        description: 'Generate a public, read-only link that you can send to friends.',
+        create: 'Create Link',
+        creating: 'Creating...',
+        copy: 'Copy Link',
+        copied: 'Copied!',
+        error: 'Error creating link',
+        publicPageTitle: 'Itinerary',
       },
     },
     homepage: {
