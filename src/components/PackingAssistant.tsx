@@ -12,14 +12,19 @@ import PackingListActions from '@/components/PackingListActions';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import PackingChecklist from '@/components/PackingChecklist';
 import QuickAddItem from '@/components/QuickAddItem';
+import AddItemModal from '@/components/AddItemModal';
 
 interface PackingAssistantProps {
   tripId: string;
   trip?: Trip & { itineraries: GeneratedItinerary[] };
   lang: Lang;
+  /** Optional action slot rendered in the header (e.g. link back to dashboard) */
+  actionSlot?: React.ReactNode;
+  /** When true, show destructive bulk delete controls (only in dialog context, not full-screen) */
+  enableBulkDelete?: boolean;
 }
 
-const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang }) => {
+const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang, actionSlot, enableBulkDelete = false }) => {
   const dictionary = getDictionary(lang).packingAssistant;
 
   if (!dictionary) {
@@ -94,6 +99,8 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang 
   const [isConfirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const [isValidationModalOpen, setValidationModalOpen] = useState(false);
   const [pendingDetails, setPendingDetails] = useState<GenerateDetails | null>(null);
+  const [isAddModalOpen, setAddModalOpen] = useState(false);
+  const [isBulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   // Theme state (remains client-side)
   const [theme, setTheme] = useState(() => {
@@ -329,8 +336,12 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang 
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300">
-      <PackingHeader theme={theme} toggleTheme={toggleTheme} />
+  <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans text-slate-800 dark:text-slate-200 transition-colors duration-300 relative">
+      <PackingHeader
+        theme={theme}
+        toggleTheme={toggleTheme}
+        actionSlot={actionSlot}
+      />
 
       {toast && (
         <div className={`fixed top-5 right-5 z-50 px-4 py-2 rounded-md shadow-lg text-sm font-medium text-white ${toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
@@ -339,8 +350,21 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang 
       )}
 
       <main className={`container mx-auto transition-all duration-300 ${isFullScreen ? 'p-0 md:p-0 max-w-full' : 'p-4 md:p-8'}`}>
+        <div className="w-full flex justify-end mb-4 no-print">
+          <button
+            type="button"
+            onClick={() => setAddModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow px-5 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          >
+            <span className="text-lg leading-none">＋</span>
+            <span>Dodaj przedmiot</span>
+          </button>
+        </div>
+        {/* Layout behavior changes:
+            - If there are no packing items AND no checklist items, we focus on generation / quick add (left panel only)
+            - If there are items, we hide the left panel and expand the list to full width (user requested) */}
         <div className={`${isFullScreen ? '' : 'grid grid-cols-1 lg:grid-cols-3 gap-8'}`}>
-          <div className={`lg:col-span-1 space-y-6 no-print ${isFullScreen ? 'hidden' : ''}`}>
+          <div className={`lg:col-span-1 space-y-6 no-print ${isFullScreen || (packingItems.length > 0 || checklistItems.length > 0) ? 'hidden' : ''}`}>
             <CollapsibleSection title={dictionary.generateTitle}>
               <PackingListGenerator onGenerate={handleGenerateList} isLoading={isLoading} trip={trip} />
             </CollapsibleSection>
@@ -369,7 +393,7 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang 
             {suggestions && renderSuggestions()}
           </div>
 
-          <div className={`lg:col-span-2 space-y-6 transition-all duration-300 ${isFullScreen ? 'lg:col-span-3' : ''}`}>
+          <div className={`space-y-6 transition-all duration-300 ${isFullScreen ? 'lg:col-span-3' : (packingItems.length > 0 || checklistItems.length > 0 ? 'lg:col-span-3' : 'lg:col-span-2')}`}>
             {listMeta && listMeta.archetype && !isFullScreen && (
               <div className="bg-indigo-50 border-l-4 border-indigo-500 text-indigo-800 p-4 rounded-r-lg shadow dark:bg-indigo-900/20 dark:border-indigo-500 dark:text-indigo-200">
                 <p className="font-bold text-lg">{dictionary.archetype.replace('{archetype}', listMeta.archetype)}</p>
@@ -395,7 +419,6 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang 
               items={filteredPackingItems}
               categories={filteredCategories}
               onAddItem={addItem}
-              onAddCategory={addCategory}
               onToggleItem={toggleItem}
               onDeleteItem={deleteItem}
               onUpdateItem={updateItem}
@@ -413,13 +436,87 @@ const PackingAssistant: React.FC<PackingAssistantProps> = ({ tripId, trip, lang 
               onToggleFullScreen={toggleFullScreen}
               isCategorizedView={isCategorizedView}
               onToggleCategorizedView={() => setIsCategorizedView(prev => !prev)}
+              onOpenAddModal={() => setAddModalOpen(true)}
             />
           </div>
         </div>
       </main>
+
+      {/* Bulk Delete destructive action (only when enabled and not full screen) */}
+      {enableBulkDelete && !isFullScreen && (packingItems.length > 0 || checklistItems.length > 0) && (
+        <div className="container mx-auto px-4 md:px-8 pb-8 mt-4">
+          <div className="border-t border-red-500/20 pt-6">
+            <button
+              type="button"
+              onClick={() => setBulkDeleteOpen(true)}
+              className="w-full md:w-auto inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium px-5 py-2.5 rounded-md shadow focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0h8m-9 0h10l-1-3H9l-1 3z" />
+              </svg>
+              {lang === 'pl' ? 'Usuń całą listę' : 'Delete entire list'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isBulkDeleteOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        >
+          <div className="w-full max-w-md rounded-lg bg-white dark:bg-slate-800 border border-red-500/30 shadow-xl relative">
+            <div className="p-5 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center text-red-600 dark:text-red-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {lang === 'pl' ? 'Potwierdź usunięcie listy' : 'Confirm list deletion'}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {lang === 'pl' ? 'Ta akcja usunie wszystkie przedmioty, checklistę oraz kategorie (poza domyślnymi). Tej operacji nie można cofnąć. Czy na pewno chcesz kontynuować?' : 'This will remove all packing items, checklist entries and reset categories to defaults. This action cannot be undone. Are you sure you want to proceed?'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setBulkDeleteOpen(false)}
+                  className="inline-flex justify-center rounded-md border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {lang === 'pl' ? 'Anuluj' : 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { clearList(); setBulkDeleteOpen(false); }}
+                  className="inline-flex justify-center items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold bg-red-600 hover:bg-red-500 text-white shadow focus:outline-none focus:ring-2 focus:ring-red-400"
+                  autoFocus
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0h8m-9 0h10l-1-3H9l-1 3z" />
+                  </svg>
+                  {lang === 'pl' ? 'Usuń wszystko' : 'Delete all'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {isConfirmationModalOpen && <ConfirmationModal onConfirm={handleConfirmGeneration} onCancel={handleCancelGeneration} />}
       {isValidationModalOpen && <ValidationModal onConfirm={handleConfirmValidation} onCancel={handleCancelValidation} />}
+      <AddItemModal
+        isOpen={isAddModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onAddItem={addItem}
+        categories={filteredCategories}
+        QuickAddSlot={<QuickAddItem onAddItem={addItemFromLibrary} />}
+      />
     </div>
   );
 };

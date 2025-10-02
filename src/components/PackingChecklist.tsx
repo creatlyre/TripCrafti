@@ -113,13 +113,36 @@ const PackingChecklist: React.FC<ChecklistProps> = ({ items, onToggleItem, onAdd
     const doneCount = items.filter(item => item.done).length;
     const totalCount = items.length;
     const progress = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
+    const [collapsed, setCollapsed] = useState(false);
+    const contentId = 'checklist-content';
 
     return (
         <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md checklist-container">
-            <div className="mb-4">
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Przed Wyjazdem (Checklista)</h2>
-                {totalCount > 0 && (
-                    <div className="mt-2 no-print">
+            <div className="mb-2 flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-4">
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Przed Wyjazdem (Checklista)</h2>
+                    <button
+                        type="button"
+                        onClick={() => setCollapsed(c => !c)}
+                        aria-expanded={!collapsed}
+                        aria-controls={contentId}
+                        className="no-print inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    >
+                        {collapsed ? (
+                          <>
+                            <span>▼</span>
+                            <span>Rozwiń</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>▲</span>
+                            <span>Zwiń</span>
+                          </>
+                        )}
+                    </button>
+                </div>
+                {!collapsed && totalCount > 0 && (
+                    <div className="mt-1 no-print">
                         <div className="flex justify-between items-center text-sm text-slate-500 dark:text-slate-400">
                             <span>Postęp</span>
                             <span>{doneCount} / {totalCount}</span>
@@ -134,18 +157,23 @@ const PackingChecklist: React.FC<ChecklistProps> = ({ items, onToggleItem, onAdd
                 )}
             </div>
 
-            <ul className="space-y-2">
-                {items.map(item => (
-                    <EditableChecklistItem
-                        key={item.id}
-                        item={item}
-                        onToggleItem={onToggleItem}
-                        onUpdateItem={onUpdateItem}
-                        onDeleteItem={onDeleteItem}
-                    />
-                ))}
-            </ul>
-            <AddChecklistItemForm onAddItem={onAddItem} />
+            <div
+              id={contentId}
+              className={`transition-all duration-300 ease-in-out overflow-hidden ${collapsed ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-[4000px] opacity-100'}`}
+            >
+              <ul className="space-y-2">
+                  {items.map(item => (
+                      <EditableChecklistItem
+                          key={item.id}
+                          item={item}
+                          onToggleItem={onToggleItem}
+                          onUpdateItem={onUpdateItem}
+                          onDeleteItem={onDeleteItem}
+                      />
+                  ))}
+              </ul>
+              <AddChecklistItemForm onAddItem={onAddItem} />
+            </div>
         </div>
     );
 };
