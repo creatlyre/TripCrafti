@@ -13,6 +13,8 @@ interface ImportMetaEnv {
   readonly UNSPLASH_ACCESS_KEY?: string;
   /** Public FX API base URL (must be prefixed with PUBLIC_ to be exposed client-side if needed) */
   readonly PUBLIC_FX_API_BASE?: string;
+  /** Enable verbose server logging when set to 'true' (non-secret) */
+  readonly DEBUG_LOGGING?: string;
   // add new env variables above this line
 }
 
@@ -27,5 +29,19 @@ declare namespace App {
     lang: 'en' | 'pl';
     supabase: import('@supabase/supabase-js').SupabaseClient;
     session: import('@supabase/supabase-js').Session | null;
+    /**
+     * Cloudflare Pages / Workers runtime bindings (only present in deployed environment).
+     * The Cloudflare adapter for Astro (output: 'server') can expose an object we map here manually in middleware.
+     * We treat it as optional so local dev & tests are unaffected.
+     */
+    runtime?: {
+      env?: Record<string, string | undefined>;
+    };
+    // Direct KV binding (Cloudflare) optionally exposed in endpoints via platform
+    // We'll fetch secrets via binding name SECRETS
+    // Provided here for type assistance only.
+    // (Astro doesn't expose this officially yet)
+    // @ts-expect-error platform not typed by Astro
+    platform?: { env?: Record<string, string | undefined> };
   }
 }

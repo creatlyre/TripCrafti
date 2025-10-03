@@ -4,6 +4,24 @@ import { sequence } from 'astro/middleware';
 
 import { createSupabaseServer } from '@/lib/supabase';
 
+// Map Cloudflare platform env (if present) into a uniform locals.runtime.env shape.
+const runtimeEnvMiddleware: MiddlewareHandler = async (context, next) => {
+  try {
+    // Cloudflare adapter exposes bindings on context.platform.env in recent versions.
+    // Use several fallbacks for safety.
+    const platformMaybe = (context as unknown as { platform?: { env?: Record<string, string> } }).platform?.env;
+    const platformEnv =
+      (platformMaybe && typeof platformMaybe === 'object' ? (platformMaybe as Record<string, string>) : undefined) ||
+      (context.locals as unknown as { platform?: { env?: Record<string, string> } }).platform?.env;
+    if (platformEnv && typeof platformEnv === 'object') {
+      context.locals.runtime = { env: platformEnv };
+    }
+  } catch {
+    /* ignore */
+  }
+  return next();
+};
+
 const langMiddleware: MiddlewareHandler = async (context, next) => {
   const url = new URL(context.request.url);
   let lang = url.searchParams.get('lang') as 'pl' | 'en' | null;
@@ -48,4 +66,4 @@ const authMiddleware: MiddlewareHandler = async (context, next) => {
   return next();
 };
 
-export const onRequest = sequence(langMiddleware, authMiddleware);
+export const onRequest = sequence(runtimeEnvMiddleware, langMiddleware, authMiddleware);

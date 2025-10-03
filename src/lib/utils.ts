@@ -21,3 +21,21 @@ export function computeDailySpendTarget(
   const daysLeft = Math.max(1, Math.round((end.getTime() - current.getTime()) / (1000 * 60 * 60 * 24) + 1));
   return remaining / daysLeft;
 }
+
+/**
+ * Resolve an environment variable with multiple fallbacks suitable for Cloudflare Pages runtime.
+ * Order of precedence:
+ * 1. Build-time substitution (import.meta.env)
+ * 2. Provided runtime object (Astro locals.runtime?.env)
+ * 3. process.env (during local dev / tests)
+ * 4. Global fallback (tests may assign on globalThis)
+ */
+export function resolveRuntimeEnv(key: string, runtimeEnv?: Record<string, string | undefined>): string | undefined {
+  // import.meta.env is typed but we need index signature at runtime
+  const buildTime = (import.meta as unknown as { env: Record<string, string | undefined> }).env?.[key];
+  if (buildTime) return buildTime;
+  if (runtimeEnv?.[key]) return runtimeEnv[key];
+  if (typeof process !== 'undefined' && process.env?.[key]) return process.env[key];
+  const globalVal = (globalThis as unknown as Record<string, string | undefined>)[key];
+  return globalVal;
+}

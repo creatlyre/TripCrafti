@@ -5,7 +5,9 @@ import { z } from 'zod';
 import type { SupabaseClientType } from '@/lib/supabase';
 import type { PackingItem } from '@/types';
 
+import { logDebug, logError } from '@/lib/log';
 import { AIPackingActionSchema } from '@/lib/schemas/packingSchemas';
+import { getSecret, primeGlobalSecret } from '@/lib/secrets';
 import { generatePackingList, validatePackingList, categorizePackingList } from '@/lib/services/geminiService';
 
 export const prerender = false;
@@ -13,11 +15,21 @@ export const prerender = false;
 export async function POST({ request, locals }: APIContext) {
   try {
     const body = await request.json();
+    logDebug('/api/ai/packing request received', { keys: Object.keys(body || {}) });
+
+    // Ensure Gemini key is available via global fallback if runtime provided it
+    // Resolve Gemini key early (may seed global for downstream service lazy resolution)
+    const geminiKey = await getSecret('GEMINI_API_KEY', {
+      runtimeEnv: locals.runtime?.env,
+      kv: undefined, // KV binding exposed separately - left undefined unless direct binding passed
+    });
+    primeGlobalSecret('GEMINI_API_KEY', geminiKey);
 
     // Validate the request body
     const validatedBody = AIPackingActionSchema.parse(body);
     const { action, payload } = validatedBody;
 
+    logDebug('/api/ai/packing action', { action });
     switch (action) {
       case 'generate': {
         if (!payload.details) {
@@ -31,7 +43,12 @@ export async function POST({ request, locals }: APIContext) {
         const acceptLang = request.headers.get('accept-language') || '';
         const headerLang = /pl/i.test(acceptLang) ? 'Polish' : /en/i.test(acceptLang) ? 'English' : 'Polish';
         const targetLanguage = payload.details.language || headerLang;
+        logDebug('Generating packing list', { targetLanguage });
         const generatedList = await generatePackingList(payload.details, targetLanguage);
+        logDebug('Packing list generated', {
+          items: generatedList.items.length,
+          checklist: generatedList.checklist.length,
+        });
 
         // Persist token usage if tripId provided and we have supabase in locals
         if (payload.tripId && locals?.supabase) {
@@ -119,6 +136,7 @@ export async function POST({ request, locals }: APIContext) {
             id: typeof i.id === 'number' ? i.id : idx + 1,
           };
         });
+        logDebug('Validating packing list', { count: normalizedCurrent.length });
         const validationResult = await validatePackingList(normalizedCurrent, payload.changes || {});
         return new Response(JSON.stringify(validationResult), {
           status: 200,
@@ -145,6 +163,10 @@ export async function POST({ request, locals }: APIContext) {
             id: typeof i.id === 'number' ? i.id : idx + 1,
           };
         });
+        logDebug('Categorizing packing list', {
+          items: normalizedItems.length,
+          categories: payload.categories.length,
+        });
         const categorizationResult = await categorizePackingList(normalizedItems, payload.categories);
         return new Response(JSON.stringify(categorizationResult), {
           status: 200,
@@ -159,10 +181,7 @@ export async function POST({ request, locals }: APIContext) {
         });
     }
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.error('Error in /api/ai/packing:', error);
-    }
+    logError('Error in /api/ai/packing', error);
 
     if (error instanceof z.ZodError) {
       return new Response(

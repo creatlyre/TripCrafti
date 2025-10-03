@@ -10,18 +10,31 @@ import type {
   CategorizationResult,
 } from '@/types';
 
+import { logDebug, logError } from '@/lib/log';
+import { resolveRuntimeEnv } from '@/lib/utils';
+
+// (types import moved above to satisfy lint ordering)
+
 // This service should only be called from server-side code (e.g., API routes)
-// Use static env access so Vite can statically replace it; then fallback to process.env in test / node contexts.
-const resolvedApiKey = import.meta.env.GEMINI_API_KEY;
-const resolvedModel = import.meta.env.GEMINI_MODEL || 'gemini-2.5-flash';
+// Prefer build-time substitution (import.meta.env). Provide runtime fallbacks for robustness (tests, some CF quirks).
+// Model is static-ish, but allow override at runtime too
+const resolvedModel = resolveRuntimeEnv('GEMINI_MODEL') || 'gemini-2.5-flash';
 
 let ai: GoogleGenerativeAI | null = null;
 const getModel = () => {
-  if (!resolvedApiKey) {
+  // Resolve key lazily so middleware/global injections have already happened
+  const apiKey = resolveRuntimeEnv('GEMINI_API_KEY');
+  if (!apiKey) {
+    logError('Gemini API key missing at runtime', {
+      buildHasKey: !!import.meta.env.GEMINI_API_KEY,
+      processHasKey: typeof process !== 'undefined' ? !!process.env?.GEMINI_API_KEY : 'n/a',
+      globalHasKey: !!(globalThis as unknown as Record<string, unknown>).GEMINI_API_KEY,
+    });
     throw new Error('Gemini API Key (GEMINI_API_KEY) is not configured.');
   }
   if (!ai) {
-    ai = new GoogleGenerativeAI(resolvedApiKey);
+    logDebug('Initializing Gemini client', { model: resolvedModel });
+    ai = new GoogleGenerativeAI(apiKey);
   }
   return ai.getGenerativeModel({ model: resolvedModel });
 };
@@ -425,10 +438,7 @@ export const generatePackingList = async (
       usage: { inputTokens, outputTokens, totalTokens, thoughtTokens },
     };
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.error('Błąd podczas generowania listy przez Gemini:', error);
-    }
+    logError('Gemini generate error', error);
     throw new Error('Nie udało się wygenerować listy. Sprawdź format danych i spróbuj ponownie.');
   }
 };
@@ -449,10 +459,7 @@ export const validatePackingList = async (currentList: PackingItem[], changes: o
       replace: parsedResult.replace || [],
     };
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.error('Błąd podczas sprawdzania listy przez Gemini:', error);
-    }
+    logError('Gemini validate error', error);
     throw new Error('Nie udało się sprawdzić listy. Spróbuj ponownie.');
   }
 };
@@ -507,10 +514,7 @@ export const categorizePackingList = async (
 
     return parsedResult.categorization;
   } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.error('Błąd podczas kategoryzacji listy przez Gemini:', error);
-    }
+    logError('Gemini categorize error', error);
     throw new Error('Nie udało się skategoryzować listy. Spróbuj ponownie.');
   }
 };
