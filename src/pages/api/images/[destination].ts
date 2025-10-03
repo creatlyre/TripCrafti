@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 
+import { logDebug, logError } from '@/lib/log';
+
 /**
  * Fetches an image from Unsplash for a given query.
  * @param query The search term for the image.
@@ -19,7 +21,7 @@ async function fetchUnsplashImage(query: string, accessKey: string) {
 
   if (!response.ok) {
     // Don't throw here, just log and return null to allow fallbacks
-    console.warn(`Unsplash API responded with status: ${response.status} for query: "${query}"`);
+    logDebug('Unsplash non-OK response', { status: response.status, query });
     return null;
   }
 
@@ -44,9 +46,10 @@ export const GET: APIRoute = async ({ params }) => {
   }
 
   const unsplashAccessKey = import.meta.env.UNSPLASH_ACCESS_KEY;
+  logDebug('Image request received', { destination, keySet: !!unsplashAccessKey });
 
   if (!unsplashAccessKey) {
-    console.error('UNSPLASH_ACCESS_KEY is not set in environment variables.');
+    logError('UNSPLASH_ACCESS_KEY is missing');
     return new Response(JSON.stringify({ error: 'Server configuration error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -58,20 +61,21 @@ export const GET: APIRoute = async ({ params }) => {
 
     // 1. Primary Attempt: Use the specific destination query
     let photo = await fetchUnsplashImage(destination, unsplashAccessKey);
+    if (!photo) logDebug('Primary Unsplash search returned no photo', { destination });
 
     // 2. Secondary Attempt: Fallback to a broader geographic term
     if (!photo) {
       const destinationParts = destination.split(',');
       const broaderQuery = destinationParts.pop()?.trim(); // Get the last part, e.g., "Italy" from "Rome, Italy"
       if (broaderQuery && broaderQuery.toLowerCase() !== destination.toLowerCase()) {
-        console.log(`Primary search failed for "${destination}", trying fallback: "${broaderQuery}"`);
+        logDebug('Trying broader Unsplash fallback', { destination, broaderQuery });
         photo = await fetchUnsplashImage(broaderQuery, unsplashAccessKey);
       }
     }
 
     // 3. Tertiary Attempt: Fallback to a generic term if all else fails
     if (!photo) {
-      console.log(`All specific searches failed for "${destination}", trying generic fallback: "travel"`);
+      logDebug('Falling back to generic travel image', { destination });
       photo = await fetchUnsplashImage('travel', unsplashAccessKey);
     }
 
@@ -102,8 +106,8 @@ export const GET: APIRoute = async ({ params }) => {
         'Cache-Control': 'public, max-age=86400, immutable', // Cache for 1 day
       },
     });
-  } catch (error: any) {
-    console.error('An unexpected error occurred while fetching an image:', error.message);
+  } catch (error) {
+    logError('Unexpected error fetching image', error);
     return new Response(JSON.stringify({ error: 'Failed to fetch image from provider' }), {
       status: 502, // Bad Gateway
       headers: { 'Content-Type': 'application/json' },

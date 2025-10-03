@@ -13,6 +13,8 @@ interface ImportMetaEnv {
   readonly UNSPLASH_ACCESS_KEY?: string;
   /** Public FX API base URL (must be prefixed with PUBLIC_ to be exposed client-side if needed) */
   readonly PUBLIC_FX_API_BASE?: string;
+  /** Enable verbose server logging when set to 'true' (non-secret) */
+  readonly DEBUG_LOGGING?: string;
   // add new env variables above this line
 }
 
