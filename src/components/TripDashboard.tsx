@@ -6,6 +6,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 
 import type { Lang } from '@/lib/i18n';
+import type { Event } from '@/lib/services/eventService';
 import type { Trip, TripInput, GeneratedItinerary, Itinerary, ItineraryPreferences } from '@/types';
 
 import { useAuth } from '@/components/hooks/useAuth';
@@ -17,6 +18,7 @@ import BudgetSummaryWidget from './budget/BudgetSummary';
 import QuickAddExpense from './budget/QuickAddExpense';
 import { EmptyState } from './EmptyState';
 import { ItineraryPreferencesFormEnhanced as ItineraryPreferencesForm } from './itinerary/ItineraryPreferencesFormEnhanced';
+import { EventFinder } from './itinerary/EventFinder';
 import { ItineraryViewEnhanced as ItineraryView } from './itinerary/ItineraryViewEnhanced';
 import PackingAssistant from './PackingAssistant';
 import { TripCard } from './TripCard';
@@ -238,6 +240,43 @@ export function TripDashboard({ lang = 'pl' }: TripDashboardProps) {
     } catch (e: any) {
       setItineraryError(e.message);
     }
+  }
+
+  function handleAddEvent(event: Event) {
+    if (!selectedTrip || !selectedTrip.itineraries[0]?.generated_plan_json) return;
+
+    const currentItinerary = selectedTrip.itineraries[0].generated_plan_json;
+    const eventDate = new Date(event.start).toISOString().split('T')[0];
+
+    const dayIndex = currentItinerary.days.findIndex((d) => d.date === eventDate);
+
+    if (dayIndex === -1) {
+      // TODO: Handle case where event date is not in the itinerary
+      console.warn('Event date not found in itinerary');
+      return;
+    }
+
+    const newActivity = {
+      type: 'event',
+      time: new Date(event.start).toTimeString().slice(0, 5),
+      description: event.title,
+      details: event.description,
+    };
+
+    const updatedItinerary = {
+      ...currentItinerary,
+      days: currentItinerary.days.map((day, index) => {
+        if (index === dayIndex) {
+          return {
+            ...day,
+            activities: [...day.activities, newActivity],
+          };
+        }
+        return day;
+      }),
+    };
+
+    handleSaveItinerary(selectedTrip.itineraries[0].id, updatedItinerary);
   }
 
   async function submitCreate(e: React.FormEvent) {
@@ -634,6 +673,9 @@ export function TripDashboard({ lang = 'pl' }: TripDashboardProps) {
                                   tripCurrency={selectedTrip.currency}
                                   lang={lang}
                                 />
+                                <div className="mt-6">
+                                  <EventFinder trip={selectedTrip} onAddEvent={handleAddEvent} />
+                                </div>
                               </div>
                             ) : (
                               <div className="space-y-4">
