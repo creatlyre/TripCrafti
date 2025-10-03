@@ -2,7 +2,10 @@
  * Usage: import { logDebug, logError } from '@/lib/log';
  */
 
-const DEBUG_ENABLED = (import.meta.env.DEBUG_LOGGING || '').toLowerCase() === 'true';
+const _rawDebug = (import.meta.env.DEBUG_LOGGING ?? '') as unknown;
+const DEBUG_ENABLED =
+  (typeof _rawDebug === 'string' && _rawDebug.toLowerCase() === 'true') ||
+  (typeof _rawDebug === 'boolean' && _rawDebug === true);
 
 export function logDebug(message: string, meta?: unknown) {
   if (!DEBUG_ENABLED) return;
