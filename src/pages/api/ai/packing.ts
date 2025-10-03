@@ -16,6 +16,12 @@ export async function POST({ request, locals }: APIContext) {
     const body = await request.json();
     logDebug('/api/ai/packing request received', { keys: Object.keys(body || {}) });
 
+    // Ensure Gemini key is available via global fallback if runtime provided it
+    const runtimeGemini = locals.runtime?.env?.GEMINI_API_KEY;
+    if (runtimeGemini && !(globalThis as unknown as Record<string, string>).GEMINI_API_KEY) {
+      (globalThis as unknown as Record<string, string>).GEMINI_API_KEY = runtimeGemini;
+    }
+
     // Validate the request body
     const validatedBody = AIPackingActionSchema.parse(body);
     const { action, payload } = validatedBody;

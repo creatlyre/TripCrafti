@@ -17,22 +17,24 @@ import { resolveRuntimeEnv } from '@/lib/utils';
 
 // This service should only be called from server-side code (e.g., API routes)
 // Prefer build-time substitution (import.meta.env). Provide runtime fallbacks for robustness (tests, some CF quirks).
-// Attempt runtime resolution with multiple fallbacks (Cloudflare bindings, process.env, global)
-const resolvedApiKey = resolveRuntimeEnv('GEMINI_API_KEY');
+// Model is static-ish, but allow override at runtime too
 const resolvedModel = resolveRuntimeEnv('GEMINI_MODEL') || 'gemini-2.5-flash';
 
 let ai: GoogleGenerativeAI | null = null;
 const getModel = () => {
-  if (!resolvedApiKey) {
+  // Resolve key lazily so middleware/global injections have already happened
+  const apiKey = resolveRuntimeEnv('GEMINI_API_KEY');
+  if (!apiKey) {
     logError('Gemini API key missing at runtime', {
       buildHasKey: !!import.meta.env.GEMINI_API_KEY,
       processHasKey: typeof process !== 'undefined' ? !!process.env?.GEMINI_API_KEY : 'n/a',
+      globalHasKey: !!(globalThis as unknown as Record<string, unknown>).GEMINI_API_KEY,
     });
     throw new Error('Gemini API Key (GEMINI_API_KEY) is not configured.');
   }
   if (!ai) {
     logDebug('Initializing Gemini client', { model: resolvedModel });
-    ai = new GoogleGenerativeAI(resolvedApiKey);
+    ai = new GoogleGenerativeAI(apiKey);
   }
   return ai.getGenerativeModel({ model: resolvedModel });
 };
