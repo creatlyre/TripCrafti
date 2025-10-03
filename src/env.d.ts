@@ -37,5 +37,11 @@ declare namespace App {
     runtime?: {
       env?: Record<string, string | undefined>;
     };
+    // Direct KV binding (Cloudflare) optionally exposed in endpoints via platform
+    // We'll fetch secrets via binding name SECRETS
+    // Provided here for type assistance only.
+    // (Astro doesn't expose this officially yet)
+    // @ts-expect-error platform not typed by Astro
+    platform?: { env?: Record<string, string | undefined> };
   }
 }

@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 
 import { logDebug, logError } from '@/lib/log';
+import { getSecret } from '@/lib/secrets';
 
 /**
  * Fetches an image from Unsplash for a given query.
@@ -47,8 +48,12 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
   // Prefer build-time substituted key; fallback to Cloudflare runtime binding if present
   const unsplashAccessKey =
-    import.meta.env.UNSPLASH_ACCESS_KEY ||
-    locals?.runtime?.env?.UNSPLASH_ACCESS_KEY ||
+    (await getSecret('UNSPLASH_ACCESS_KEY', {
+      runtimeEnv: locals.runtime?.env,
+      // KV binding accessed separately if needed; left undefined here.
+      kv: undefined,
+    })) ||
+    (locals.runtime?.env?.UNSPLASH_ACCESS_KEY as string | undefined) ||
     (globalThis as unknown as Record<string, string | undefined>).UNSPLASH_ACCESS_KEY;
   logDebug('Image request received', { destination, keySet: !!unsplashAccessKey });
 

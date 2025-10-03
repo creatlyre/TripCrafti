@@ -7,6 +7,7 @@ import type { PackingItem } from '@/types';
 
 import { logDebug, logError } from '@/lib/log';
 import { AIPackingActionSchema } from '@/lib/schemas/packingSchemas';
+import { getSecret, primeGlobalSecret } from '@/lib/secrets';
 import { generatePackingList, validatePackingList, categorizePackingList } from '@/lib/services/geminiService';
 
 export const prerender = false;
@@ -17,10 +18,12 @@ export async function POST({ request, locals }: APIContext) {
     logDebug('/api/ai/packing request received', { keys: Object.keys(body || {}) });
 
     // Ensure Gemini key is available via global fallback if runtime provided it
-    const runtimeGemini = locals.runtime?.env?.GEMINI_API_KEY;
-    if (runtimeGemini && !(globalThis as unknown as Record<string, string>).GEMINI_API_KEY) {
-      (globalThis as unknown as Record<string, string>).GEMINI_API_KEY = runtimeGemini;
-    }
+    // Resolve Gemini key early (may seed global for downstream service lazy resolution)
+    const geminiKey = await getSecret('GEMINI_API_KEY', {
+      runtimeEnv: locals.runtime?.env,
+      kv: undefined, // KV binding exposed separately - left undefined unless direct binding passed
+    });
+    primeGlobalSecret('GEMINI_API_KEY', geminiKey);
 
     // Validate the request body
     const validatedBody = AIPackingActionSchema.parse(body);
