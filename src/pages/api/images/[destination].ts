@@ -35,7 +35,7 @@ async function fetchUnsplashImage(query: string, accessKey: string) {
  * 2. Tries a broader part of the destination (e.g., country).
  * 3. Tries a generic "travel" query as a final resort.
  */
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, locals }) => {
   const { destination } = params;
 
   if (!destination) {
@@ -45,7 +45,11 @@ export const GET: APIRoute = async ({ params }) => {
     });
   }
 
-  const unsplashAccessKey = import.meta.env.UNSPLASH_ACCESS_KEY;
+  // Prefer build-time substituted key; fallback to Cloudflare runtime binding if present
+  const unsplashAccessKey =
+    import.meta.env.UNSPLASH_ACCESS_KEY ||
+    locals?.runtime?.env?.UNSPLASH_ACCESS_KEY ||
+    (globalThis as unknown as Record<string, string | undefined>).UNSPLASH_ACCESS_KEY;
   logDebug('Image request received', { destination, keySet: !!unsplashAccessKey });
 
   if (!unsplashAccessKey) {

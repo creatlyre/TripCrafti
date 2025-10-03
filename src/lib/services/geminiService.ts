@@ -11,19 +11,15 @@ import type {
 } from '@/types';
 
 import { logDebug, logError } from '@/lib/log';
+import { resolveRuntimeEnv } from '@/lib/utils';
 
 // (types import moved above to satisfy lint ordering)
 
 // This service should only be called from server-side code (e.g., API routes)
 // Prefer build-time substitution (import.meta.env). Provide runtime fallbacks for robustness (tests, some CF quirks).
-const resolvedApiKey =
-  import.meta.env.GEMINI_API_KEY ||
-  (typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY : undefined) ||
-  (globalThis as unknown as { GEMINI_API_KEY?: string })?.GEMINI_API_KEY;
-const resolvedModel =
-  import.meta.env.GEMINI_MODEL ||
-  (typeof process !== 'undefined' ? process.env?.GEMINI_MODEL : undefined) ||
-  'gemini-2.5-flash';
+// Attempt runtime resolution with multiple fallbacks (Cloudflare bindings, process.env, global)
+const resolvedApiKey = resolveRuntimeEnv('GEMINI_API_KEY');
+const resolvedModel = resolveRuntimeEnv('GEMINI_MODEL') || 'gemini-2.5-flash';
 
 let ai: GoogleGenerativeAI | null = null;
 const getModel = () => {

@@ -29,5 +29,13 @@ declare namespace App {
     lang: 'en' | 'pl';
     supabase: import('@supabase/supabase-js').SupabaseClient;
     session: import('@supabase/supabase-js').Session | null;
+    /**
+     * Cloudflare Pages / Workers runtime bindings (only present in deployed environment).
+     * The Cloudflare adapter for Astro (output: 'server') can expose an object we map here manually in middleware.
+     * We treat it as optional so local dev & tests are unaffected.
+     */
+    runtime?: {
+      env?: Record<string, string | undefined>;
+    };
   }
 }
