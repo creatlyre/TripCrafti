@@ -17,8 +17,8 @@ import { getDictionary } from '@/lib/i18n';
 import BudgetSummaryWidget from './budget/BudgetSummary';
 import QuickAddExpense from './budget/QuickAddExpense';
 import { EmptyState } from './EmptyState';
-import { ItineraryPreferencesFormEnhanced as ItineraryPreferencesForm } from './itinerary/ItineraryPreferencesFormEnhanced';
 import { EventFinder } from './itinerary/EventFinder';
+import { ItineraryPreferencesFormEnhanced as ItineraryPreferencesForm } from './itinerary/ItineraryPreferencesFormEnhanced';
 import { ItineraryViewEnhanced as ItineraryView } from './itinerary/ItineraryViewEnhanced';
 import PackingAssistant from './PackingAssistant';
 import { TripCard } from './TripCard';
@@ -616,6 +616,7 @@ export function TripDashboard({ lang = 'pl' }: TripDashboardProps) {
                         <TabsTrigger value="itinerary">{dict.tabs?.itinerary}</TabsTrigger>
                         <TabsTrigger value="budget">{dict.tabs?.budget}</TabsTrigger>
                         <TabsTrigger value="packing">{dict.tabs?.packing}</TabsTrigger>
+                        <TabsTrigger value="events">{dict.tabs?.events}</TabsTrigger>
                         <TabsTrigger value="settings">{dict.tabs?.settings}</TabsTrigger>
                       </TabsList>
 
@@ -673,9 +674,6 @@ export function TripDashboard({ lang = 'pl' }: TripDashboardProps) {
                                   tripCurrency={selectedTrip.currency}
                                   lang={lang}
                                 />
-                                <div className="mt-6">
-                                  <EventFinder trip={selectedTrip} onAddEvent={handleAddEvent} />
-                                </div>
                               </div>
                             ) : (
                               <div className="space-y-4">
@@ -768,6 +766,13 @@ export function TripDashboard({ lang = 'pl' }: TripDashboardProps) {
                             }
                             enableBulkDelete
                           />
+                        </TabsContent>
+
+                        <TabsContent
+                          value="events"
+                          className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full"
+                        >
+                          <EventFinder trip={selectedTrip} onAddEvent={handleAddEvent} lang={lang} />
                         </TabsContent>
 
                         <TabsContent

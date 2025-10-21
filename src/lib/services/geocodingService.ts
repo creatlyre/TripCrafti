@@ -1,23 +1,30 @@
 import { z } from 'zod';
 
-const geocodeResponseSchema = z.array(
-  z.object({
-    lat: z.string(),
-    lon: z.string(),
-  })
-);
+const googleGeocodeResponseSchema = z.object({
+  results: z.array(
+    z.object({
+      geometry: z.object({
+        location: z.object({
+          lat: z.number(),
+          lng: z.number(),
+        }),
+      }),
+    })
+  ),
+  status: z.string(),
+});
 
-const GEOCODE_API_URL = 'https://geocode.maps.co/search';
+const GEOCODE_API_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
 
 export async function getCoordinates(destination: string): Promise<{ lat: number; long: number }> {
-  const apiKey = import.meta.env.GEOCODE_MAPS_CO_API_KEY;
+  const apiKey = import.meta.env.GOOGLE_GEOCODING_API_KEY;
   if (!apiKey) {
-    throw new Error('Missing GEOCODE_MAPS_CO_API_KEY environment variable');
+    throw new Error('Missing GOOGLE_GEOCODING_API_KEY environment variable');
   }
 
   const params = new URLSearchParams({
-    q: destination,
-    api_key: apiKey,
+    address: destination,
+    key: apiKey,
   });
 
   const response = await fetch(`${GEOCODE_API_URL}?${params.toString()}`);
@@ -27,12 +34,12 @@ export async function getCoordinates(destination: string): Promise<{ lat: number
   }
 
   const data = await response.json();
-  const parsedData = geocodeResponseSchema.parse(data);
+  const parsedData = googleGeocodeResponseSchema.parse(data);
 
-  if (parsedData.length === 0) {
-    throw new Error(`No coordinates found for destination: ${destination}`);
+  if (parsedData.status !== 'OK' || parsedData.results.length === 0) {
+    throw new Error(`No coordinates found for destination: ${destination}. Status: ${parsedData.status}`);
   }
 
-  const { lat, lon } = parsedData[0];
-  return { lat: parseFloat(lat), long: parseFloat(lon) };
+  const { lat, lng } = parsedData.results[0].geometry.location;
+  return { lat, long: lng };
 }

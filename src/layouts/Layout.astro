@@ -1,4 +1,6 @@
 ---
+import { ViewTransitions } from 'astro:transitions';
+
 import '../styles/global.css';
 import SupabaseProvider from '../components/auth/SupabaseProvider.tsx';
 const lang = (Astro.locals?.lang as 'pl' | 'en') ?? 'pl';
@@ -6,6 +8,10 @@ const lang = (Astro.locals?.lang as 'pl' | 'en') ?? 'pl';
 interface Props {
   title?: string;
 }
+
+import { BackToTopButton } from '@/components/BackToTopButton';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { ModeToggle } from '@/components/ThemeToggle';
 
 const { title = 'TripCrafti' } = Astro.props;
 ---
@@ -18,11 +24,18 @@ const { title = 'TripCrafti' } = Astro.props;
     <link rel="icon" type="image/png" href="/Logo_TripCrafti.png" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <ViewTransitions />
   </head>
   <body>
-    <SupabaseProvider>
-      <slot />
-    </SupabaseProvider>
+    <ThemeProvider>
+      <SupabaseProvider>
+        <slot />
+        <BackToTopButton client:load />
+        <div class="fixed bottom-4 right-16">
+          <ModeToggle client:load />
+        </div>
+      </SupabaseProvider>
+    </ThemeProvider>
   </body>
 </html>
 

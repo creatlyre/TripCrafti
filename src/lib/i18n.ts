@@ -216,6 +216,7 @@ export interface Dictionary {
       budget: string;
       packing: string;
       settings: string;
+      events?: string;
     };
     status?: {
       creating: string;
@@ -735,6 +736,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         budget: 'Budżet',
         packing: 'Pakowanie',
         settings: 'Ustawienia',
+        events: 'Wydarzenia',
       },
       status: {
         creating: 'Tworzenie…',
@@ -1312,6 +1314,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         budget: 'Budget',
         packing: 'Packing',
         settings: 'Settings',
+        events: 'Events',
       },
       status: {
         creating: 'Creating…',
