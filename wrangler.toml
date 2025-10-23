@@ -12,3 +12,7 @@ DEBUG_LOGGING = "false"
 binding = "SECRETS" # KV namespace for runtime secrets (GEMINI_API_KEY, UNSPLASH_ACCESS_KEY, etc.)
 id = "b2c9e78506a7423ba7d15b7bef93d7e4"
 
+[secrets]
+UNSPLASH_ACCESS_KEY
+GEMINI_API_KEY
+EXCHANGERATE_API_KEY
