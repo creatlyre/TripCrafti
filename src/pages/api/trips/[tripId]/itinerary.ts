@@ -47,10 +47,10 @@ async function getGenAI(runtimeEnv?: Record<string, string | undefined>) {
 const MODEL_CANDIDATES = [
   import.meta.env.GEMINI_MODEL as string | undefined,
   'gemini-2.5-flash', // Fastest model first for production reliability
+  'gemini-2.5-pro', // Most powerful but slowest, try last
   'gemini-2.5-flash-lite',
   'gemini-2.0-flash',
   'gemini-2.0-flash-lite',
-  'gemini-2.5-pro', // Most powerful but slowest, try last
 ].filter(Boolean) as string[];
 
 let resolvedModel: string | null = null; // cache the first working model for subsequent requests
@@ -87,7 +87,7 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
     const model = genAIInstance.getGenerativeModel({ model: resolvedModel });
     return {
       modelName: resolvedModel,
-      result: await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout'),
+      result: await withTimeout(model.generateContent(prompt), 90000, 'ModelTimeout'),
     };
   }
   let lastError: unknown = null;
@@ -98,17 +98,30 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
       const model = genAIInstance.getGenerativeModel({ model: candidate });
 
       // eslint-disable-next-line no-console
-      console.log('[itinerary-ai] Model instance created, starting generation with timeout 120s...');
+      console.log('[itinerary-ai] Model instance created, starting generation with timeout 90s...');
       // eslint-disable-next-line no-console
       console.log('[itinerary-ai] About to call model.generateContent() - this is the critical step');
+      
+      // Add memory and timing diagnostics for Cloudflare Workers debugging
+      const memBefore =
+        (globalThis as unknown as { performance?: { memory?: { usedJSHeapSize?: number } } }).performance?.memory
+          ?.usedJSHeapSize || 'unknown';
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] Memory before AI call:', memBefore);
+      
       const startTime = Date.now();
 
-      // Use shorter timeout for Cloudflare Workers environment (2 minutes instead of 5)
-      const result = await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout');
+      // Use aggressive timeout for Cloudflare Workers CPU limits (90 seconds)
+      const result = await withTimeout(model.generateContent(prompt), 90000, 'ModelTimeout');
 
       const endTime = Date.now();
+      const memAfter =
+        (globalThis as unknown as { performance?: { memory?: { usedJSHeapSize?: number } } }).performance?.memory
+          ?.usedJSHeapSize || 'unknown';
       // eslint-disable-next-line no-console
       console.log('[itinerary-ai] model.generateContent() call completed successfully');
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] Memory after AI call:', memAfter);
       // eslint-disable-next-line no-console
       console.log('[itinerary-ai] Model generation completed in', endTime - startTime, 'ms');
 
