@@ -11,11 +11,8 @@ export interface SecretContext {
 
 /**
  * Resolve a secret in the following order:
- * 1. import.meta.env
- * 2. runtimeEnv (locals.runtime?.env)
- * 3. process.env (dev / tests)
- * 4. globalThis
- * 5. KV namespace (if provided)
+ * PRODUCTION: 1. KV namespace, 2. runtimeEnv, 3. import.meta.env, 4. globalThis
+ * DEVELOPMENT: 1. import.meta.env, 2. runtimeEnv, 3. process.env, 4. globalThis, 5. KV namespace
  */
 export async function getSecret(key: string, ctx: SecretContext = {}): Promise<string | undefined> {
   if (secretCache.has(key)) {
@@ -23,24 +20,38 @@ export async function getSecret(key: string, ctx: SecretContext = {}): Promise<s
     return cached === null ? undefined : cached;
   }
 
-  // 1-4 via helper / runtimeEnv override
+  // In production, prioritize KV namespace for secrets
+  if (import.meta.env.PROD && ctx.kv) {
+    try {
+      const kvVal = await ctx.kv.get(key);
+      if (kvVal) {
+        logDebug('Secret resolved from KV (production)', { key });
+        secretCache.set(key, kvVal);
+        return kvVal;
+      }
+    } catch (err) {
+      logError('KV secret lookup failed', { key, err });
+    }
+  }
+
+  // Try immediate resolution (import.meta.env, runtimeEnv, process.env, globalThis)
   const immediate = resolveRuntimeEnv(key, ctx.runtimeEnv);
   if (immediate) {
     secretCache.set(key, immediate);
     return immediate;
   }
 
-  // 5 KV fallback
-  if (ctx.kv) {
+  // In development, KV is fallback (for local development with --remote flag)
+  if (!import.meta.env.PROD && ctx.kv) {
     try {
       const kvVal = await ctx.kv.get(key);
       if (kvVal) {
-        logDebug('Secret resolved from KV', { key });
+        logDebug('Secret resolved from KV (development fallback)', { key });
         secretCache.set(key, kvVal);
         return kvVal;
       }
     } catch (err) {
-      logError('KV secret lookup failed', { key, err });
+      logError('KV secret lookup failed (development)', { key, err });
     }
   }
 

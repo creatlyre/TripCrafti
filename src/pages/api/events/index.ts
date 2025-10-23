@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 
-import { getEvents, coordinatesToGeoPoint } from '../../../lib/services/eventService';
+import { logError, logDebug } from '@/lib/log';
+import { getEvents, coordinatesToGeoPoint } from '@/lib/services/eventService';
 
 function json(data: unknown, init: number | ResponseInit = 200) {
   return new Response(JSON.stringify(data), {
@@ -10,7 +11,7 @@ function json(data: unknown, init: number | ResponseInit = 200) {
   });
 }
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
   const url = new URL(request.url);
   const geoPoint = url.searchParams.get('geoPoint');
   const lat = url.searchParams.get('lat');
@@ -27,18 +28,20 @@ export const GET: APIRoute = async ({ request }) => {
   const units = url.searchParams.get('unit') as 'km' | 'miles' | null; // Changed from 'units' to 'unit'
 
   // 🔍 API Endpoint Logging for Manual Testing
-  console.log('\n=== EVENTS SEARCH API REQUEST ===');
-  console.log('📍 Location - Lat:', lat, 'Long:', long, 'GeoPoint:', geoPoint);
-  console.log('📅 Date Range:', startDate, 'to', endDate);
-  console.log('🏷️  Classifications:', classificationName);
-  console.log('🎭 Filters - Genre:', genreId, 'SubGenre:', subGenreId, 'Type:', typeId, 'SubType:', subTypeId);
-  console.log('🌍 Locale:', locale, 'Radius:', radius, 'Unit:', units);
-  console.log('📍 Full URL:', url.toString());
-  console.log('🕐 Timestamp:', new Date().toISOString());
+  logDebug('Events search API request', {
+    location: { lat, long, geoPoint },
+    dateRange: { startDate, endDate },
+    classifications: classificationName,
+    filters: { genreId, subGenreId, typeId, subTypeId },
+    locale,
+    radius,
+    units,
+    url: url.toString(),
+  });
 
   // Validate required parameters
   if (!startDate || !endDate) {
-    console.log('❌ Error: Missing required parameters - startDate or endDate');
+    logError('Missing required parameters - startDate or endDate');
     return json({ error: 'Missing required query parameters: startDate, endDate' }, 400);
   }
 
@@ -49,9 +52,9 @@ export const GET: APIRoute = async ({ request }) => {
     finalGeoPoint = geoPoint;
   } else if (lat && long) {
     finalGeoPoint = coordinatesToGeoPoint(parseFloat(lat), parseFloat(long));
-    console.log('🗺️  Converted coordinates to geoPoint:', finalGeoPoint);
+    logDebug('Converted coordinates to geoPoint', { finalGeoPoint });
   } else {
-    console.log('❌ Error: Missing location parameters');
+    logError('Missing location parameters');
     return json({ error: 'Missing location: provide either geoPoint or both lat and long parameters' }, 400);
   }
 
@@ -67,19 +70,19 @@ export const GET: APIRoute = async ({ request }) => {
       subTypeId: subTypeId.length > 0 ? subTypeId : undefined,
       locale: locale || undefined,
       radius: radius || undefined,
-      unit: units || undefined, // Changed parameter name from 'units' to 'unit'
+      unit: units || undefined,
+      runtimeEnv: locals.runtime?.env,
+      kv: locals.runtime?.env?.SECRETS as { get: (key: string) => Promise<string | null> } | undefined,
     });
-    console.log('✅ Events search completed. Found', events.length, 'events');
+    logDebug('Events search completed', { count: events.length });
     if (events.length > 0) {
-      console.log('🎟️  First event ID for manual testing:', events[0].id);
-      console.log('📋 Event IDs:', events.map((e) => e.id).slice(0, 5), events.length > 5 ? '...' : '');
+      logDebug('First event for testing', { eventId: events[0].id });
+      logDebug('Event IDs sample', { eventIds: events.map((e) => e.id).slice(0, 5) });
     }
-    console.log('=====================================\n');
     return json(events);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.log('❌ Error in events search:', errorMessage);
-    console.log('=====================================\n');
+    logError('Error in events search', { error: errorMessage });
     return json({ error: 'Failed to fetch events', details: errorMessage }, 500);
   }
 };

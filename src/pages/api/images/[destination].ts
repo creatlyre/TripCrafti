@@ -46,15 +46,12 @@ export const GET: APIRoute = async ({ params, locals }) => {
     });
   }
 
-  // Prefer build-time substituted key; fallback to Cloudflare runtime binding if present
-  const unsplashAccessKey =
-    (await getSecret('UNSPLASH_ACCESS_KEY', {
-      runtimeEnv: locals.runtime?.env,
-      // KV binding accessed separately if needed; left undefined here.
-      kv: undefined,
-    })) ||
-    (locals.runtime?.env?.UNSPLASH_ACCESS_KEY as string | undefined) ||
-    (globalThis as unknown as Record<string, string | undefined>).UNSPLASH_ACCESS_KEY;
+  // Get secret using KV namespace binding from Cloudflare
+  const unsplashAccessKey = await getSecret('UNSPLASH_ACCESS_KEY', {
+    runtimeEnv: locals.runtime?.env,
+    kv: locals.runtime?.env?.SECRETS as { get: (key: string) => Promise<string | null> } | undefined,
+  });
+
   logDebug('Image request received', { destination, keySet: !!unsplashAccessKey });
 
   if (!unsplashAccessKey) {

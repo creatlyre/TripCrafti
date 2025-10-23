@@ -6,6 +6,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const apiKey = await getSecret('TICKETMASTER_API_KEY', {
       runtimeEnv: locals.runtime?.env,
+      kv: locals.runtime?.env?.SECRETS as { get: (key: string) => Promise<string | null> } | undefined,
     });
 
     if (!apiKey) {

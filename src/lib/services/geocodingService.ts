@@ -27,7 +27,7 @@ export async function getCoordinates(
     runtimeEnv,
     kv,
   });
-  
+
   if (!apiKey) {
     throw new Error('Missing GOOGLE_GEOCODING_API_KEY environment variable');
   }
