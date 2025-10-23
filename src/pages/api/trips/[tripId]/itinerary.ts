@@ -57,11 +57,23 @@ let resolvedModel: string | null = null; // cache the first working model for su
 
 function withTimeout<T>(p: Promise<T>, ms: number, label = 'Timeout'): Promise<T> {
   return new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error(label)), ms);
+    // eslint-disable-next-line no-console
+    console.log(`[itinerary-ai] Setting timeout for ${label}: ${ms}ms`);
+
+    const t = setTimeout(() => {
+      // eslint-disable-next-line no-console
+      console.error(`[itinerary-ai] TIMEOUT: ${label} exceeded ${ms}ms`);
+      reject(new Error(`${label} (${ms}ms)`));
+    }, ms);
+
     p.then((v) => {
+      // eslint-disable-next-line no-console
+      console.log(`[itinerary-ai] ${label} completed successfully`);
       clearTimeout(t);
       resolve(v);
     }).catch((e) => {
+      // eslint-disable-next-line no-console
+      console.error(`[itinerary-ai] ${label} failed:`, e);
       clearTimeout(t);
       reject(e);
     });
@@ -75,7 +87,7 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
     const model = genAIInstance.getGenerativeModel({ model: resolvedModel });
     return {
       modelName: resolvedModel,
-      result: await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout'),
+      result: await withTimeout(model.generateContent(prompt), 90000, 'ModelTimeout'),
     };
   }
   let lastError: unknown = null;
@@ -86,10 +98,10 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
       const model = genAIInstance.getGenerativeModel({ model: candidate });
 
       // eslint-disable-next-line no-console
-      console.log('[itinerary-ai] Model instance created, starting generation with timeout 120s...');
+      console.log('[itinerary-ai] Model instance created, starting generation with timeout 90s...');
       const startTime = Date.now();
 
-      const result = await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout');
+      const result = await withTimeout(model.generateContent(prompt), 90000, 'ModelTimeout');
 
       const endTime = Date.now();
       // eslint-disable-next-line no-console
@@ -229,7 +241,14 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       tableName: tableToUse,
       runtimeEnv: locals.runtime?.env,
     }).catch((err) => {
-      console.error('generateItinerary top-level rejection', err);
+      // eslint-disable-next-line no-console
+      console.error('[itinerary-ai] CRITICAL: Unhandled error in generateItinerary:', err);
+      // eslint-disable-next-line no-console
+      console.error('[itinerary-ai] Stack trace:', err?.stack);
+      // eslint-disable-next-line no-console
+      console.error('[itinerary-ai] Error name:', err?.name);
+      // eslint-disable-next-line no-console
+      console.error('[itinerary-ai] Error message:', err?.message);
     });
 
     // Immediately return a response to the client
@@ -259,12 +278,21 @@ async function generateItinerary({
   tableName,
   runtimeEnv,
 }: GenerateArgs) {
+  // Heartbeat function to keep connection alive
+  const heartbeat = setInterval(() => {
+    // eslint-disable-next-line no-console
+    console.log('[itinerary-ai] Heartbeat - process still alive for:', itineraryId);
+  }, 15000); // Every 15 seconds
+
   try {
+    // eslint-disable-next-line no-console
     console.log('[itinerary-ai] Starting generation for itinerary:', itineraryId);
+    // eslint-disable-next-line no-console
     console.log('[itinerary-ai] Trip details:', {
       destination: trip.destination,
       dates: `${trip.start_date} to ${trip.end_date}`,
     });
+    // eslint-disable-next-line no-console
     console.log('[itinerary-ai] Preferences:', {
       interests: preferences.interests?.length || 0,
       travelStyle: preferences.travelStyle,
@@ -273,23 +301,59 @@ async function generateItinerary({
     });
 
     const genAIInstance = await getGenAI(runtimeEnv);
+    // eslint-disable-next-line no-console
     console.log('[itinerary-ai] GenAI instance created successfully');
+
+    // Test Supabase connection early
+    try {
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] Testing Supabase connection...');
+      const testResult = await supabase.from(tableName).select('id').limit(1);
+      if (testResult.error) {
+        // eslint-disable-next-line no-console
+        console.error('[itinerary-ai] Supabase connection test failed:', testResult.error);
+      } else {
+        // eslint-disable-next-line no-console
+        console.log('[itinerary-ai] Supabase connection test successful');
+      }
+    } catch (connError) {
+      // eslint-disable-next-line no-console
+      console.error('[itinerary-ai] Supabase connection test threw exception:', connError);
+    }
 
     const prompt = createAdvancedItineraryPrompt(trip, preferences, language);
     console.log('[itinerary-ai] Prompt created, length:', prompt.length, 'characters');
 
+    // eslint-disable-next-line no-console
     console.time('[itinerary-ai] total_generation');
+    // eslint-disable-next-line no-console
     console.log('[itinerary-ai] Starting model generation...');
 
+    const startGenTime = Date.now();
     const { modelName, result } = await generateWithFallback(genAIInstance, prompt);
-    console.log('[itinerary-ai] Model generation completed with:', modelName);
+    const endGenTime = Date.now();
+    // eslint-disable-next-line no-console
+    console.log('[itinerary-ai] Model generation completed with:', modelName, 'in', endGenTime - startGenTime, 'ms');
 
+    // eslint-disable-next-line no-console
     console.log('[itinerary-ai] Extracting response...');
+    const startResponseTime = Date.now();
     const response = await result.response;
-    console.log('[itinerary-ai] Response extracted, getting text...');
+    const endResponseTime = Date.now();
+    // eslint-disable-next-line no-console
+    console.log('[itinerary-ai] Response extracted in', endResponseTime - startResponseTime, 'ms, getting text...');
 
+    const startTextTime = Date.now();
     const text = response.text();
-    console.log('[itinerary-ai] Text extracted, length:', text.length, 'characters');
+    const endTextTime = Date.now();
+    // eslint-disable-next-line no-console
+    console.log(
+      '[itinerary-ai] Text extracted in',
+      endTextTime - startTextTime,
+      'ms, length:',
+      text.length,
+      'characters'
+    );
 
     // Clean the response to get valid JSON
     // eslint-disable-next-line no-console
@@ -354,17 +418,32 @@ async function generateItinerary({
     }
 
     // eslint-disable-next-line no-console
-    console.log('[itinerary-ai] Updating database record...');
-    const updateOk = await supabase
-      .from(tableName)
-      .update({
-        generated_plan_json: generatedPlan,
-        status: 'COMPLETED',
-        input_tokens: inputTokens,
-        thought_tokens: thoughtTokens,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', itineraryId);
+    console.log('[itinerary-ai] Starting database update for itinerary:', itineraryId);
+    // eslint-disable-next-line no-console
+    console.log('[itinerary-ai] Generated plan size:', JSON.stringify(generatedPlan).length, 'characters');
+
+    const startDbTime = Date.now();
+    let updateOk;
+    try {
+      updateOk = await supabase
+        .from(tableName)
+        .update({
+          generated_plan_json: generatedPlan,
+          status: 'COMPLETED',
+          input_tokens: inputTokens,
+          thought_tokens: thoughtTokens,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', itineraryId);
+
+      const endDbTime = Date.now();
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] Database update completed in', endDbTime - startDbTime, 'ms');
+    } catch (dbError) {
+      // eslint-disable-next-line no-console
+      console.error('[itinerary-ai] Database update threw exception:', dbError);
+      throw dbError;
+    }
 
     // eslint-disable-next-line no-console
     console.timeEnd('[itinerary-ai] total_generation');
@@ -376,7 +455,12 @@ async function generateItinerary({
       // eslint-disable-next-line no-console
       console.log('[itinerary-ai] Successfully completed itinerary generation for:', itineraryId);
     }
+
+    // Clear heartbeat on success
+    clearInterval(heartbeat);
   } catch (error) {
+    // Clear heartbeat on error
+    clearInterval(heartbeat);
     // eslint-disable-next-line no-console
     console.error('[itinerary-ai] Error generating itinerary for:', itineraryId);
     // eslint-disable-next-line no-console
