@@ -216,6 +216,7 @@ export interface Dictionary {
       budget: string;
       packing: string;
       settings: string;
+      events?: string;
     };
     status?: {
       creating: string;
@@ -495,6 +496,64 @@ export interface Dictionary {
       attributionUrl: string;
     };
   };
+  events?: {
+    finder: {
+      title: string;
+      subtitle: string;
+      clearAll: string;
+      filtersActive: string;
+      filter: string;
+      filters: string;
+      loadingCategories: string;
+      searchCategories: string;
+      advancedCategories: string;
+      advancedCategoriesDesc: string;
+      allCategories: string;
+      items: string;
+      noCategoriesFound: string;
+      searchingEvents: string;
+      findLocalEvents: string;
+      add: string;
+      address: string;
+      foundEvents: string;
+      moreDetails: string;
+      eventDetails: string;
+      eventDetailsDescription: string;
+      loadingDetails: string;
+      basicInfo: string;
+      description: string;
+      additionalInfo: string;
+      pleaseNote: string;
+      officialWebsite: string;
+      visitOfficialWebsite: string;
+      eventImage: string;
+      primaryCategory: string;
+      segment: string;
+      noCategoriesAvailable: string;
+      venueInformation: string;
+      venueDetails: string;
+      phone: string;
+      hours: string;
+      parking: string;
+      accessibility: string;
+      priceInformation: string;
+      attractions: string;
+      learnMore: string;
+      unknownError: string;
+      failedFetchClassifications: string;
+      failedGeocodeDestination: string;
+      failedFetchEvents: string;
+      failedFetchEventDetails: string;
+      failedLoadEventDetails: string;
+      mainCategories: {
+        mainCategories: string;
+        genres: string;
+        eventTypes: string;
+        subGenres: string;
+        subTypes: string;
+      };
+    };
+  };
 }
 
 const year = new Date().getFullYear();
@@ -735,6 +794,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         budget: 'Budżet',
         packing: 'Pakowanie',
         settings: 'Ustawienia',
+        events: 'Wydarzenia',
       },
       status: {
         creating: 'Tworzenie…',
@@ -1084,6 +1144,64 @@ export const dictionaries: Record<Lang, Dictionary> = {
         attributionUrl: 'https://unsplash.com?utm_source=trip-planner&utm_medium=referral',
       },
     },
+    events: {
+      finder: {
+        title: 'Kategorie Wydarzeń',
+        subtitle: 'Wybierz kategorie, aby znaleźć wydarzenia, które pasują do Twoich zainteresowań',
+        clearAll: 'Wyczyść wszystko',
+        filtersActive: 'aktywne filtry',
+        filter: 'filtr',
+        filters: 'filtry',
+        loadingCategories: 'Ładowanie kategorii...',
+        searchCategories: 'Szukaj kategorii...',
+        advancedCategories: 'Zaawansowane Kategorie',
+        advancedCategoriesDesc: 'Podgatunki, Podtypy',
+        allCategories: 'Wszystkie Kategorie',
+        items: 'pozycji',
+        noCategoriesFound: 'Nie znaleziono kategorii pasujących do wyszukiwania',
+        searchingEvents: 'Wyszukiwanie wydarzeń...',
+        findLocalEvents: 'Znajdź Lokalne Wydarzenia',
+        add: 'Dodaj',
+        address: 'Adres:',
+        foundEvents: 'Znalezione Wydarzenia',
+        moreDetails: 'Więcej Szczegółów',
+        eventDetails: 'Szczegóły Wydarzenia',
+        eventDetailsDescription: 'Szczegółowe informacje o tym wydarzeniu',
+        loadingDetails: 'Ładowanie szczegółów wydarzenia...',
+        basicInfo: 'Podstawowe Informacje',
+        description: 'Opis',
+        additionalInfo: 'Dodatkowe Informacje',
+        pleaseNote: 'Uwaga',
+        officialWebsite: 'Oficjalna Strona',
+        visitOfficialWebsite: 'Odwiedź Oficjalną Stronę',
+        eventImage: 'Zdjęcie Wydarzenia',
+        primaryCategory: 'Kategoria Główna',
+        segment: 'Segment',
+        noCategoriesAvailable: 'Brak dostępnych kategorii',
+        venueInformation: 'Informacje o Miejscu',
+        venueDetails: 'Szczegóły Miejsca',
+        phone: 'Telefon:',
+        hours: 'Godziny:',
+        parking: 'Parking:',
+        accessibility: 'Dostępność:',
+        priceInformation: 'Informacje o Cenach',
+        attractions: 'Atrakcje',
+        learnMore: 'Dowiedz się więcej',
+        unknownError: 'Wystąpił nieznany błąd',
+        failedFetchClassifications: 'Nie udało się pobrać klasyfikacji',
+        failedGeocodeDestination: 'Nie udało się geokodować miejsca docelowego',
+        failedFetchEvents: 'Nie udało się pobrać wydarzeń',
+        failedFetchEventDetails: 'Nie udało się pobrać szczegółów wydarzenia',
+        failedLoadEventDetails: 'Nie udało się załadować szczegółów wydarzenia',
+        mainCategories: {
+          mainCategories: 'Główne Kategorie',
+          genres: 'Gatunki',
+          eventTypes: 'Typy Wydarzeń',
+          subGenres: 'Podgatunki',
+          subTypes: 'Podtypy',
+        },
+      },
+    },
   },
   en: {
     hero: {
@@ -1312,6 +1430,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         budget: 'Budget',
         packing: 'Packing',
         settings: 'Settings',
+        events: 'Events',
       },
       status: {
         creating: 'Creating…',
@@ -1652,6 +1771,64 @@ export const dictionaries: Record<Lang, Dictionary> = {
         photoBy: 'Photo by',
         providerName: 'Unsplash',
         attributionUrl: 'https://unsplash.com?utm_source=trip-planner&utm_medium=referral',
+      },
+    },
+    events: {
+      finder: {
+        title: 'Event Categories',
+        subtitle: 'Choose categories to find events that match your interests',
+        clearAll: 'Clear all',
+        filtersActive: 'filters active',
+        filter: 'filter',
+        filters: 'filters',
+        loadingCategories: 'Loading categories...',
+        searchCategories: 'Search categories...',
+        advancedCategories: 'Advanced Categories',
+        advancedCategoriesDesc: 'Sub-genres, Sub-types',
+        allCategories: 'All Categories',
+        items: 'items',
+        noCategoriesFound: 'No categories found matching your search',
+        searchingEvents: 'Searching for events...',
+        findLocalEvents: 'Find Local Events',
+        add: 'Add',
+        address: 'Address:',
+        foundEvents: 'Found Events',
+        moreDetails: 'More Details',
+        eventDetails: 'Event Details',
+        eventDetailsDescription: 'Detailed information about this event',
+        loadingDetails: 'Loading event details...',
+        basicInfo: 'Basic Information',
+        description: 'Description',
+        additionalInfo: 'Additional Information',
+        pleaseNote: 'Please Note',
+        officialWebsite: 'Official Website',
+        visitOfficialWebsite: 'Visit Official Website',
+        eventImage: 'Event Image',
+        primaryCategory: 'Primary Category',
+        segment: 'Segment',
+        noCategoriesAvailable: 'No categories available',
+        venueInformation: 'Venue Information',
+        venueDetails: 'Venue Details',
+        phone: 'Phone:',
+        hours: 'Hours:',
+        parking: 'Parking:',
+        accessibility: 'Accessibility:',
+        priceInformation: 'Price Information',
+        attractions: 'Attractions',
+        learnMore: 'Learn More',
+        unknownError: 'An unknown error occurred',
+        failedFetchClassifications: 'Failed to fetch classifications',
+        failedGeocodeDestination: 'Failed to geocode destination',
+        failedFetchEvents: 'Failed to fetch events',
+        failedFetchEventDetails: 'Failed to fetch event details',
+        failedLoadEventDetails: 'Failed to load event details',
+        mainCategories: {
+          mainCategories: 'Main Categories',
+          genres: 'Genres',
+          eventTypes: 'Event Types',
+          subGenres: 'Sub-Genres',
+          subTypes: 'Sub-Types',
+        },
       },
     },
   },

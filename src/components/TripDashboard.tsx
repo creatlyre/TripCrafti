@@ -6,6 +6,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 
 import type { Lang } from '@/lib/i18n';
+import type { Event } from '@/lib/services/eventService';
 import type { Trip, TripInput, GeneratedItinerary, Itinerary, ItineraryPreferences } from '@/types';
 
 import { useAuth } from '@/components/hooks/useAuth';
@@ -16,6 +17,7 @@ import { getDictionary } from '@/lib/i18n';
 import BudgetSummaryWidget from './budget/BudgetSummary';
 import QuickAddExpense from './budget/QuickAddExpense';
 import { EmptyState } from './EmptyState';
+import { EventFinder } from './itinerary/EventFinder';
 import { ItineraryPreferencesFormEnhanced as ItineraryPreferencesForm } from './itinerary/ItineraryPreferencesFormEnhanced';
 import { ItineraryViewEnhanced as ItineraryView } from './itinerary/ItineraryViewEnhanced';
 import PackingAssistant from './PackingAssistant';
@@ -238,6 +240,43 @@ export function TripDashboard({ lang = 'pl' }: TripDashboardProps) {
     } catch (e: any) {
       setItineraryError(e.message);
     }
+  }
+
+  function handleAddEvent(event: Event) {
+    if (!selectedTrip || !selectedTrip.itineraries[0]?.generated_plan_json) return;
+
+    const currentItinerary = selectedTrip.itineraries[0].generated_plan_json;
+    const eventDate = new Date(event.start).toISOString().split('T')[0];
+
+    const dayIndex = currentItinerary.days.findIndex((d) => d.date === eventDate);
+
+    if (dayIndex === -1) {
+      // TODO: Handle case where event date is not in the itinerary
+      console.warn('Event date not found in itinerary');
+      return;
+    }
+
+    const newActivity = {
+      type: 'event',
+      time: new Date(event.start).toTimeString().slice(0, 5),
+      description: event.title,
+      details: event.description,
+    };
+
+    const updatedItinerary = {
+      ...currentItinerary,
+      days: currentItinerary.days.map((day, index) => {
+        if (index === dayIndex) {
+          return {
+            ...day,
+            activities: [...day.activities, newActivity],
+          };
+        }
+        return day;
+      }),
+    };
+
+    handleSaveItinerary(selectedTrip.itineraries[0].id, updatedItinerary);
   }
 
   async function submitCreate(e: React.FormEvent) {
@@ -577,6 +616,7 @@ export function TripDashboard({ lang = 'pl' }: TripDashboardProps) {
                         <TabsTrigger value="itinerary">{dict.tabs?.itinerary}</TabsTrigger>
                         <TabsTrigger value="budget">{dict.tabs?.budget}</TabsTrigger>
                         <TabsTrigger value="packing">{dict.tabs?.packing}</TabsTrigger>
+                        <TabsTrigger value="events">{dict.tabs?.events}</TabsTrigger>
                         <TabsTrigger value="settings">{dict.tabs?.settings}</TabsTrigger>
                       </TabsList>
 
@@ -726,6 +766,13 @@ export function TripDashboard({ lang = 'pl' }: TripDashboardProps) {
                             }
                             enableBulkDelete
                           />
+                        </TabsContent>
+
+                        <TabsContent
+                          value="events"
+                          className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full"
+                        >
+                          <EventFinder trip={selectedTrip} onAddEvent={handleAddEvent} lang={lang} />
                         </TabsContent>
 
                         <TabsContent

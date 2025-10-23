@@ -16,6 +16,8 @@ TripCrafti to nie tylko planer, to zintegrowany ekosystem, który dba o każdy d
 
     🗺️ Inteligentny Kreator Planu Podróży (AI): Opisz swoje zainteresowania, styl podróży i budżet, a Google Gemini stworzy dla Ciebie spersonalizowany, edytowalny plan zwiedzania na każdy dzień.
 
+    🎭 Wyszukiwarka Wydarzeń (Event Discovery): Automatycznie znajdź lokalne wydarzenia i atrakcje podczas swojej podróży dzięki integracji z Ticketmaster API. Filtruj wyniki według kategorii (muzyka, sport, teatr) z lokalną bazą klasyfikacji dla lepszej wydajności.
+
     🧳 Asystent Pakowania (AI): Na podstawie celu, długości wyjazdu i zaplanowanych aktywności, AI wygeneruje idealną listę rzeczy do spakowania, abyś nigdy więcej o niczym nie zapomniał(a).
 
     🔒 Bezpieczne Uwierzytelnianie: Pełne bezpieczeństwo i izolacja danych dzięki systemowi rejestracji i logowania. Każda podróż i jej dane należą tylko do Ciebie.
@@ -33,6 +35,7 @@ Projekt jest aplikacją typu Single Repo opartą o:
 | Stylowanie | Tailwind CSS 4 |
 | Baza / Auth | Supabase (PostgreSQL + row level security + auth) |
 | AI | Google Gemini (itinerary + packing: generowanie, walidacja, kategoryzacja) |
+| Wydarzenia | Ticketmaster Discovery API (z lokalną bazą klasyfikacji) |
 | Waluty (FX) | exchangerate.host (public API z opcjonalnym kluczem) |
 | Testy | Vitest + @testing-library/react |
 | Lint / Format | ESLint (niestandardowe reguły + `no-hardcoded-jsx-text`), Prettier |
@@ -50,6 +53,7 @@ Monorepo aplikacyjne (Astro) + Supabase jako BaaS:
     ├─ Pages & Layouts (routing / SSR)
     ├─ API Endpoints (server only logic)
     │    /api/trips/...         (CRUD + itinerary AI)
+    │    /api/events/...        (wyszukiwanie wydarzeń + klasyfikacje)
     │    /api/ai/packing        (generowanie / walidacja / kategoryzacja listy)
     │    /api/trips/:id/packing/share (linki współdzielenia)
     ├─ lib/ (FX, i18n, AI prompty, usługi Gemini)
@@ -61,6 +65,7 @@ Supabase (PostgreSQL + Auth)
 
 Zewnętrzne:
     • Google Gemini (itinerary JSON + packing list / suggestions / categorization)
+    • Ticketmaster Discovery API (wydarzenia lokalne, klasyfikacje w lokalnym pliku JSON)
     • exchangerate.host (kursy walut z cache 6h, fallback = rate 1)
     • Unsplash (opcjonalnie obrazy destynacji)
 ```
