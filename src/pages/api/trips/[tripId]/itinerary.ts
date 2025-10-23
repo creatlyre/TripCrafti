@@ -70,6 +70,7 @@ function withTimeout<T>(p: Promise<T>, ms: number, label = 'Timeout'): Promise<T
 
 async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: string) {
   if (resolvedModel) {
+    // eslint-disable-next-line no-console
     console.log('[itinerary-ai] Using cached model', resolvedModel);
     const model = genAIInstance.getGenerativeModel({ model: resolvedModel });
     return {
@@ -77,22 +78,38 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
       result: await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout'),
     };
   }
-  let lastError: any = null;
+  let lastError: unknown = null;
   for (const candidate of MODEL_CANDIDATES) {
     try {
+      // eslint-disable-next-line no-console
       console.log('[itinerary-ai] Trying model', candidate);
       const model = genAIInstance.getGenerativeModel({ model: candidate });
+
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] Model instance created, starting generation with timeout 120s...');
+      const startTime = Date.now();
+
       const result = await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout');
+
+      const endTime = Date.now();
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] Model generation completed in', endTime - startTime, 'ms');
+
       resolvedModel = candidate; // cache on first success
       return { modelName: candidate, result };
-    } catch (e: any) {
+    } catch (e: unknown) {
       lastError = e;
-      console.warn('[itinerary-ai] Model failed', candidate, e?.message || e);
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      // eslint-disable-next-line no-console
+      console.warn('[itinerary-ai] Model failed', candidate, errorMessage);
       continue;
     }
   }
   throw new Error(
-    'AllModelsFailed: ' + MODEL_CANDIDATES.join(', ') + ' lastError=' + (lastError?.message || lastError)
+    'AllModelsFailed: ' +
+      MODEL_CANDIDATES.join(', ') +
+      ' lastError=' +
+      (lastError instanceof Error ? lastError.message : lastError)
   );
 }
 
@@ -243,24 +260,57 @@ async function generateItinerary({
   runtimeEnv,
 }: GenerateArgs) {
   try {
+    console.log('[itinerary-ai] Starting generation for itinerary:', itineraryId);
+    console.log('[itinerary-ai] Trip details:', {
+      destination: trip.destination,
+      dates: `${trip.start_date} to ${trip.end_date}`,
+    });
+    console.log('[itinerary-ai] Preferences:', {
+      interests: preferences.interests?.length || 0,
+      travelStyle: preferences.travelStyle,
+      budget: preferences.budget,
+      language: preferences.language,
+    });
+
     const genAIInstance = await getGenAI(runtimeEnv);
+    console.log('[itinerary-ai] GenAI instance created successfully');
+
     const prompt = createAdvancedItineraryPrompt(trip, preferences, language);
+    console.log('[itinerary-ai] Prompt created, length:', prompt.length, 'characters');
 
     console.time('[itinerary-ai] total_generation');
+    console.log('[itinerary-ai] Starting model generation...');
+
     const { modelName, result } = await generateWithFallback(genAIInstance, prompt);
+    console.log('[itinerary-ai] Model generation completed with:', modelName);
+
+    console.log('[itinerary-ai] Extracting response...');
     const response = await result.response;
-    console.log('[itinerary-ai] Model success', modelName);
+    console.log('[itinerary-ai] Response extracted, getting text...');
+
     const text = response.text();
+    console.log('[itinerary-ai] Text extracted, length:', text.length, 'characters');
 
     // Clean the response to get valid JSON
+    // eslint-disable-next-line no-console
+    console.log('[itinerary-ai] Cleaning response text...');
     const jsonString = text
       .replace(/```json/g, '')
       .replace(/```/g, '')
       .trim();
-    let generatedPlan: any = null;
+
+    // eslint-disable-next-line no-console
+    console.log('[itinerary-ai] Cleaned JSON string length:', jsonString.length);
+
+    let generatedPlan: unknown = null;
     try {
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] Parsing JSON...');
       generatedPlan = JSON.parse(jsonString);
-    } catch (parseErr) {
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] JSON parsed successfully');
+    } catch {
+      // eslint-disable-next-line no-console
       console.error('Failed to parse model JSON response', { raw: text.slice(0, 400) });
       throw new Error('ModelReturnedInvalidJSON');
     }
@@ -270,6 +320,8 @@ async function generateItinerary({
     // Example structure:
     // result.response.candidates[0]. ... AND result.response.usageMetadata = {
     //   promptTokenCount, candidatesTokenCount, totalTokenCount, thoughtsTokenCount }
+    // eslint-disable-next-line no-console
+    console.log('[itinerary-ai] Calculating token usage...');
     let inputTokens = 0;
     let thoughtTokens = 0;
     try {
@@ -286,15 +338,23 @@ async function generateItinerary({
       if (usage) {
         inputTokens = usage.promptTokenCount ?? usage.prompt_tokens ?? 0;
         thoughtTokens = usage.thoughtsTokenCount ?? usage.candidatesTokenCount ?? 0;
+        // eslint-disable-next-line no-console
+        console.log('[itinerary-ai] Using official token counts:', { inputTokens, thoughtTokens });
       } else {
         inputTokens = Math.round(prompt.length / 4);
         thoughtTokens = Math.round(text.length / 4);
+        // eslint-disable-next-line no-console
+        console.log('[itinerary-ai] Using estimated token counts:', { inputTokens, thoughtTokens });
       }
     } catch {
       inputTokens = Math.round(prompt.length / 4);
       thoughtTokens = Math.round(text.length / 4);
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] Using fallback token counts:', { inputTokens, thoughtTokens });
     }
 
+    // eslint-disable-next-line no-console
+    console.log('[itinerary-ai] Updating database record...');
     const updateOk = await supabase
       .from(tableName)
       .update({
@@ -305,15 +365,25 @@ async function generateItinerary({
         updated_at: new Date().toISOString(),
       })
       .eq('id', itineraryId);
+
     // eslint-disable-next-line no-console
     console.timeEnd('[itinerary-ai] total_generation');
+
     if (updateOk.error) {
       // eslint-disable-next-line no-console
       console.error('[itinerary-ai] Failed to update itinerary after generation', updateOk.error);
+    } else {
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] Successfully completed itinerary generation for:', itineraryId);
     }
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('Error generating itinerary:', error);
+    console.error('[itinerary-ai] Error generating itinerary for:', itineraryId);
+    // eslint-disable-next-line no-console
+    console.error('[itinerary-ai] Error details:', error);
+
+    // eslint-disable-next-line no-console
+    console.log('[itinerary-ai] Updating status to FAILED...');
     const failUpdate = await supabase
       .from(tableName)
       .update({
@@ -324,6 +394,9 @@ async function generateItinerary({
     if (failUpdate.error) {
       // eslint-disable-next-line no-console
       console.error('[itinerary-ai] Failed to mark FAILED', failUpdate.error);
+    } else {
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] Successfully marked itinerary as FAILED:', itineraryId);
     }
   }
 }
