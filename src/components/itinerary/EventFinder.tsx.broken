@@ -1,4 +1,17 @@
-import { ChevronDown, Filter, X, Search, Tag, Layers, Info, ExternalLink, MapPin, Calendar, Users } from 'lucide-react';
+import {
+  ChevronDown,
+  Filter,
+  X,
+  Search,
+  Tag,
+  Layers,
+  Info,
+  ExternalLink,
+  MapPin,
+  Calendar,
+  Users,
+  Clock,
+} from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
 import type { Event } from '@/lib/services/eventService';
@@ -6,7 +19,7 @@ import type { EventDetails } from '@/lib/services/eventService';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -96,7 +109,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
       const geocodeRes = await fetch(`/api/geocode?destination=${encodeURIComponent(trip.destination)}`);
       if (!geocodeRes.ok) {
         const body = await geocodeRes.json().catch(() => ({}));
-        throw new Error(body.error || dict?.failedGeocodeDestination || 'Failed to geocode destination');
+        throw new Error(body.error || 'Failed to geocode destination');
       }
       const location = await geocodeRes.json();
       logDebug('EventFinder: Location', location);
@@ -112,7 +125,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
       const eventsRes = await fetch(eventsUrl);
       if (!eventsRes.ok) {
         const body = await eventsRes.json().catch(() => ({}));
-        throw new Error(body.error || dict?.failedFetchEvents || 'Failed to fetch events');
+        throw new Error(body.error || 'Failed to fetch events');
       }
       const data = await eventsRes.json();
       logDebug('EventFinder: Events data received', data);
@@ -122,7 +135,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
       if (e instanceof Error) {
         setError(e.message);
       } else {
-        setError(dict?.unknownError || 'An unknown error occurred');
+        setError('An unknown error occurred');
       }
     } finally {
       setLoading(false);
@@ -153,17 +166,19 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
       const response = await fetch(`/api/events/${event.id}/details?locale=${lang}`);
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body.error || dict?.failedFetchEventDetails || 'Failed to fetch event details');
+        throw new Error(body.error || 'Failed to fetch event details');
       }
       const details = await response.json();
       logDebug('EventFinder: Event details received', details);
+      console.log('🏷️  Classifications in React component:', details.classifications);
+      console.log('🏷️  Classifications length:', details.classifications?.length || 0);
       setEventDetails(details);
     } catch (e: unknown) {
       logError('EventFinder: Error fetching event details', e);
       if (e instanceof Error) {
         setEventDetailsError(e.message);
       } else {
-        setEventDetailsError(dict?.failedLoadEventDetails || 'Failed to load event details');
+        setEventDetailsError('Failed to load event details');
       }
     } finally {
       setEventDetailsLoading(false);
@@ -176,7 +191,13 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
   ) => {
     if (!images || images.length === 0) return null;
 
-    // Priority order for web app display
+    // Priority order for web app display:
+    // 1. 16:9 ratio (ideal for cards)
+    // 2. 4:3 ratio (good for thumbnails)
+    // 3. 3:2 ratio (alternative)
+    // 4. Any other ratio
+    // 5. Non-fallback images preferred
+
     const priorityRatios = ['16:9', '4:3', '3:2'];
 
     for (const ratio of priorityRatios) {
@@ -351,7 +372,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
             />
           </div>
 
-          {/* Primary Category Tabs */}
+          {/* Primary Category Tabs - Improved UI */}
           <div className="bg-slate-800/50 rounded-lg p-2">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {getCategoryDisplayData()
@@ -568,9 +589,8 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
                         <p className="text-sm text-slate-400 mb-2">
                           {(() => {
                             const date = new Date(event.start);
-                            const hasSpecificTime =
-                              !event.start.endsWith('T00:00:00') && !event.start.includes('T00:00:00');
-
+                            const hasSpecificTime = !event.start.endsWith('T00:00:00') && !event.start.includes('T00:00:00');
+                            
                             if (hasSpecificTime) {
                               return date.toLocaleDateString(lang === 'pl' ? 'pl-PL' : 'en-US', {
                                 weekday: 'short',
@@ -596,17 +616,18 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
 
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fetchEventDetails(event)}
-                        className="text-blue-400 border-blue-400/30 hover:bg-blue-400/10 hover:border-blue-400/50"
-                      >
-                        <Info className="w-4 h-4 mr-1" />
-                        {dict?.moreDetails || 'More Details'}
-                      </Button>
-                      <Button size="sm" onClick={() => onAddEvent(event)} className="bg-green-600 hover:bg-green-700">
-                        {dict?.add || 'Add'}
-                      </Button>
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fetchEventDetails(event)}
+                          className="text-blue-400 border-blue-400/30 hover:bg-blue-400/10 hover:border-blue-400/50"
+                        >
+                          <Info className="w-4 h-4 mr-1" />
+                          {dict?.moreDetails || 'More Details'}
+                        </Button>
+                        <Button size="sm" onClick={() => onAddEvent(event)} className="bg-green-600 hover:bg-green-700">
+                          {dict?.add || 'Add'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -618,8 +639,8 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
 
       {/* Event Details Dialog */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-          <DialogHeader className="flex-shrink-0">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+          <DialogHeader>
             <DialogTitle className="text-xl font-bold">
               {selectedEventForDetails?.title || dict?.eventDetails || 'Event Details'}
             </DialogTitle>
@@ -628,7 +649,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto space-y-6 pr-2 min-h-0">
+          <div className="overflow-y-auto pr-4">
             {eventDetailsLoading && (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -643,14 +664,14 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
             )}
 
             {eventDetails && (
-              <div className="space-y-6 pb-4">
+              <div className="space-y-6">
                 {/* Event Images */}
                 {eventDetails.images && eventDetails.images.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Info className="w-5 h-5" />
-                        {dict?.eventImage || 'Event Image'}
+                        {'Event Image'}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -669,7 +690,6 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
                     </CardContent>
                   </Card>
                 )}
-
                 {/* Basic Event Info */}
                 <Card>
                   <CardHeader>
@@ -681,7 +701,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
                   <CardContent className="space-y-3">
                     {eventDetails.description && (
                       <div>
-                        <h4 className="font-medium mb-1">{dict?.description || 'Description'}</h4>
+                        <h4 className="font-medium mb-1">{'Description'}</h4>
                         <p className="text-slate-600">{eventDetails.description}</p>
                       </div>
                     )}
@@ -706,119 +726,77 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 font-medium"
                         >
-                          {dict?.visitOfficialWebsite || 'Visit Official Website'}
+                          {'Visit Official Website'}
                           <ExternalLink className="w-4 h-4" />
                         </a>
                       </div>
                     )}
                   </CardContent>
                 </Card>
-
                 {/* Classifications */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Tag className="w-5 h-5" />
-                      {dict?.allCategories || 'Categories'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {eventDetailsLoading ? (
-                      <div className="flex items-center justify-center py-4">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-                        <span className="ml-2 text-slate-600">
-                          {dict?.loadingCategories || 'Loading categories...'}
-                        </span>
+                {eventDetails && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Tag className="w-5 h-5" />
+                        Categories
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded">
+                        <p className="text-sm">Debug: Classifications data</p>
+                        <pre className="text-xs">{JSON.stringify(eventDetails.classifications, null, 2)}</pre>
                       </div>
-                    ) : eventDetails?.classifications && eventDetails.classifications.length > 0 ? (
-                      <div className="space-y-4">
-                        {eventDetails.classifications.map((classification, index) => (
-                          <div
-                            key={index}
-                            className={`rounded-lg p-4 space-y-3 border-l-4 ${
-                              classification.primary ? 'bg-blue-50 border-blue-500' : 'bg-slate-50 border-slate-300'
-                            }`}
-                          >
-                            {classification.primary && (
-                              <div className="flex items-center gap-2 mb-2">
-                                <Badge variant="info" className="text-xs">
-                                  {dict?.primaryCategory || 'Primary Category'}
-                                </Badge>
-                              </div>
-                            )}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {!eventDetails.classifications || eventDetails.classifications.length === 0 ? (
+                        <div className="text-slate-600">No categories available</div>
+                      ) : (
+                        <div className="space-y-4">
+                          {eventDetails.classifications.map((classification, index) => (
+                            <div key={index} className="bg-slate-50 rounded-lg p-4 space-y-3">
                               {classification.segment && (
-                                <div className="space-y-1">
-                                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                                    {dict?.segment || 'Segment'}
-                                  </span>
-                                  <div className="text-sm font-semibold text-slate-900">
-                                    {classification.segment.name}
-                                  </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-slate-600">Segment:</span>
+                                  <span className="font-semibold text-slate-900">{classification.segment.name}</span>
                                 </div>
                               )}
                               {classification.genre && (
-                                <div className="space-y-1">
-                                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                                    {dict?.mainCategories?.genres || 'Genre'}
-                                  </span>
-                                  <div className="text-sm font-semibold text-slate-900">
-                                    {classification.genre.name}
-                                  </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-slate-600">Genre:</span>
+                                  <span className="font-semibold text-slate-900">{classification.genre.name}</span>
                                 </div>
                               )}
                               {classification.subGenre && (
-                                <div className="space-y-1">
-                                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                                    {dict?.mainCategories?.subGenres || 'Sub-Genre'}
-                                  </span>
-                                  <div className="text-sm font-semibold text-slate-900">
-                                    {classification.subGenre.name}
-                                  </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-slate-600">Sub-Genre:</span>
+                                  <span className="font-semibold text-slate-900">{classification.subGenre.name}</span>
                                 </div>
                               )}
                               {classification.type && (
-                                <div className="space-y-1">
-                                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                                    {dict?.mainCategories?.eventTypes || 'Type'}
-                                  </span>
-                                  <div className="text-sm font-semibold text-slate-900">{classification.type.name}</div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-slate-600">Type:</span>
+                                  <span className="font-semibold text-slate-900">{classification.type.name}</span>
                                 </div>
                               )}
                               {classification.subType && (
-                                <div className="space-y-1">
-                                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                                    {dict?.mainCategories?.subTypes || 'Sub-Type'}
-                                  </span>
-                                  <div className="text-sm font-semibold text-slate-900">
-                                    {classification.subType.name}
-                                  </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-slate-600">Sub-Type:</span>
+                                  <span className="font-semibold text-slate-900">{classification.subType.name}</span>
                                 </div>
                               )}
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
-                        <Tag className="w-12 h-12 text-slate-400" />
-                        <div className="space-y-1">
-                          <p className="text-slate-600 font-medium">
-                            {dict?.noCategoriesAvailable || 'No categories available'}
-                          </p>
+                          ))}
                         </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
+                      )}
+                    </CardContent>
+                  </Card>
+                )}{' '}
                 {/* Venue Information */}
                 {eventDetails._embedded?.venues && eventDetails._embedded.venues.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <MapPin className="w-5 h-5" />
-                        {dict?.venueInformation || 'Venue Information'}
+                        {dict?.venueInfo || 'Venue Information'}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -851,22 +829,22 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
                                 <div className="space-y-2 text-sm text-slate-600">
                                   {venue.boxOfficeInfo?.phoneNumberDetail && (
                                     <p>
-                                      <strong>{dict?.phone || 'Phone:'}</strong> {venue.boxOfficeInfo.phoneNumberDetail}
+                                      <strong>{dict?.phone || 'Phone'}:</strong> {venue.boxOfficeInfo.phoneNumberDetail}
                                     </p>
                                   )}
                                   {venue.boxOfficeInfo?.openHoursDetail && (
                                     <p>
-                                      <strong>{dict?.hours || 'Hours:'}</strong> {venue.boxOfficeInfo.openHoursDetail}
+                                      <strong>{dict?.hours || 'Hours'}:</strong> {venue.boxOfficeInfo.openHoursDetail}
                                     </p>
                                   )}
                                   {venue.parkingDetail && (
                                     <p>
-                                      <strong>{dict?.parking || 'Parking:'}</strong> {venue.parkingDetail}
+                                      <strong>{dict?.parking || 'Parking'}:</strong> {venue.parkingDetail}
                                     </p>
                                   )}
                                   {venue.accessibleSeatingDetail && (
                                     <p>
-                                      <strong>{dict?.accessibility || 'Accessibility:'}</strong>{' '}
+                                      <strong>{dict?.accessibility || 'Accessibility'}:</strong>{' '}
                                       {venue.accessibleSeatingDetail}
                                     </p>
                                   )}
@@ -879,14 +857,13 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
                     </CardContent>
                   </Card>
                 )}
-
                 {/* Price Information */}
                 {eventDetails.priceRanges && eventDetails.priceRanges.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Users className="w-5 h-5" />
-                        {dict?.priceInformation || 'Price Information'}
+                        {dict?.priceInfo || 'Price Information'}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -905,7 +882,6 @@ export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps)
                     </CardContent>
                   </Card>
                 )}
-
                 {/* Attractions */}
                 {eventDetails._embedded?.attractions && eventDetails._embedded.attractions.length > 0 && (
                   <Card>

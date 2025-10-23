@@ -515,6 +515,36 @@ export interface Dictionary {
       findLocalEvents: string;
       add: string;
       address: string;
+      foundEvents: string;
+      moreDetails: string;
+      eventDetails: string;
+      eventDetailsDescription: string;
+      loadingDetails: string;
+      basicInfo: string;
+      description: string;
+      additionalInfo: string;
+      pleaseNote: string;
+      officialWebsite: string;
+      visitOfficialWebsite: string;
+      eventImage: string;
+      primaryCategory: string;
+      segment: string;
+      noCategoriesAvailable: string;
+      venueInformation: string;
+      venueDetails: string;
+      phone: string;
+      hours: string;
+      parking: string;
+      accessibility: string;
+      priceInformation: string;
+      attractions: string;
+      learnMore: string;
+      unknownError: string;
+      failedFetchClassifications: string;
+      failedGeocodeDestination: string;
+      failedFetchEvents: string;
+      failedFetchEventDetails: string;
+      failedLoadEventDetails: string;
       mainCategories: {
         mainCategories: string;
         genres: string;
@@ -1133,6 +1163,36 @@ export const dictionaries: Record<Lang, Dictionary> = {
         findLocalEvents: 'Znajdź Lokalne Wydarzenia',
         add: 'Dodaj',
         address: 'Adres:',
+        foundEvents: 'Znalezione Wydarzenia',
+        moreDetails: 'Więcej Szczegółów',
+        eventDetails: 'Szczegóły Wydarzenia',
+        eventDetailsDescription: 'Szczegółowe informacje o tym wydarzeniu',
+        loadingDetails: 'Ładowanie szczegółów wydarzenia...',
+        basicInfo: 'Podstawowe Informacje',
+        description: 'Opis',
+        additionalInfo: 'Dodatkowe Informacje',
+        pleaseNote: 'Uwaga',
+        officialWebsite: 'Oficjalna Strona',
+        visitOfficialWebsite: 'Odwiedź Oficjalną Stronę',
+        eventImage: 'Zdjęcie Wydarzenia',
+        primaryCategory: 'Kategoria Główna',
+        segment: 'Segment',
+        noCategoriesAvailable: 'Brak dostępnych kategorii',
+        venueInformation: 'Informacje o Miejscu',
+        venueDetails: 'Szczegóły Miejsca',
+        phone: 'Telefon:',
+        hours: 'Godziny:',
+        parking: 'Parking:',
+        accessibility: 'Dostępność:',
+        priceInformation: 'Informacje o Cenach',
+        attractions: 'Atrakcje',
+        learnMore: 'Dowiedz się więcej',
+        unknownError: 'Wystąpił nieznany błąd',
+        failedFetchClassifications: 'Nie udało się pobrać klasyfikacji',
+        failedGeocodeDestination: 'Nie udało się geokodować miejsca docelowego',
+        failedFetchEvents: 'Nie udało się pobrać wydarzeń',
+        failedFetchEventDetails: 'Nie udało się pobrać szczegółów wydarzenia',
+        failedLoadEventDetails: 'Nie udało się załadować szczegółów wydarzenia',
         mainCategories: {
           mainCategories: 'Główne Kategorie',
           genres: 'Gatunki',
@@ -1732,6 +1792,36 @@ export const dictionaries: Record<Lang, Dictionary> = {
         findLocalEvents: 'Find Local Events',
         add: 'Add',
         address: 'Address:',
+        foundEvents: 'Found Events',
+        moreDetails: 'More Details',
+        eventDetails: 'Event Details',
+        eventDetailsDescription: 'Detailed information about this event',
+        loadingDetails: 'Loading event details...',
+        basicInfo: 'Basic Information',
+        description: 'Description',
+        additionalInfo: 'Additional Information',
+        pleaseNote: 'Please Note',
+        officialWebsite: 'Official Website',
+        visitOfficialWebsite: 'Visit Official Website',
+        eventImage: 'Event Image',
+        primaryCategory: 'Primary Category',
+        segment: 'Segment',
+        noCategoriesAvailable: 'No categories available',
+        venueInformation: 'Venue Information',
+        venueDetails: 'Venue Details',
+        phone: 'Phone:',
+        hours: 'Hours:',
+        parking: 'Parking:',
+        accessibility: 'Accessibility:',
+        priceInformation: 'Price Information',
+        attractions: 'Attractions',
+        learnMore: 'Learn More',
+        unknownError: 'An unknown error occurred',
+        failedFetchClassifications: 'Failed to fetch classifications',
+        failedGeocodeDestination: 'Failed to geocode destination',
+        failedFetchEvents: 'Failed to fetch events',
+        failedFetchEventDetails: 'Failed to fetch event details',
+        failedLoadEventDetails: 'Failed to load event details',
         mainCategories: {
           mainCategories: 'Main Categories',
           genres: 'Genres',

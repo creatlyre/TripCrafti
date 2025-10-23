@@ -49,7 +49,7 @@ const events = await getEvents({
   endDate: '2025-11-30',
   genreId: ['KnvZfZ7vAvv'], // Music genre ID
   locale: 'pl',
-  radius: '20',
+  radius: '50',
   units: 'km'
 });
 ```
