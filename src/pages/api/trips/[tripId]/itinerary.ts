@@ -316,30 +316,11 @@ async function generateItinerary({
     // eslint-disable-next-line no-console
     console.log('[itinerary-ai] GenAI instance created successfully');
 
-    logProgress('SUPABASE_TEST', 'Testing database connection');
-    // Test Supabase connection with timeout (non-blocking)
+    logProgress('SUPABASE_TEST', 'Skipping connection test - proceeding with generation');
+    // Skip Supabase connection test in Cloudflare Workers environment to prevent hangs
+    // The connection is already validated by the successful record creation in the main handler
     // eslint-disable-next-line no-console
-    console.log('[itinerary-ai] Testing Supabase connection...');
-    try {
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Supabase connection test timeout')), 5000)
-      );
-      const testPromise = supabase.from(tableName).select('id').limit(1);
-
-      const testResult = (await Promise.race([testPromise, timeoutPromise])) as { error?: unknown };
-
-      if (testResult.error) {
-        // eslint-disable-next-line no-console
-        console.error('[itinerary-ai] Supabase connection test failed:', testResult.error);
-      } else {
-        // eslint-disable-next-line no-console
-        console.log('[itinerary-ai] Supabase connection test successful');
-      }
-    } catch (connError) {
-      // eslint-disable-next-line no-console
-      console.error('[itinerary-ai] Supabase connection test threw exception:', connError);
-      // Don't fail the whole process, just log and continue
-    }
+    console.log('[itinerary-ai] Skipping Supabase connection test to prevent hangs');
 
     logProgress('PROMPT_CREATE', 'Creating AI prompt');
     // eslint-disable-next-line no-console
