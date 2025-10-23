@@ -87,7 +87,7 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
     const model = genAIInstance.getGenerativeModel({ model: resolvedModel });
     return {
       modelName: resolvedModel,
-      result: await withTimeout(model.generateContent(prompt), 300000, 'ModelTimeout'),
+      result: await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout'),
     };
   }
   let lastError: unknown = null;
@@ -98,10 +98,11 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
       const model = genAIInstance.getGenerativeModel({ model: candidate });
 
       // eslint-disable-next-line no-console
-      console.log('[itinerary-ai] Model instance created, starting generation with timeout 90s...');
+      console.log('[itinerary-ai] Model instance created, starting generation with timeout 120s...');
       const startTime = Date.now();
 
-      const result = await withTimeout(model.generateContent(prompt), 300000, 'ModelTimeout');
+      // Use shorter timeout for Cloudflare Workers environment (2 minutes instead of 5)
+      const result = await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout');
 
       const endTime = Date.now();
       // eslint-disable-next-line no-console
