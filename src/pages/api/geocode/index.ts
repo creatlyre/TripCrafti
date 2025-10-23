@@ -20,7 +20,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    const coordinates = await getCoordinates(destination, locals.runtime?.env);
+    const coordinates = await getCoordinates(
+      destination,
+      locals.runtime?.env,
+      locals.runtime?.env?.SECRETS as { get: (key: string) => Promise<string | null> } | undefined
+    );
     return json(coordinates);
   } catch (error: unknown) {
     logError('Error fetching coordinates', { error });

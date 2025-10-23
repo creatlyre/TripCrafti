@@ -9,12 +9,12 @@ async function getClassificationsFromPublic(locale = 'en') {
     // Fetch the JSON file from the public directory via HTTP
     const baseUrl = import.meta.env.SITE || 'http://localhost:4321';
     const fileUrl = `${baseUrl}/ticketmaster_classifications_${selectedLocale}.json`;
-    
+
     const response = await fetch(fileUrl);
     if (!response.ok) {
       throw new Error(`Failed to fetch classifications file: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
 
     // Skip complex validation for now, just ensure basic structure
