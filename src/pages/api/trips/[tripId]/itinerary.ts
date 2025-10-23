@@ -87,7 +87,7 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
     const model = genAIInstance.getGenerativeModel({ model: resolvedModel });
     return {
       modelName: resolvedModel,
-      result: await withTimeout(model.generateContent(prompt), 90000, 'ModelTimeout'),
+      result: await withTimeout(model.generateContent(prompt), 180000, 'ModelTimeout'),
     };
   }
   let lastError: unknown = null;
@@ -98,7 +98,7 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
       const model = genAIInstance.getGenerativeModel({ model: candidate });
 
       // eslint-disable-next-line no-console
-      console.log('[itinerary-ai] Model instance created, starting generation with timeout 90s...');
+      console.log('[itinerary-ai] Model instance created, starting generation with timeout 120s...');
       // eslint-disable-next-line no-console
       console.log('[itinerary-ai] About to call model.generateContent() - this is the critical step');
       
@@ -111,8 +111,8 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
       
       const startTime = Date.now();
 
-      // Use aggressive timeout for Cloudflare Workers CPU limits (90 seconds)
-      const result = await withTimeout(model.generateContent(prompt), 90000, 'ModelTimeout');
+      // Use appropriate timeout for queue-based processing (3 minutes)
+      const result = await withTimeout(model.generateContent(prompt), 180000, 'ModelTimeout');
 
       const endTime = Date.now();
       const memAfter =
@@ -254,25 +254,51 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
     const itineraryId = itineraryRecord.id;
 
-    // 5. Asynchronously generate itinerary
-    generateItinerary({
-      itineraryId,
-      trip,
-      preferences: finalPreferences,
-      supabase,
-      language: finalPreferences.language,
-      tableName: tableToUse,
-      runtimeEnv: locals.runtime?.env,
-    }).catch((err) => {
+    // 5. Queue the itinerary generation instead of processing directly
+    try {
+      const queueMessage = {
+        itineraryId,
+        tripId,
+        trip,
+        preferences: finalPreferences,
+        language: finalPreferences.language,
+        tableName: tableToUse,
+      };
+
+      // Send to queue for background processing
+      if (locals.runtime?.env && 'ITINERARY_QUEUE' in locals.runtime.env) {
+        const queue = locals.runtime.env.ITINERARY_QUEUE as unknown as { send: (message: unknown) => Promise<void> };
+        await queue.send(queueMessage);
+        // eslint-disable-next-line no-console
+        console.log('[itinerary-api] Successfully queued generation for:', itineraryId);
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn('[itinerary-api] Queue not available, falling back to direct processing');
+        // Fallback to direct processing for development
+        generateItinerary({
+          itineraryId,
+          trip,
+          preferences: finalPreferences,
+          supabase,
+          language: finalPreferences.language,
+          tableName: tableToUse,
+          runtimeEnv: locals.runtime?.env,
+        }).catch((err) => {
+          // eslint-disable-next-line no-console
+          console.error('[itinerary-ai] CRITICAL: Unhandled error in generateItinerary:', err);
+          // eslint-disable-next-line no-console
+          console.error('[itinerary-ai] Stack trace:', err?.stack);
+          // eslint-disable-next-line no-console
+          console.error('[itinerary-ai] Error name:', err?.name);
+          // eslint-disable-next-line no-console
+          console.error('[itinerary-ai] Error message:', err?.message);
+        });
+      }
+    } catch (queueError) {
       // eslint-disable-next-line no-console
-      console.error('[itinerary-ai] CRITICAL: Unhandled error in generateItinerary:', err);
-      // eslint-disable-next-line no-console
-      console.error('[itinerary-ai] Stack trace:', err?.stack);
-      // eslint-disable-next-line no-console
-      console.error('[itinerary-ai] Error name:', err?.name);
-      // eslint-disable-next-line no-console
-      console.error('[itinerary-ai] Error message:', err?.message);
-    });
+      console.error('[itinerary-api] Failed to queue generation:', queueError);
+      return json({ error: 'QueueError', details: 'Failed to queue itinerary generation' }, 500);
+    }
 
     // Immediately return a response to the client
     return json({ message: 'Itinerary generation started.', itineraryId }, 202);

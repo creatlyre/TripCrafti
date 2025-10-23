@@ -11,3 +11,12 @@ DEBUG_LOGGING = "false"
 [[kv_namespaces]]
 binding = "SECRETS" # KV namespace for runtime secrets (GEMINI_API_KEY, UNSPLASH_ACCESS_KEY, etc.)
 id = "b2c9e78506a7423ba7d15b7bef93d7e4"
+
+[[queues.producers]]
+queue = "itinerary-generation"
+binding = "ITINERARY_QUEUE"
+
+[[queues.consumers]]
+queue = "itinerary-generation"
+max_batch_size = 1
+max_batch_timeout = 5
