@@ -1,13 +1,14 @@
 import { ChevronDown, Filter, X, Search, Tag, Layers } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
-import type { Lang } from '@/lib/i18n';
 import type { Event } from '@/lib/services/eventService';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { getDictionary, type Lang } from '@/lib/i18n';
+import { logDebug, logError } from '@/lib/log';
 
 interface Classification {
   id: string;
@@ -36,7 +37,9 @@ interface EventFinderProps {
   lang?: Lang;
 }
 
-export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps) {
+export function EventFinder({ trip, onAddEvent, lang = 'pl' }: EventFinderProps) {
+  const dict = getDictionary(lang).events?.finder;
+
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +59,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
 
   useEffect(() => {
     async function fetchClassifications() {
-      console.log('Fetching event classifications...');
+      logDebug('EventFinder: Fetching event classifications...');
       setClassificationsLoading(true);
       try {
         const response = await fetch(`/api/events/classifications?locale=${lang}`);
@@ -64,10 +67,10 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
           throw new Error('Failed to fetch classifications');
         }
         const data = await response.json();
-        console.log('Fetched classifications:', data);
+        logDebug('EventFinder: Fetched classifications', data);
         setClassificationData(data);
       } catch (error) {
-        console.error('Error fetching classifications:', error);
+        logError('EventFinder: Error fetching classifications', error);
       } finally {
         setClassificationsLoading(false);
       }
@@ -76,7 +79,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
   }, [lang]);
 
   async function findEvents() {
-    console.log('Starting event search...');
+    logDebug('EventFinder: Starting event search...');
     setLoading(true);
     setError(null);
     try {
@@ -86,7 +89,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
         throw new Error(body.error || 'Failed to geocode destination');
       }
       const location = await geocodeRes.json();
-      console.log('Location:', location);
+      logDebug('EventFinder: Location', location);
 
       let eventsUrl = `/api/events?lat=${location.lat}&long=${location.long}&startDate=${trip.start_date}&endDate=${trip.end_date}`;
 
@@ -94,7 +97,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
         eventsUrl += `&classificationName=${selectedClassifications.join(',')}`;
       }
 
-      console.log('Fetching events from:', eventsUrl);
+      logDebug('EventFinder: Fetching events from', eventsUrl);
 
       const eventsRes = await fetch(eventsUrl);
       if (!eventsRes.ok) {
@@ -102,10 +105,10 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
         throw new Error(body.error || 'Failed to fetch events');
       }
       const data = await eventsRes.json();
-      console.log('Events data received:', data);
+      logDebug('EventFinder: Events data received', data);
       setEvents(data);
     } catch (e: unknown) {
-      console.error('Error in findEvents:', e);
+      logError('EventFinder: Error in findEvents', e);
       if (e instanceof Error) {
         setError(e.message);
       } else {
@@ -117,7 +120,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
   }
 
   function handleClassificationChange(classificationName: string, checked: boolean) {
-    console.log('Classification change:', classificationName, checked);
+    logDebug('EventFinder: Classification change', { classificationName, checked });
     setSelectedClassifications((prev) => {
       if (checked) {
         return [...prev, classificationName];
@@ -126,6 +129,26 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
       }
     });
   }
+
+  // Helper function to translate category names
+  const translateCategoryName = (categoryName: string): string => {
+    if (!dict?.mainCategories) return categoryName;
+
+    switch (categoryName) {
+      case 'Main Categories':
+        return dict.mainCategories.mainCategories;
+      case 'Genres':
+        return dict.mainCategories.genres;
+      case 'Event Types':
+        return dict.mainCategories.eventTypes;
+      case 'Sub-Genres':
+        return dict.mainCategories.subGenres;
+      case 'Sub-Types':
+        return dict.mainCategories.subTypes;
+      default:
+        return categoryName;
+    }
+  };
 
   // Get filtered classifications based on search and selected category
   const getFilteredClassifications = () => {
@@ -168,13 +191,37 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
     const categoryOrder = ['Main Categories', 'Genres', 'Event Types', 'Sub-Genres', 'Sub-Types'];
     const priorityCategories = ['Main Categories', 'Genres', 'Event Types'];
 
-    return categoryOrder.map((category) => ({
-      key: category,
-      name: category,
-      count: classificationData.grouped[category]?.length || 0,
-      isPriority: priorityCategories.includes(category),
-      items: classificationData.grouped[category] || [],
-    }));
+    return categoryOrder.map((category) => {
+      // Get translated name for known categories
+      let translatedName = category;
+      if (dict?.mainCategories) {
+        switch (category) {
+          case 'Main Categories':
+            translatedName = dict.mainCategories.mainCategories;
+            break;
+          case 'Genres':
+            translatedName = dict.mainCategories.genres;
+            break;
+          case 'Event Types':
+            translatedName = dict.mainCategories.eventTypes;
+            break;
+          case 'Sub-Genres':
+            translatedName = dict.mainCategories.subGenres;
+            break;
+          case 'Sub-Types':
+            translatedName = dict.mainCategories.subTypes;
+            break;
+        }
+      }
+
+      return {
+        key: category,
+        name: translatedName,
+        count: classificationData.grouped[category]?.length || 0,
+        isPriority: priorityCategories.includes(category),
+        items: classificationData.grouped[category] || [],
+      };
+    });
   };
 
   return (
@@ -182,13 +229,15 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">{'Event Categories'}</h3>
-          <p className="text-sm text-slate-400">{'Choose categories to find events that match your interests'}</p>
+          <h3 className="text-lg font-semibold text-white">{dict?.title || 'Event Categories'}</h3>
+          <p className="text-sm text-slate-400">
+            {dict?.subtitle || 'Choose categories to find events that match your interests'}
+          </p>
         </div>
         {selectedClassifications.length > 0 && (
           <Button variant="outline" size="sm" onClick={clearAllFilters} className="gap-2">
             <X className="w-4 h-4" />
-            {'Clear all'}
+            {dict?.clearAll || 'Clear all'}
           </Button>
         )}
       </div>
@@ -199,7 +248,9 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
           <div className="flex items-center gap-2 mb-3">
             <Filter className="w-4 h-4 text-blue-400" />
             <span className="text-sm font-medium text-white">
-              {selectedClassifications.length} {selectedClassifications.length === 1 ? 'filter' : 'filters'} active
+              {selectedClassifications.length}{' '}
+              {selectedClassifications.length === 1 ? dict?.filter || 'filter' : dict?.filters || 'filters'}{' '}
+              {dict?.filtersActive || 'active'}
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -222,7 +273,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
       {classificationsLoading ? (
         <div className="bg-slate-800/30 rounded-lg p-8 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-slate-400">{'Loading categories...'}</p>
+          <p className="text-slate-400">{dict?.loadingCategories || 'Loading categories...'}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -231,7 +282,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder={'Search categories...'}
+              placeholder={dict?.searchCategories || 'Search categories...'}
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               className="w-full pl-10 pr-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -264,8 +315,12 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
             <CollapsibleTrigger className="flex items-center justify-between w-full p-3 bg-slate-800/30 hover:bg-slate-800/50 rounded-lg border border-slate-700 transition-colors">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-slate-400" />
-                <span className="text-sm font-medium text-white">{'Advanced Categories'}</span>
-                <span className="text-xs text-slate-400">{'Sub-genres, Sub-types'}</span>
+                <span className="text-sm font-medium text-white">
+                  {dict?.advancedCategories || 'Advanced Categories'}
+                </span>
+                <span className="text-xs text-slate-400">
+                  {dict?.advancedCategoriesDesc || 'Sub-genres, Sub-types'}
+                </span>
               </div>
               <ChevronDown className="w-4 h-4 text-slate-400" />
             </CollapsibleTrigger>
@@ -299,9 +354,32 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
             <div className="p-4 border-b border-slate-700">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium text-white">
-                  {selectedCategory === 'all' ? 'All Categories' : selectedCategory}
+                  {selectedCategory === 'all'
+                    ? dict?.allCategories || 'All Categories'
+                    : (() => {
+                        // Get translated name for the selected category
+                        if (dict?.mainCategories) {
+                          switch (selectedCategory) {
+                            case 'Main Categories':
+                              return dict.mainCategories.mainCategories;
+                            case 'Genres':
+                              return dict.mainCategories.genres;
+                            case 'Event Types':
+                              return dict.mainCategories.eventTypes;
+                            case 'Sub-Genres':
+                              return dict.mainCategories.subGenres;
+                            case 'Sub-Types':
+                              return dict.mainCategories.subTypes;
+                            default:
+                              return selectedCategory;
+                          }
+                        }
+                        return selectedCategory;
+                      })()}
                 </h4>
-                <span className="text-sm text-slate-400">{getFilteredClassifications().length} items</span>
+                <span className="text-sm text-slate-400">
+                  {getFilteredClassifications().length} {dict?.items || 'items'}
+                </span>
               </div>
             </div>
 
@@ -309,7 +387,9 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
               {getFilteredClassifications().length === 0 ? (
                 <div className="p-8 text-center">
                   <Search className="w-8 h-8 text-slate-500 mx-auto mb-2" />
-                  <p className="text-slate-400">{'No categories found matching your search'}</p>
+                  <p className="text-slate-400">
+                    {dict?.noCategoriesFound || 'No categories found matching your search'}
+                  </p>
                 </div>
               ) : (
                 <div className="p-4 space-y-2">
@@ -329,7 +409,7 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
                       <label htmlFor={classification.id} className="flex-1 text-sm cursor-pointer">
                         <span className="font-medium text-white">{classification.name}</span>
                         <span className="ml-2 text-xs text-slate-400 bg-slate-700 px-2 py-0.5 rounded">
-                          {classification.category}
+                          {translateCategoryName(classification.category)}
                         </span>
                       </label>
                     </div>
@@ -346,12 +426,12 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
         {loading ? (
           <>
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            {'Searching for events...'}
+            {dict?.searchingEvents || 'Searching for events...'}
           </>
         ) : (
           <>
             <Search className="w-4 h-4 mr-2" />
-            {'Find Local Events'}
+            {dict?.findLocalEvents || 'Find Local Events'}
           </>
         )}
       </Button>
@@ -372,13 +452,13 @@ export function EventFinder({ trip, onAddEvent, lang = 'en' }: EventFinderProps)
                     </div>
                   </div>
                   <Button size="sm" onClick={() => onAddEvent(event)}>
-                    {'Add'}
+                    {dict?.add || 'Add'}
                   </Button>
                 </div>
                 <CollapsibleContent className="mt-2 space-y-1 text-sm text-slate-300 pl-6">
                   {event.address && (
                     <p>
-                      {'Address:'} {event.address}
+                      {dict?.address || 'Address:'} {event.address}
                     </p>
                   )}
                   {event.description && <p className="text-xs italic">{event.description}</p>}

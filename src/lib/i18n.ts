@@ -496,6 +496,34 @@ export interface Dictionary {
       attributionUrl: string;
     };
   };
+  events?: {
+    finder: {
+      title: string;
+      subtitle: string;
+      clearAll: string;
+      filtersActive: string;
+      filter: string;
+      filters: string;
+      loadingCategories: string;
+      searchCategories: string;
+      advancedCategories: string;
+      advancedCategoriesDesc: string;
+      allCategories: string;
+      items: string;
+      noCategoriesFound: string;
+      searchingEvents: string;
+      findLocalEvents: string;
+      add: string;
+      address: string;
+      mainCategories: {
+        mainCategories: string;
+        genres: string;
+        eventTypes: string;
+        subGenres: string;
+        subTypes: string;
+      };
+    };
+  };
 }
 
 const year = new Date().getFullYear();
@@ -1086,6 +1114,34 @@ export const dictionaries: Record<Lang, Dictionary> = {
         attributionUrl: 'https://unsplash.com?utm_source=trip-planner&utm_medium=referral',
       },
     },
+    events: {
+      finder: {
+        title: 'Kategorie Wydarzeń',
+        subtitle: 'Wybierz kategorie, aby znaleźć wydarzenia, które pasują do Twoich zainteresowań',
+        clearAll: 'Wyczyść wszystko',
+        filtersActive: 'aktywne filtry',
+        filter: 'filtr',
+        filters: 'filtry',
+        loadingCategories: 'Ładowanie kategorii...',
+        searchCategories: 'Szukaj kategorii...',
+        advancedCategories: 'Zaawansowane Kategorie',
+        advancedCategoriesDesc: 'Podgatunki, Podtypy',
+        allCategories: 'Wszystkie Kategorie',
+        items: 'pozycji',
+        noCategoriesFound: 'Nie znaleziono kategorii pasujących do wyszukiwania',
+        searchingEvents: 'Wyszukiwanie wydarzeń...',
+        findLocalEvents: 'Znajdź Lokalne Wydarzenia',
+        add: 'Dodaj',
+        address: 'Adres:',
+        mainCategories: {
+          mainCategories: 'Główne Kategorie',
+          genres: 'Gatunki',
+          eventTypes: 'Typy Wydarzeń',
+          subGenres: 'Podgatunki',
+          subTypes: 'Podtypy',
+        },
+      },
+    },
   },
   en: {
     hero: {
@@ -1655,6 +1711,34 @@ export const dictionaries: Record<Lang, Dictionary> = {
         photoBy: 'Photo by',
         providerName: 'Unsplash',
         attributionUrl: 'https://unsplash.com?utm_source=trip-planner&utm_medium=referral',
+      },
+    },
+    events: {
+      finder: {
+        title: 'Event Categories',
+        subtitle: 'Choose categories to find events that match your interests',
+        clearAll: 'Clear all',
+        filtersActive: 'filters active',
+        filter: 'filter',
+        filters: 'filters',
+        loadingCategories: 'Loading categories...',
+        searchCategories: 'Search categories...',
+        advancedCategories: 'Advanced Categories',
+        advancedCategoriesDesc: 'Sub-genres, Sub-types',
+        allCategories: 'All Categories',
+        items: 'items',
+        noCategoriesFound: 'No categories found matching your search',
+        searchingEvents: 'Searching for events...',
+        findLocalEvents: 'Find Local Events',
+        add: 'Add',
+        address: 'Address:',
+        mainCategories: {
+          mainCategories: 'Main Categories',
+          genres: 'Genres',
+          eventTypes: 'Event Types',
+          subGenres: 'Sub-Genres',
+          subTypes: 'Sub-Types',
+        },
       },
     },
   },
