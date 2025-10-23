@@ -7,10 +7,11 @@ async function getClassificationsFromPublic(locale = 'en') {
     const selectedLocale = validLocales.includes(locale) ? locale : 'en';
 
     // Fetch the JSON file from the public directory via HTTP
-    const baseUrl = import.meta.env.SITE || 'http://localhost:4321';
+    const baseUrl = import.meta.env.SITE || 'http://localhost:3001';
     const fileUrl = `${baseUrl}/ticketmaster_classifications_${selectedLocale}.json`;
 
     const response = await fetch(fileUrl);
+
     if (!response.ok) {
       throw new Error(`Failed to fetch classifications file: ${response.statusText}`);
     }
