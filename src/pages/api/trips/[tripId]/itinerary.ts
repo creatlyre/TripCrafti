@@ -43,14 +43,14 @@ async function getGenAI(runtimeEnv?: Record<string, string | undefined>) {
 }
 
 // Ordered list of candidate model names. You can override the first one with GEMINI_MODEL env var.
-// We'll try them in order until one succeeds. This mitigates naming differences across SDK versions.
+// We'll try them in order until one succeeds. Prioritize faster models for Cloudflare Workers.
 const MODEL_CANDIDATES = [
   import.meta.env.GEMINI_MODEL as string | undefined,
-  'gemini-2.5-pro',
-  'gemini-2.5-flash',
+  'gemini-2.5-flash', // Fastest model first for production reliability
   'gemini-2.5-flash-lite',
   'gemini-2.0-flash',
   'gemini-2.0-flash-lite',
+  'gemini-2.5-pro', // Most powerful but slowest, try last
 ].filter(Boolean) as string[];
 
 let resolvedModel: string | null = null; // cache the first working model for subsequent requests
@@ -99,12 +99,16 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
 
       // eslint-disable-next-line no-console
       console.log('[itinerary-ai] Model instance created, starting generation with timeout 120s...');
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] About to call model.generateContent() - this is the critical step');
       const startTime = Date.now();
 
       // Use shorter timeout for Cloudflare Workers environment (2 minutes instead of 5)
       const result = await withTimeout(model.generateContent(prompt), 120000, 'ModelTimeout');
 
       const endTime = Date.now();
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] model.generateContent() call completed successfully');
       // eslint-disable-next-line no-console
       console.log('[itinerary-ai] Model generation completed in', endTime - startTime, 'ms');
 
