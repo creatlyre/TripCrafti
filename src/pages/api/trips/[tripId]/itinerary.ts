@@ -8,6 +8,7 @@ import type { ItineraryPreferences } from '../../../../types';
 
 import { geocode } from '../../../../lib/geocoding';
 import { createAdvancedItineraryPrompt } from '../../../../lib/prompts/itineraryPrompt';
+import { getSecret, primeGlobalSecret } from '../../../../lib/secrets';
 
 export const prerender = false;
 
@@ -25,12 +26,17 @@ const preferencesSchema = z.object({
 
 // Lazy init so we can validate presence of key inside handler (better error reporting)
 let genAI: GoogleGenerativeAI | null = null;
-function getGenAI() {
+async function getGenAI(runtimeEnv?: Record<string, string | undefined>) {
   if (!genAI) {
-    const key = import.meta.env.GEMINI_API_KEY;
+    // Use the same pattern as packing endpoint for consistent key resolution
+    const key = await getSecret('GEMINI_API_KEY', {
+      runtimeEnv,
+      kv: undefined,
+    });
     if (!key) {
       throw new Error('Missing GEMINI_API_KEY environment variable');
     }
+    primeGlobalSecret('GEMINI_API_KEY', key);
     genAI = new GoogleGenerativeAI(key);
   }
   return genAI;
@@ -204,6 +210,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       supabase,
       language: finalPreferences.language,
       tableName: tableToUse,
+      runtimeEnv: locals.runtime?.env,
     }).catch((err) => {
       console.error('generateItinerary top-level rejection', err);
     });
@@ -223,11 +230,20 @@ interface GenerateArgs {
   supabase: SupabaseClient;
   language: string;
   tableName: string;
+  runtimeEnv?: Record<string, string | undefined>;
 }
 
-async function generateItinerary({ itineraryId, trip, preferences, supabase, language, tableName }: GenerateArgs) {
+async function generateItinerary({
+  itineraryId,
+  trip,
+  preferences,
+  supabase,
+  language,
+  tableName,
+  runtimeEnv,
+}: GenerateArgs) {
   try {
-    const genAIInstance = getGenAI();
+    const genAIInstance = await getGenAI(runtimeEnv);
     const prompt = createAdvancedItineraryPrompt(trip, preferences, language);
 
     console.time('[itinerary-ai] total_generation');
