@@ -303,12 +303,18 @@ async function generateItinerary({
     const genAIInstance = await getGenAI(runtimeEnv);
     // eslint-disable-next-line no-console
     console.log('[itinerary-ai] GenAI instance created successfully');
-
-    // Test Supabase connection early
+    
+    // Test Supabase connection with timeout (non-blocking)
+    // eslint-disable-next-line no-console
+    console.log('[itinerary-ai] Testing Supabase connection...');
     try {
-      // eslint-disable-next-line no-console
-      console.log('[itinerary-ai] Testing Supabase connection...');
-      const testResult = await supabase.from(tableName).select('id').limit(1);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Supabase connection test timeout')), 5000)
+      );
+      const testPromise = supabase.from(tableName).select('id').limit(1);
+      
+      const testResult = (await Promise.race([testPromise, timeoutPromise])) as { error?: unknown };
+      
       if (testResult.error) {
         // eslint-disable-next-line no-console
         console.error('[itinerary-ai] Supabase connection test failed:', testResult.error);
@@ -319,8 +325,12 @@ async function generateItinerary({
     } catch (connError) {
       // eslint-disable-next-line no-console
       console.error('[itinerary-ai] Supabase connection test threw exception:', connError);
+      // Don't fail the whole process, just log and continue
     }
-
+    
+    // eslint-disable-next-line no-console
+    console.log('[itinerary-ai] Proceeding with generation...');
+    
     const prompt = createAdvancedItineraryPrompt(trip, preferences, language);
     console.log('[itinerary-ai] Prompt created, length:', prompt.length, 'characters');
 
