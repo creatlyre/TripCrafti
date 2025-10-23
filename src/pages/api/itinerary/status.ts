@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
   // Get itinerary ID from query parameters
   const itineraryId = url.searchParams.get('itineraryId');
-  
+
   if (!itineraryId) {
     return json({ error: 'Missing itineraryId parameter' }, 400);
   }

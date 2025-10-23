@@ -101,14 +101,14 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
       console.log('[itinerary-ai] Model instance created, starting generation with timeout 120s...');
       // eslint-disable-next-line no-console
       console.log('[itinerary-ai] About to call model.generateContent() - this is the critical step');
-      
+
       // Add memory and timing diagnostics for Cloudflare Workers debugging
       const memBefore =
         (globalThis as unknown as { performance?: { memory?: { usedJSHeapSize?: number } } }).performance?.memory
           ?.usedJSHeapSize || 'unknown';
       // eslint-disable-next-line no-console
       console.log('[itinerary-ai] Memory before AI call:', memBefore);
-      
+
       const startTime = Date.now();
 
       // Use appropriate timeout for queue-based processing (3 minutes)
@@ -254,50 +254,35 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
     const itineraryId = itineraryRecord.id;
 
-    // 5. Queue the itinerary generation instead of processing directly
+    // 5. Start background generation - use Promise for non-blocking execution
     try {
-      const queueMessage = {
+      // Start generation in background without blocking the response
+      // This allows the generation to continue after the response is sent
+      generateItinerary({
         itineraryId,
-        tripId,
         trip,
         preferences: finalPreferences,
+        supabase,
         language: finalPreferences.language,
         tableName: tableToUse,
-      };
-
-      // Send to queue for background processing
-      if (locals.runtime?.env && 'ITINERARY_QUEUE' in locals.runtime.env) {
-        const queue = locals.runtime.env.ITINERARY_QUEUE as unknown as { send: (message: unknown) => Promise<void> };
-        await queue.send(queueMessage);
+        runtimeEnv: locals.runtime?.env,
+      }).catch((err) => {
         // eslint-disable-next-line no-console
-        console.log('[itinerary-api] Successfully queued generation for:', itineraryId);
-      } else {
+        console.error('[itinerary-ai] CRITICAL: Unhandled error in background generation:', err);
         // eslint-disable-next-line no-console
-        console.warn('[itinerary-api] Queue not available, falling back to direct processing');
-        // Fallback to direct processing for development
-        generateItinerary({
-          itineraryId,
-          trip,
-          preferences: finalPreferences,
-          supabase,
-          language: finalPreferences.language,
-          tableName: tableToUse,
-          runtimeEnv: locals.runtime?.env,
-        }).catch((err) => {
-          // eslint-disable-next-line no-console
-          console.error('[itinerary-ai] CRITICAL: Unhandled error in generateItinerary:', err);
-          // eslint-disable-next-line no-console
-          console.error('[itinerary-ai] Stack trace:', err?.stack);
-          // eslint-disable-next-line no-console
-          console.error('[itinerary-ai] Error name:', err?.name);
-          // eslint-disable-next-line no-console
-          console.error('[itinerary-ai] Error message:', err?.message);
-        });
-      }
-    } catch (queueError) {
+        console.error('[itinerary-ai] Stack trace:', err?.stack);
+        // eslint-disable-next-line no-console
+        console.error('[itinerary-ai] Error name:', err?.name);
+        // eslint-disable-next-line no-console
+        console.error('[itinerary-ai] Error message:', err?.message);
+      });
+      
       // eslint-disable-next-line no-console
-      console.error('[itinerary-api] Failed to queue generation:', queueError);
-      return json({ error: 'QueueError', details: 'Failed to queue itinerary generation' }, 500);
+      console.log('[itinerary-api] Successfully started background generation for:', itineraryId);
+    } catch (backgroundError) {
+      // eslint-disable-next-line no-console
+      console.error('[itinerary-api] Failed to start background generation:', backgroundError);
+      return json({ error: 'BackgroundProcessError', details: 'Failed to start itinerary generation' }, 500);
     }
 
     // Immediately return a response to the client
