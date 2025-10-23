@@ -87,7 +87,7 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
     const model = genAIInstance.getGenerativeModel({ model: resolvedModel });
     return {
       modelName: resolvedModel,
-      result: await withTimeout(model.generateContent(prompt), 90000, 'ModelTimeout'),
+      result: await withTimeout(model.generateContent(prompt), 300000, 'ModelTimeout'),
     };
   }
   let lastError: unknown = null;
@@ -101,7 +101,7 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
       console.log('[itinerary-ai] Model instance created, starting generation with timeout 90s...');
       const startTime = Date.now();
 
-      const result = await withTimeout(model.generateContent(prompt), 90000, 'ModelTimeout');
+      const result = await withTimeout(model.generateContent(prompt), 300000, 'ModelTimeout');
 
       const endTime = Date.now();
       // eslint-disable-next-line no-console
