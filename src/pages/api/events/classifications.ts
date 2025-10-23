@@ -1,18 +1,21 @@
 import type { APIRoute } from 'astro';
 
-import { readFile } from 'fs/promises';
-import { join } from 'path';
-
-async function getClassificationsFromFile(locale = 'en') {
+async function getClassificationsFromPublic(locale = 'en') {
   try {
     // Validate locale and default to 'en' if invalid
     const validLocales = ['en', 'pl'];
     const selectedLocale = validLocales.includes(locale) ? locale : 'en';
 
-    // Read the local classifications file for the specific language
-    const filePath = join(process.cwd(), 'public', `ticketmaster_classifications_${selectedLocale}.json`);
-    const fileContent = await readFile(filePath, 'utf-8');
-    const data = JSON.parse(fileContent);
+    // Fetch the JSON file from the public directory via HTTP
+    const baseUrl = import.meta.env.SITE || 'http://localhost:4321';
+    const fileUrl = `${baseUrl}/ticketmaster_classifications_${selectedLocale}.json`;
+    
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch classifications file: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
 
     // Skip complex validation for now, just ensure basic structure
     if (!data._embedded?.classifications) {
@@ -103,7 +106,7 @@ async function getClassificationsFromFile(locale = 'en') {
     };
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    throw new Error(`Failed to load classifications from local file: ${errorMessage}`);
+    throw new Error(`Failed to load classifications from public assets: ${errorMessage}`);
   }
 }
 
@@ -113,7 +116,7 @@ export const GET: APIRoute = async ({ request }) => {
     const url = new URL(request.url);
     const locale = url.searchParams.get('locale') || 'en';
 
-    const classifications = await getClassificationsFromFile(locale);
+    const classifications = await getClassificationsFromPublic(locale);
     return new Response(JSON.stringify(classifications), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

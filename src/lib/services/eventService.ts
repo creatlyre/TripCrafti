@@ -2,6 +2,7 @@ import geohash from 'ngeohash';
 import { z } from 'zod';
 
 import { logDebug, logError, logInfo } from '../log';
+import { getSecret } from '../secrets';
 
 // Rate limiting helper - wait between API calls to respect Ticketmaster limits
 const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -154,6 +155,8 @@ export interface EventSearchOptions {
   locale?: string;
   radius?: string;
   unit?: 'km' | 'miles'; // Changed from 'units' to 'unit'
+  runtimeEnv?: Record<string, string | undefined>;
+  kv?: { get: (key: string) => Promise<string | null> };
 }
 
 const TICKETMASTER_API_URL = 'https://app.ticketmaster.com/discovery/v2/events.json';
@@ -171,8 +174,13 @@ export async function getEvents(options: EventSearchOptions): Promise<Event[]> {
     locale = 'pl',
     radius = '50',
     unit = 'km', // Changed from 'units' to 'unit'
+    runtimeEnv,
+    kv,
   } = options;
-  const apiKey = import.meta.env.TICKETMASTER_API_KEY;
+  const apiKey = await getSecret('TICKETMASTER_API_KEY', {
+    runtimeEnv,
+    kv,
+  });
   if (!apiKey) {
     throw new Error('Missing TICKETMASTER_API_KEY environment variable');
   }
@@ -715,8 +723,16 @@ export type EventDetails = z.infer<typeof eventDetailsSchema>;
 
 const TICKETMASTER_EVENT_DETAILS_URL = 'https://app.ticketmaster.com/discovery/v2/events';
 
-export async function getEventDetails(eventId: string, locale = 'pl'): Promise<EventDetails> {
-  const apiKey = import.meta.env.TICKETMASTER_API_KEY;
+export async function getEventDetails(
+  eventId: string,
+  locale = 'pl',
+  runtimeEnv?: Record<string, string | undefined>,
+  kv?: { get: (key: string) => Promise<string | null> }
+): Promise<EventDetails> {
+  const apiKey = await getSecret('TICKETMASTER_API_KEY', {
+    runtimeEnv,
+    kv,
+  });
   if (!apiKey) {
     throw new Error('Missing TICKETMASTER_API_KEY environment variable');
   }

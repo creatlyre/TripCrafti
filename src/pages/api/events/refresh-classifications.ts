@@ -1,11 +1,13 @@
 import type { APIRoute } from 'astro';
 
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
+import { getSecret } from '@/lib/secrets';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const apiKey = import.meta.env.TICKETMASTER_API_KEY;
+    const apiKey = await getSecret('TICKETMASTER_API_KEY', {
+      runtimeEnv: locals.runtime?.env,
+    });
+
     if (!apiKey) {
       return new Response(JSON.stringify({ error: 'Missing TICKETMASTER_API_KEY environment variable' }), {
         status: 500,
@@ -51,22 +53,63 @@ export const POST: APIRoute = async ({ request }) => {
 
     const data = await response.json();
 
-    // Save the fresh data to the locale-specific file
-    const filePath = join(process.cwd(), 'public', `ticketmaster_classifications_${selectedLocale}.json`);
-    await writeFile(filePath, JSON.stringify(data, null, 2));
+    // In production (Cloudflare Pages), we can't write to file system
+    // So we'll just return the data and let the client know about the limitation
+    if (import.meta.env.PROD) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message:
+            'Classifications fetched successfully. Note: In production environment, file system updates are not supported. Classifications data returned below for manual update.',
+          locale: selectedLocale,
+          timestamp: new Date().toISOString(),
+          data,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Classifications refreshed successfully for locale: ${selectedLocale}`,
-        locale: selectedLocale,
-        timestamp: new Date().toISOString(),
-      }),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    // Development environment - we can try to write the file (if fs is available)
+    try {
+      // Dynamic import to avoid issues in production
+      const { writeFile } = await import('fs/promises');
+      const { join } = await import('path');
+
+      const filePath = join(process.cwd(), 'public', `ticketmaster_classifications_${selectedLocale}.json`);
+      await writeFile(filePath, JSON.stringify(data, null, 2));
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `Classifications refreshed successfully for locale: ${selectedLocale}`,
+          locale: selectedLocale,
+          timestamp: new Date().toISOString(),
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    } catch (fsError) {
+      // If file writing fails, return the data anyway
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Classifications fetched but file write failed. Data returned for manual update.',
+          locale: selectedLocale,
+          timestamp: new Date().toISOString(),
+          error: fsError instanceof Error ? fsError.message : 'Unknown file system error',
+          data,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(JSON.stringify({ error: 'Failed to refresh classifications', details: message }), {

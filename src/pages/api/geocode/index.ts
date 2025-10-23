@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
-import { getCoordinates } from '../../../lib/services/geocodingService';
 
-function json(data: any, init: number | ResponseInit = 200) {
+import { logError } from '@/lib/log';
+import { getCoordinates } from '@/lib/services/geocodingService';
+
+function json(data: unknown, init: number | ResponseInit = 200) {
   return new Response(JSON.stringify(data), {
     status: typeof init === 'number' ? init : init.status,
     headers: { 'content-type': 'application/json' },
@@ -9,7 +11,7 @@ function json(data: any, init: number | ResponseInit = 200) {
   });
 }
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
   const url = new URL(request.url);
   const destination = url.searchParams.get('destination');
 
@@ -18,10 +20,13 @@ export const GET: APIRoute = async ({ request }) => {
   }
 
   try {
-    const coordinates = await getCoordinates(destination);
+    const coordinates = await getCoordinates(destination, locals.runtime?.env);
     return json(coordinates);
-  } catch (error: any) {
-    console.error('Error fetching coordinates:', error);
-    return json({ error: 'Failed to fetch coordinates', details: error.message }, 500);
+  } catch (error: unknown) {
+    logError('Error fetching coordinates', { error });
+    return json(
+      { error: 'Failed to fetch coordinates', details: error instanceof Error ? error.message : 'Unknown error' },
+      500
+    );
   }
 };

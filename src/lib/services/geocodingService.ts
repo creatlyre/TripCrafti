@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { getSecret } from '@/lib/secrets';
+
 const googleGeocodeResponseSchema = z.object({
   results: z.array(
     z.object({
@@ -16,8 +18,16 @@ const googleGeocodeResponseSchema = z.object({
 
 const GEOCODE_API_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
 
-export async function getCoordinates(destination: string): Promise<{ lat: number; long: number }> {
-  const apiKey = import.meta.env.GOOGLE_GEOCODING_API_KEY;
+export async function getCoordinates(
+  destination: string,
+  runtimeEnv?: Record<string, string | undefined>,
+  kv?: { get: (key: string) => Promise<string | null> }
+): Promise<{ lat: number; long: number }> {
+  const apiKey = await getSecret('GOOGLE_GEOCODING_API_KEY', {
+    runtimeEnv,
+    kv,
+  });
+  
   if (!apiKey) {
     throw new Error('Missing GOOGLE_GEOCODING_API_KEY environment variable');
   }
