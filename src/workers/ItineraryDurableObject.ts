@@ -70,10 +70,13 @@ export class ItineraryDurableObject {
 
   private async initializeSupabase(): Promise<SupabaseClient> {
     if (!this.supabase) {
+      console.log('[ItineraryDO] Initializing Supabase client...');
       const serviceRoleKey = await this.env.SECRETS.get('SUPABASE_SERVICE_ROLE_KEY');
       if (!serviceRoleKey) {
+        console.error('[ItineraryDO] SUPABASE_SERVICE_ROLE_KEY not found in secrets');
         throw new Error('SUPABASE_SERVICE_ROLE_KEY not found in secrets');
       }
+      console.log('[ItineraryDO] Supabase service role key found, creating client');
 
       this.supabase = createClient(this.env.PUBLIC_SUPABASE_URL, serviceRoleKey, {
         auth: {
@@ -81,17 +84,22 @@ export class ItineraryDurableObject {
           persistSession: false,
         },
       });
+      console.log('[ItineraryDO] Supabase client initialized successfully');
     }
     return this.supabase;
   }
 
   private async initializeGenAI(): Promise<GoogleGenerativeAI> {
     if (!this.genAI) {
+      console.log('[ItineraryDO] Initializing Google AI client...');
       const geminiKey = await this.env.SECRETS.get('GEMINI_API_KEY');
       if (!geminiKey) {
+        console.error('[ItineraryDO] GEMINI_API_KEY not found in secrets');
         throw new Error('GEMINI_API_KEY not found in secrets');
       }
+      console.log('[ItineraryDO] Gemini API key found, creating AI client');
       this.genAI = new GoogleGenerativeAI(geminiKey);
+      console.log('[ItineraryDO] Google AI client initialized successfully');
     }
     return this.genAI;
   }
