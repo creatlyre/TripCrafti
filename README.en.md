@@ -310,14 +310,38 @@ PR checklist (abbrev): tests green, lint clean, i18n keys added, no stray logs, 
 
 ---
 
-## Roadmap
-| Phase | Items |
-|-------|-------|
-| Itinerary UX | Timeline visualization, public readonly shares |
-| Packing | Versioning history, collaborative edits expansion |
-| Budget | Persist fx_rate snapshots, historical rates lookup |
-| Offline / PWA | Cache itinerary & packing data, installable shell |
-| Social | Public itinerary gallery, notes & attachments |
+## Completed Features (Key Achievements)
+
+| Module | Description | Status |
+|-------|------|--------|
+| **Trip Management** | Full CRUD on trips, including basic data like destination, dates, and budget. | ✅ Done |
+| **Budget & Expenses** | Expense tracking with automatic currency normalization (FX), categorization, and reporting. | ✅ Done |
+| **AI Itinerary Assistant** | Generation of detailed travel plans (day by day) using AI models (Gemini) in background processes (Durable Objects). | ✅ Done |
+| **AI Packing Assistant** | Intelligent generation of packing lists based on trip data, with options for regeneration and categorization. | ✅ Done |
+| **Event Discovery** | Integration with Ticketmaster to search for and display local events. | ✅ Done |
+| **Currency System (FX)** | Dynamic retrieval of currency exchange rates with a caching and fallback mechanism. | ✅ Done |
+| **Packing List Sharing** | Generation of secure links for sharing lists with optional editing permissions. | ✅ Done |
+| **Internationalization (i18n)** | Support for multiple languages (Polish, English) throughout the application. | ✅ Done |
+
+---
+
+## Roadmap (Proposed Enhancements)
+
+| Category | Feature | Priority | Description |
+|-----------|----------------|-----------|------|
+| **Itinerary** | Timeline and map visualization | High | A graphical representation of the travel plan, making it easier to understand the schedule and locations. |
+| | Calendar export (iCal) | Medium | Ability to add the generated travel plan to external calendar applications (Google, Apple). |
+| | Public sharing | Medium | Option to share the itinerary in "read-only" mode via a public link. |
+| **Budget** | Advanced analytics and charts | High | Visual reports and charts showing the structure of expenses. |
+| | Expense splitting | Medium | Functionality to split costs among trip participants. |
+| | Historical FX rates | Low | Saving the exchange rate from the day an expense was entered for greater accuracy. |
+| **Packing** | List templates | High | Ability to create and save custom packing list templates (e.g., "Ski Trip"). |
+| | Version history | Medium | Tracking changes to the packing list and the ability to restore previous versions. |
+| **Offline Mode (PWA)** | Offline data access | High | Ability to view key data (itinerary, packing list, bookings) without an internet connection. |
+| **Social Features** | Public itinerary gallery | Medium | Browsing and getting inspired by travel plans created by other users. |
+| | Notes and attachments | Low | Ability to add private notes, photos, and documents (e.g., tickets) to a trip. |
+| **Integrations** | Booking import | High | Automatic import of flight and hotel bookings from an email inbox or via API. |
+| | Weather forecast | Medium | Displaying the weather forecast for the destination in the trip dashboard. |
 
 ---
 

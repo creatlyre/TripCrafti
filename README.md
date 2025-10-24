@@ -308,14 +308,38 @@ PR checklist (skrót): testy zielone, lint czysty, klucze i18n dodane, brak zbę
 
 ---
 
-## Roadmap
-| Faza | Elementy |
-|------|----------|
-| Itinerary UX | Wizualizacja timeline, public readonly shares |
-| Packing | Historia wersji, rozszerzona kolaboracja |
-| Budget | Persist fx_rate, historyczne kursy |
-| Offline / PWA | Cache itinerary + packing, instalowalna aplikacja |
-| Social | Publiczna galeria itinerariów, notatki i załączniki |
+## Ukończone Funkcjonalności (Kluczowe Osiągnięcia)
+
+| Moduł | Opis | Status |
+|-------|------|--------|
+| **Zarządzanie Podróżami** | Pełny CRUD na podróżach, włączając podstawowe dane jak cel, daty i budżet. | ✅ Zrobione |
+| **Budżet i Wydatki** | Śledzenie wydatków z automatyczną normalizacją walut (FX), kategoryzacją i raportowaniem. | ✅ Zrobione |
+| **Asystent Itinerarium (AI)** | Generowanie szczegółowych planów podróży (dzień po dniu) przy użyciu modeli AI (Gemini) w procesach tła (Durable Objects). | ✅ Zrobione |
+| **Asystent Pakowania (AI)** | Inteligentne generowanie list do pakowania na podstawie danych podróży, z opcją regeneracji i kategoryzacji. | ✅ Zrobione |
+| **Odkrywanie Wydarzeń** | Integracja z Ticketmaster w celu wyszukiwania i wyświetlania lokalnych wydarzeń. | ✅ Zrobione |
+| **System Walutowy (FX)** | Dynamiczne pobieranie kursów walut z mechanizmem cache i fallbacków. | ✅ Zrobione |
+| **Udostępnianie List Pakowania** | Generowanie bezpiecznych linków do współdzielenia list z opcjonalnymi uprawnieniami do edycji. | ✅ Zrobione |
+| **Internacjonalizacja (i18n)** | Wsparcie dla wielu języków (polski, angielski) w całej aplikacji. | ✅ Zrobione |
+
+---
+
+## Roadmap (Proponowane Rozszerzenia)
+
+| Kategoria | Funkcjonalność | Priorytet | Opis |
+|-----------|----------------|-----------|------|
+| **Itinerarium** | Wizualizacja na osi czasu i mapie | Wysoki | Graficzne przedstawienie planu podróży, ułatwiające orientację w czasie i przestrzeni. |
+| | Eksport do kalendarza (iCal) | Średni | Możliwość dodania wygenerowanego planu podróży do zewnętrznych aplikacji kalendarza (Google, Apple). |
+| | Współdzielenie publiczne | Średni | Opcja udostępnienia itinerarium w trybie "tylko do odczytu" za pomocą publicznego linku. |
+| **Budżet** | Zaawansowana analityka i wykresy | Wysoki | Wizualne raporty i wykresy przedstawiające strukturę wydatków. |
+| | Dzielenie wydatków | Średni | Funkcjonalność do dzielenia kosztów między uczestników podróży. |
+| | Historyczne kursy FX | Niski | Zapisywanie kursu waluty z dnia wprowadzenia wydatku dla większej precyzji. |
+| **Pakowanie** | Szablony list | Wysoki | Możliwość tworzenia i zapisywania własnych szablonów list do pakowania (np. "Wyjazd na narty"). |
+| | Historia wersji | Średni | Śledzenie zmian na liście do pakowania i możliwość przywracania poprzednich wersji. |
+| **Tryb Offline (PWA)** | Dostęp offline do danych | Wysoki | Możliwość przeglądania kluczowych danych (itinerarium, lista pakowania, rezerwacje) bez dostępu do internetu. |
+| **Funkcje Społecznościowe** | Galeria publicznych itinerariów | Średni | Przeglądanie i inspirowanie się planami podróży stworzonymi przez innych użytkowników. |
+| | Notatki i załączniki | Niski | Możliwość dodawania prywatnych notatek, zdjęć i dokumentów (np. biletów) do podróży. |
+| **Integracje** | Import rezerwacji | Wysoki | Automatyczne importowanie rezerwacji lotów i hoteli ze skrzynki e-mail lub przez API. |
+| | Prognoza pogody | Średni | Wyświetlanie prognozy pogody dla miejsca docelowego w panelu podróży. |
 
 ---
 
