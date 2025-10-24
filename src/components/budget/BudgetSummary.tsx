@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import React, { useEffect, useState, useCallback } from 'react';
 
 import { getDictionary, type Lang } from '@/lib/i18n';
 
 import type { BudgetSummary, BudgetMode } from '../../types';
 
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Progress } from '../ui/progress';
+// Removed unused Progress import
 import CategorySpendChart from './CategorySpendChart';
 
 interface Props {
@@ -21,34 +22,35 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lan
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/trips/${tripId}/budget/summary`);
       if (!res.ok) throw new Error(dict.errors?.summaryFailed || `Failed to load summary (${res.status})`);
-      const data = await res.json();
+      const data: BudgetSummary = await res.json();
       setSummary(data);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unexpected error';
+      setError(message);
     } finally {
       setLoading(false);
     }
-  }
+  }, [tripId, dict.errors?.summaryFailed]);
 
   useEffect(() => {
     load();
-  }, [tripId, refreshToken]);
+  }, [load, refreshToken]);
   useEffect(() => {
     const id = setInterval(load, 60000);
     return () => clearInterval(id);
-  }, [tripId]);
+  }, [load]);
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-24 rounded-lg bg-slate-800/40 animate-pulse" />
+          <div key={i} className="h-28 rounded-lg bg-brand-navy-light/40 animate-pulse" />
         ))}
       </div>
     );
@@ -65,18 +67,20 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lan
   const percent = summary.totalBudget ? Math.min(100, (effectiveSpent / summary.totalBudget) * 100) : 0;
 
   const STAT = (title: string, primary: string, secondary?: string, accent?: string) => (
-    <Card className="bg-slate-900/60 border-slate-700">
-      <CardContent className="p-4 space-y-1">
-        <p className="text-[11px] uppercase tracking-wide text-slate-400">{title}</p>
-        <p className={`text-sm font-semibold text-slate-100 ${accent || ''}`}>{primary}</p>
-        {secondary && <p className="text-[11px] text-slate-500 font-mono">{secondary}</p>}
+    <Card className="bg-gradient-to-br from-brand-navy-light to-brand-navy-lighter border-2 border-brand-cyan/20 shadow-xl hover:shadow-brand-cyan/10 transition-all duration-300 hover:scale-105 hover:border-brand-cyan/40">
+      <CardContent className="p-6 space-y-3">
+        <p className="text-sm uppercase tracking-wider text-brand-cyan font-semibold">{title}</p>
+        <p className={`text-xl font-bold text-white ${accent || ''}`}>{primary}</p>
+        {secondary && (
+          <p className="text-sm text-brand-cyan/70 font-mono bg-brand-cyan/5 px-2 py-1 rounded">{secondary}</p>
+        )}
       </CardContent>
     </Card>
   );
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
         {STAT(
           dict.summary.totalBudget,
           summary.totalBudget?.toFixed(2) ?? '—',
@@ -92,13 +96,13 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lan
             : summary.totalSpentPrepaid
               ? `${dict.summary.spentPrepaidShort} ${summary.totalSpentPrepaid.toFixed(2)}`
               : undefined,
-          'text-emerald-300'
+          'text-brand-cyan'
         )}
         {STAT(
           dict.summary.remaining,
           effectiveRemaining != null ? effectiveRemaining.toFixed(2) : '—',
           summary.totalBudget ? `${percent.toFixed(0)}${dict.summary.percentUsed}` : undefined,
-          'text-amber-300'
+          effectiveRemaining && effectiveRemaining < 0 ? 'text-brand-orange' : 'text-brand-cyan'
         )}
         {STAT(
           dict.summary.onTrip,
@@ -114,38 +118,57 @@ export const BudgetSummaryWidget: React.FC<Props> = ({ tripId, refreshToken, lan
         )}
       </div>
 
-      <Card className="border-slate-700 bg-slate-900/60 shadow-inner">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">{dict.summary.progress}</CardTitle>
+      <Card className="border-2 border-brand-cyan/20 bg-gradient-to-br from-brand-navy-light to-brand-navy-lighter shadow-xl hover:shadow-brand-cyan/10 transition-all duration-300">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg text-white font-semibold flex items-center gap-2">
+            📊 {dict.summary.progress}
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between text-xs text-slate-400">
+        <CardContent className="space-y-4">
+          <div className="flex justify-between text-sm text-brand-cyan/90 font-medium">
             <span>
-              {dict.summary.spent} {summary.totalSpent.toFixed(2)}
+              💰 {dict.summary.spent} {effectiveSpent.toFixed(2)}
             </span>
-            <span>{summary.totalBudget?.toFixed(2) ?? '—'}</span>
+            <span>🎯 {summary.totalBudget?.toFixed(2) ?? '—'}</span>
           </div>
-          <div className="h-3 w-full rounded-full bg-slate-800 overflow-hidden">
+          <div
+            role="progressbar"
+            aria-valuenow={percent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={dict.summary.progress}
+            className="h-8 w-full rounded-full bg-brand-navy-dark/80 overflow-hidden shadow-inner border-2 border-brand-cyan/30 relative"
+          >
             <div
-              className="h-full bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 transition-all"
-              style={{ width: percent + '%' }}
-            />
+              className="h-full bg-gradient-to-r from-brand-cyan via-brand-cyan/90 to-brand-orange transition-all duration-1000 ease-out shadow-lg relative"
+              style={{ width: Math.max(2, percent) + '%' }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-50" />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
+            </div>
+            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow-lg mix-blend-difference">
+              {summary.totalBudget
+                ? `${effectiveSpent.toFixed(0)} / ${summary.totalBudget.toFixed(0)} (${percent.toFixed(0)}%)`
+                : `${effectiveSpent.toFixed(0)} spent`}
+            </span>
           </div>
           {summary.remaining != null && (
-            <p className="text-[11px] text-slate-500">
-              {dict.summary.remaining} {summary.remaining.toFixed(2)}
+            <p className="text-sm text-brand-cyan/80 bg-brand-cyan/5 px-3 py-2 rounded-lg border border-brand-cyan/20">
+              💳 {dict.summary.remaining} {summary.remaining.toFixed(2)}
             </p>
           )}
         </CardContent>
       </Card>
 
-      <Card className="border-slate-700 bg-slate-900/60 shadow-inner">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">{dict.summary.categories}</CardTitle>
+      <Card className="border-2 border-brand-orange/20 bg-gradient-to-br from-brand-navy-light to-brand-navy-lighter shadow-xl hover:shadow-brand-orange/10 transition-all duration-300">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg text-white font-semibold flex items-center gap-2">
+            📈 {dict.summary.categories}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {summary.spentByCategory.length === 0 ? (
-            <div className="text-xs text-slate-500">{dict.summary.categoriesEmpty}</div>
+            <div className="text-sm text-brand-cyan/60">{dict.summary.categoriesEmpty}</div>
           ) : (
             <CategorySpendChart summary={summary} />
           )}
