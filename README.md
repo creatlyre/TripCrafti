@@ -1,368 +1,335 @@
-**TripCrafti – Twój Inteligentny Asystent Podróży**  
+<div align="center">
+
+# TripCrafti – Inteligentne Planowanie Podróży
+
+AI + manualna kontrola: itinerarium, budżet, wydarzenia, pakowanie i współdzielenie – w jednym wydajnym środowisku Astro + Cloudflare.
+
 _Język:_ **Polski** | [English](./README.en.md)
 
-🌟 **Wizja Projektu**
+</div>
 
-TripCrafti to inteligentny asystent podróży, którego misją jest zrewolucjonizowanie sposobu, w jaki planujemy i przeżywamy wyjazdy. Naszym celem jest zredukowanie stresu związanego z organizacją do minimum, pozwalając podróżnikom czerpać czystą radość z odkrywania świata.
+---
 
-Aplikacja kompleksowo wspiera użytkownika na każdym etapie: od inspiracji i automatycznego planowania, przez precyzyjne zarządzanie budżetem i rezerwacjami, aż po inteligentne spakowanie walizki z pomocą AI.
-✨ **Główne Funkcjonalności**
+## Spis Treści
+1. [Wizja i Przegląd](#wizja-i-przegląd)
+2. [Moduły Kluczowe](#moduły-kluczowe)
+3. [Stos Technologiczny](#stos-technologiczny)
+4. [Architektura](#architektura)
+5. [Struktura Katalogów](#struktura-katalogów)
+6. [Zmienne Środowiskowe](#zmienne-środowiskowe)
+7. [Instalacja i Development](#instalacja-i-development)
+8. [Skrypty](#skrypty)
+9. [Moduły Funkcjonalne (Szczegóły)](#moduły-funkcjonalne-szczegóły)
+10. [Wybrane Endpointy API](#wybrane-endpointy-api)
+11. [Struktury Danych](#struktury-danych)
+12. [Testy](#testy)
+13. [Deployment (Cloudflare)](#deployment-cloudflare)
+14. [Commity i Styl](#commity-i-styl)
+15. [Roadmap](#roadmap)
+16. [Współtworzenie](#współtworzenie)
 
-TripCrafti to nie tylko planer, to zintegrowany ekosystem, który dba o każdy detal Twojej podróży.
+---
 
-    ✈️ Centralne Zarządzanie Podróżą (CRUD): Stanowi serce aplikacji. Twórz, przeglądaj, edytuj i usuwaj swoje wyjazdy. Zarządzaj rezerwacjami, kluczowymi dokumentami i notatkami w jednym miejscu.
+## Wizja i Przegląd
+TripCrafti obniża obciążenie organizacyjne podróży. Równoważymy precyzyjne ręczne zarządzanie z akceleracją AI (itinerarium + pakowanie), świadomością kosztów (budżet + FX) oraz odkrywaniem wydarzeń.
 
-    💰 Precyzyjne Śledzenie Budżetu: Ustaw ogólny budżet dla podróży i na bieżąco dodawaj wydatki. TripCrafti automatycznie podsumuje koszty i pokaże, jak Twoje wydatki mają się do założonego planu.
+Założenia projektowe:
+* Hybrydowy SSR + wyspy (Astro) dla wydajności.
+* Długotrwałe procesy AI w Durable Objects.
+* Izolacja danych dzięki Supabase RLS.
+* Deterministyczne kontrakty JSON dla AI (bez markdown fence).
 
-    🗺️ Inteligentny Kreator Planu Podróży (AI): Opisz swoje zainteresowania, styl podróży i budżet, a Google Gemini stworzy dla Ciebie spersonalizowany, edytowalny plan zwiedzania na każdy dzień.
+---
 
-    🎭 Wyszukiwarka Wydarzeń (Event Discovery): Automatycznie znajdź lokalne wydarzenia i atrakcje podczas swojej podróży dzięki integracji z Ticketmaster API. Filtruj wyniki według kategorii (muzyka, sport, teatr) z lokalną bazą klasyfikacji dla lepszej wydajności.
+## Moduły Kluczowe
+| Moduł | Opis |
+|-------|------|
+| Trips CRUD | Tworzenie / edycja podróży (destynacja, daty, budżet, waluta, lodging). |
+| Budget & Expenses | Plan kategorii, normalizacja FX, prepaid vs on‑trip, eksport CSV, raport wykorzystania. |
+| AI Itinerary Assistant | Gemini generuje JSON (dni → aktywności) z fallbackiem modeli + log tokenów. |
+| AI Packing Assistant | Generacja → regeneracje z diff (max 2) → walidacja (add/remove/adjust/replace) → kategoryzacja → edycje → sharing. |
+| Events Discovery | Ticketmaster + lokalne klasyfikacje (cache) + opcjonalne obrazy. |
+| FX System | Cache 6h, fallback chain, oznaczenie źródła (identity | cache | live | fallback). |
+| Sharing (Packing) | Linki z tokenem + can_modify + opcjonalny expiry. |
+| I18n | Middleware wybiera `lang` (pl/en), słowniki w `src/lib/i18n.ts`. |
+| Destination Images | Unsplash (wielostopniowe fallbacki). |
+| Geocoding | Google Geocoding API + prosty OSM helper. |
 
-    🧳 Asystent Pakowania (AI): Na podstawie celu, długości wyjazdu i zaplanowanych aktywności, AI wygeneruje idealną listę rzeczy do spakowania, abyś nigdy więcej o niczym nie zapomniał(a).
+---
 
-    🔒 Bezpieczne Uwierzytelnianie: Pełne bezpieczeństwo i izolacja danych dzięki systemowi rejestracji i logowania. Każda podróż i jej dane należą tylko do Ciebie.
-
-    📱 Pełna Responsywność: Korzystaj z aplikacji wygodnie na komputerze, tablecie i smartfonie.
-
-🛠️ **Stos Technologiczny**
-
-Projekt jest aplikacją typu Single Repo opartą o:
-
-| Obszar | Technologia |
+## Stos Technologiczny
+| Warstwa | Technologia |
 |--------|-------------|
-| Runtime / SSR | Astro 5 (hybrydowy rendering + server endpoints) |
-| UI / Interaktywność | React 18 (przygotowane pod 19) + TypeScript |
+| Runtime / Framework | Astro 5 (SSR + API) |
+| UI | React 19.2.x + TypeScript 5 + shadcn/ui + Radix |
 | Stylowanie | Tailwind CSS 4 |
-| Baza / Auth | Supabase (PostgreSQL + row level security + auth) |
-| AI | Google Gemini (itinerary + packing: generowanie, walidacja, kategoryzacja) |
-| Deployment | Cloudflare Pages + Durable Objects (długotrwałe AI generowanie) |
-| Wydarzenia | Ticketmaster Discovery API (z lokalną bazą klasyfikacji) |
-| Waluty (FX) | exchangerate.host (public API z opcjonalnym kluczem) |
-| Testy | Vitest + @testing-library/react |
-| Lint / Format | ESLint (niestandardowe reguły + `no-hardcoded-jsx-text`), Prettier |
-| Ikony / UI | shadcn/ui + Radix Primitives + lucide-react |
-| I18n | Lekki słownik PL/EN (`src/lib/i18n.ts`) |
-| Obrazy destynacji | Unsplash API (opcjonalny klucz) |
+| Auth & DB | Supabase (PostgreSQL + RLS) |
+| AI | Google Gemini (itinerary + packing) z fallback chain |
+| Long Tasks | Cloudflare Durable Objects |
+| Deployment | Cloudflare Pages + Worker + KV |
+| Zewnętrzne API | Ticketmaster, exchangerate.host, Unsplash, Google Geocoding |
+| Narzędzia | Vitest, Testing Library, ESLint (custom), Prettier |
 
-**Cloudflare Durable Objects** używane dla długotrwałego generowania itinerariów (60-90s) bez timeoutów.
+---
 
-Brak osobnego backendu typu NestJS – logika biznesowa zaimplementowana w Astro server endpoints (`/src/pages/api/**`).
-🏗️ **Architektura**
-
-Monorepo aplikacyjne (Astro) + Supabase jako BaaS:
-
+## Architektura
+Przepływ wykonania:
 ```
-[*] Astro (SSR + React wyspy)
-    ├─ Pages & Layouts (routing / SSR)
-    ├─ API Endpoints (server only logic)
-    │    /api/trips/...         (CRUD + itinerary AI)
-    │    /api/events/...        (wyszukiwanie wydarzeń + klasyfikacje)
-    │    /api/ai/packing        (generowanie / walidacja / kategoryzacja listy)
-    │    /api/trips/:id/packing/share (linki współdzielenia)
-    ├─ lib/ (FX, i18n, AI prompty, usługi Gemini)
-    └─ components/ (UI + hooki)
-
-Supabase (PostgreSQL + Auth)
-    ├─ Tabele: trips, expenses, budget_categories, generateditineraries
-    └─ Row Level Security (izolacja użytkowników)
-
-Cloudflare (Deployment)
-    ├─ Pages (główna aplikacja Astro + React)
-    ├─ Durable Objects Worker (długotrwałe AI generowanie)
-    └─ KV Storage (sekrety: GEMINI_API_KEY, SUPABASE_SERVICE_ROLE_KEY)
-
-Zewnętrzne:
-    • Google Gemini (itinerary JSON + packing list / suggestions / categorization)
-    • Ticketmaster Discovery API (wydarzenia lokalne, klasyfikacje w lokalnym pliku JSON)
-    • exchangerate.host (kursy walut z cache 6h, fallback = rate 1)
-    • Unsplash (opcjonalnie obrazy destynacji)
+Przeglądarka (React wyspy / Astro pages)
+   ↓ SSR / API (Astro endpoints)
+      ├─ Supabase (auth + dane)
+      ├─ Durable Object (długie generowanie AI)
+      ├─ Gemini (modele AI)
+      ├─ Ticketmaster (wydarzenia)
+      ├─ FX Provider (exchangerate.host)
+      ├─ Unsplash (obrazy)
+      └─ Google Geocoding (koordynaty)
 ```
+Korzyści Durable Objects:
+* Brak timeoutów przy 60–90s generacji
+* Stan przejściowy (postęp, fallback)
+* Odporność na retry klienta
 
-☁️ **Architektura Cloudflare**
+Szczegóły: `docs/architecture.md`.
 
-TripCrafti wykorzystuje hybrydowy model deploymentu:
+---
 
+## Struktura Katalogów
 ```
-Cloudflare Pages (główna aplikacja)
-├─ Astro SSR + React komponenty
-├─ API endpoints (/api/*)
-├─ Fallback dla AI gdy Durable Objects niedostępne
-└─ Automatyczne cachowanie statycznych zasobów
-
-Cloudflare Durable Objects Worker (AI generowanie)
-├─ Długotrwałe AI generowanie (bez timeoutów)
-├─ Stan persystentny per itinerary
-├─ Automatyczne timeout handling (5 min)
-└─ Fallback model chain (gemini-2.5-flash → gemini-2.5-pro)
-
-Cloudflare KV (sekrety)
-├─ GEMINI_API_KEY
-├─ SUPABASE_SERVICE_ROLE_KEY
-└─ Inne klucze API
+src/
+  pages/            # Strony Astro + endpointy API
+  components/       # React + UI wyspy
+  lib/              # Serwisy (AI, FX, geocoding, logging, secrets)
+  workers/          # Durable Objects
+  middleware.ts     # Język + Supabase + runtime bindings
+  types.ts          # Wspólne typy / DTO
+docs/               # Architektura / deployment / schema
+tests/              # Testy komponentów i integracyjne
 ```
 
-**Tryby pracy:**
-- **Lokalny development**: `npm run dev` (z automatycznym fallbackiem)
-- **Cloudflare dev**: `npm run dev:cloudflare` (z prawdziwymi Durable Objects)
-- **Produkcja**: Pages + Durable Objects Worker
+---
 
-Szczegóły w `docs/architecture.md`.
+## Zmienne Środowiskowe
+Strategia rozwiązywania (patrz `src/lib/secrets.ts`):
+1. Produkcja: KV → runtimeEnv → import.meta.env → globalThis
+2. Development: import.meta.env → runtimeEnv → process.env → globalThis → KV
 
-Mechanizmy:
-* AI Itinerary: fallback lista modeli, pierwsze dostępne; token usage zapisywany (input, output, thought approx).
-* AI Packing: generacja bazowa → do 2 regeneracji (podgląd różnic) → walidacja kontekstowa (sugestie: add/remove/adjust/replace) → kategoryzacja → udostępnianie listy.
-* FX: pamięciowy cache (TTL 6h, źródło: identity | cache | live | fallback).
-* Budżet: normalizacja wydatków do waluty podróży, raport post-trip.
-* I18n: middleware ustawia `lang` (PL/EN).
+| Nazwa | Wymagana | Zakres | Cel |
+|-------|----------|--------|-----|
+| PUBLIC_SUPABASE_URL | tak | client | URL projektu Supabase |
+| PUBLIC_SUPABASE_ANON_KEY | tak | client | Publiczny anon key |
+| SUPABASE_SERVICE_ROLE_KEY | prod ops | server (KV) | Operacje serwisowe (nie ujawniać) |
+| GEMINI_API_KEY | tak (AI) | server | Itinerary + packing |
+| GEMINI_MODEL | nie | server | Nadpisanie modelu |
+| UNSPLASH_ACCESS_KEY | nie | server | Obrazy destynacji |
+| PUBLIC_FX_API_BASE | nie | client/server | Bazowy URL FX (domyślnie exchangerate.host) |
+| EXCHANGERATE_API_KEY | nie | server | Opcjonalny klucz dostawcy |
+| TICKETMASTER_API_KEY | wydarzenia | server | Integracja Ticketmaster |
+| GOOGLE_GEOCODING_API_KEY | jeśli geocoding | server | Dokładne współrzędne |
+| DEBUG_LOGGING | nie | server | Rozszerzone logi ('true') |
+| OPENROUTER_API_KEY | nieużywane | server | Przyszły multi-provider |
+| SUPABASE_URL / SUPABASE_KEY | legacy | server | Kompatybilność wsteczna |
 
-🚀 **Roadmap (aktualny status)**
+Sekrety bez `PUBLIC_` przechowuj w KV. Nie commituj realnych wartości.
 
-Etap 1: MVP
-    [x] Auth (Supabase)
-    [x] CRUD Trips
-    [x] Wydatki + kategorie budżetu
-    [x] Podsumowanie budżetu
+---
 
-Etap 2: AI Itinerary
-    [x] Formularz preferencji
-    [x] Prompt + fallback modeli Gemini
-    [x] Generowanie planu (JSON) + token usage
-    [ ] Zaawansowana wizualizacja timeline
-    [x] Ręczna edycja / integracja
-
-Etap 3: AI Packing
-    [x] Generacja listy
-    [x] Limit 2 regeneracji (preview diff)
-    [x] Walidacja kontekstowa (sugestie)
-    [x] Kategoryzacja automatyczna
-    [x] Szybkie dodawanie z biblioteki
-    [x] Udostępnienie przez link (view/collab)
-    [ ] Wersjonowanie list (future)
-
-Etap 4: Budżet rozszerzony
-    [x] FX konwersje (cache 6h)
-    [x] Post-trip raport
-    [x] Eksport CSV
-    [ ] Historyczne kursy
-    [ ] Persist fx_rate
-
-Etap 5: Społecznościowe / UX
-    [ ] Publiczne itineraries
-    [ ] Notatki / załączniki
-    [ ] Powiadomienia
-    [ ] Tryb offline / PWA
-
-⚙️ **Instalacja i Uruchomienie**
-
-Wymagania:
-* Node 20+
-* Konto Supabase (URL + anon key)
-* Konto Cloudflare (dla Durable Objects w produkcji)
-* (Opcjonalnie) Klucze: GEMINI_API_KEY, UNSPLASH_ACCESS_KEY, EXCHANGERATE_API_KEY
-
-Kroki:
-1. Sklonuj repo: `git clone <repo_url>`
-2. Wejdź do katalogu projektu: `cd 10x-devs-project`
-3. Zainstaluj zależności: `npm install`
-4. Skopiuj `.env.example` → `.env` i uzupełnij wymagane pola
-5. Uruchom dev serwer: `npm run dev` (z automatycznym fallbackiem dla AI)
-6. Testy: `npm test`
-7. Build produkcyjny: `npm run build` + `npm run preview`
-
-**Deployment w produkcji (Cloudflare Pages + Durable Objects):**
+## Instalacja i Development
 ```bash
-# 1. Deploy Durable Objects Worker
-npx wrangler deploy --config wrangler-worker.toml
-
-# 2. Deploy Pages application
+git clone <repo_url>
+cd 10x-devs-project
+npm install
+cp .env.example .env
+# Uzupełnij wymagane wartości (min. Supabase + GEMINI_API_KEY)
+npm run dev
+```
+Tryb Cloudflare z prawdziwym Durable Object:
+```bash
 npm run build
-npx wrangler pages deploy dist
+npm run dev:cloudflare
+```
+Baza: zastosuj `db_schema.sql` w Supabase; RLS według schematu.
+
+---
+
+## Skrypty
+```bash
+npm run dev           # Dev (SSR + fallback AI)
+npm run dev:cloudflare# Dev z DO (wymaga build)
+npm run build         # Build produkcyjny
+npm run preview       # Podgląd buildu
+npm run test          # Testy (pojedynczy przebieg)
+npm run test:watch    # Tryb watch
+npm run lint          # ESLint
+npm run lint:fix      # ESLint --fix
+npm run format        # Prettier
 ```
 
-Szczegółowe instrukcje w `docs/deployment.md`.
+---
 
-Brak osobnych kroków frontend/backend – wszystko w jednym pakiecie Astro.
+## Moduły Funkcjonalne (Szczegóły)
+### Trips
+CRUD: destynacja, zakres dat, waluta, budżet bazowy, lodging (próba geocodingu).
 
-🤝 **Współtworzenie**
+### Budget & Expenses
+* Plan kategorii (planned vs actual)
+* Normalizacja FX do waluty podróży
+* Prepaid vs on‑trip
+* Raport (`/api/trips/:id/budget/report`)
+* Eksport CSV (`/api/trips/:id/expenses/export.csv`)
 
-Jesteś pasjonatem podróży i kodowania? Chcesz pomóc w rozwoju TripCrafti? Twoja pomoc jest mile widziana!
-
-    Sforkuj repozytorium.
-
-    Utwórz nową gałąź (git checkout -b feature/twoja-funkcja).
-
-    Wprowadź swoje zmiany.
-
-    Zacommituj zmiany (git commit -m 'feat: Dodaj nową, wspaniałą funkcję').
-
-    Wypchnij zmiany do swojej gałęzi (git push origin feature/twoja-funkcja).
-
-    Otwórz Pull Request, opisując wprowadzone zmiany.
-
-Stworzone z ❤️ dla wszystkich podróżników.
-## **Środowisko (Environment Variables)**
-
-Zmiennie w `.env`. Prefiks `PUBLIC_` = dostępne w kliencie (nie dla sekretów!).
-
-Obowiązkowe:
-```
-PUBLIC_SUPABASE_URL=...
-PUBLIC_SUPABASE_ANON_KEY=...
-```
-
-**Produkcja - Cloudflare KV (sekrety):**
-```
-GEMINI_API_KEY=...           # Przechowywane w Cloudflare KV
-SUPABASE_SERVICE_ROLE_KEY=... # Przechowywane w Cloudflare KV
-```
-
-AI (itinerary + packing):
-```
-GEMINI_API_KEY=...
-# GEMINI_MODEL=gemini-2.5-flash
-```
-
-Waluty (FX):
-```
-# PUBLIC_FX_API_BASE=https://api.exchangerate.host
-# EXCHANGERATE_API_KEY=opcjonalny_klucz
-```
-
-Unsplash (opcjonalne):
-```
-# UNSPLASH_ACCESS_KEY=...
-```
-
-Legacy (opcjonalne):
-```
-# SUPABASE_URL=...
-# SUPABASE_KEY=...
-```
-
-**Uwagi:**
-* W produkcji sekrety (bez PUBLIC_) przechowywane w Cloudflare KV
-* Local development używa .env file z automatycznym fallbackiem
-* Instrukcje konfiguracji KV w `docs/deployment.md`
-
-## **Moduły Funkcjonalne**
-
-### **Trips**
-CRUD podróży (tytuł, destination, daty, budżet, waluta, lodging meta).
-
-### **Budget & Expenses**
-* Kategorie (planned_amount)
-* Wydatki z konwersją do waluty podróży (`amount_in_home_currency`)
-* Prepaid vs on-trip
-* Raport `/api/trips/:id/budget/report` (planned vs actual + prepaid)
-* Eksport CSV `/api/trips/:id/expenses/export.csv`
-* Tryby widoku: simple / full
-
-### **FX System**
-* Cache 6h (para walut)
+### FX System
+* Cache 6h
+* Fallback chain → identity
 * Źródło: identity | cache | live | fallback
-* Fallback zapewnia odporność przy błędach sieci
 
-### **AI Itinerary Assistant**
-* Wejście: interests, travelStyle, budget level, lodging, maxDistanceKm, travel party
-* Wyjście: JSON dni → aktywności (czas, nazwa, opis, koszt, waluta)
-* Fallback modeli (override `GEMINI_MODEL`)
-* Token usage (input/output/thought approx) zapisywany
+### AI Itinerary Assistant
+* Wejścia: interests, style, lodging, party profile, maxDistanceKm, budget tier
+* Wyjście: JSON (dni → aktywności: czas, tytuł, opis, koszt, waluta)
+* Fallback modeli
+* Log tokenów (input/output/approx thought)
 
-### **AI Packing Assistant**
-Flow: generacja → (max 2) regeneracje z podglądem → walidacja (add/remove/adjust/replace) → kategoryzacja → edycje ręczne → sharing
-* Biblioteka szybkich itemów
-* Drag & drop / zmiana kategorii / ilości
-* Ochrona kosztów: limit regeneracji
+### AI Packing Assistant
+Przepływ: generacja → max 2 regeneracje z diff → walidacja → kategoryzacja → edycje → udostępnienie.
 
-### **Sharing (Packing)**
-Link z tokenem, `can_modify`, opcjonalny expiry (godziny). Możliwość kopiowania do schowka.
+### Events Discovery
+* Ticketmaster + lokalne klasyfikacje JSON
+* Refresh endpoint z guardami produkcyjnymi
 
-### **I18n**
-Middleware ustala `lang`; słowniki w `src/lib/i18n.ts`. Dodanie języka = rozszerzenie enum + obiekt w `dictionaries`.
+### Sharing (Packing)
+* Link z tokenem + can_modify + opcjonalny expiry (h)
 
-### **Unsplash**
-Opcjonalny klucz dla obrazów destynacji kart podróży.
+### I18n
+* Middleware ustala `lang` (pl|en)
+* Słowniki: `src/lib/i18n.ts`
 
-### **Testy**
-```
-npm test
-```
-Zakres: FX (cache/fallback), parsing JSON Gemini packingu, budżet utils, komponenty UI.
+### Destination Images
+* Unsplash: exact → broadened → travel fallback
 
-### **Endpointy (wybór)**
-| Endpoint | Metoda | Opis |
-|----------|--------|------|
-| /api/trips | GET/POST | Lista / tworzenie podróży |
+---
+
+## Wybrane Endpointy API
+| Endpoint | Metoda(y) | Opis |
+|----------|-----------|------|
+| /api/trips | GET/POST | Lista / tworzenie |
 | /api/trips/:id/itinerary | POST | Generacja itinerarium (AI) |
-| /api/ai/packing | POST | Generacja / walidacja / kategoryzacja listy |
+| /api/ai/packing | POST | Generacja / walidacja / kategoryzacja packingu |
 | /api/trips/:id/expenses | POST | Dodanie wydatku (FX) |
-| /api/trips/:id/budget/report | GET | Raport post-trip |
+| /api/trips/:id/budget/report | GET | Raport budżetu |
 | /api/trips/:id/expenses/export.csv | GET | Eksport CSV |
-| /api/trips/:id/packing/share | POST | Utworzenie linku do listy |
+| /api/trips/:id/packing/share | POST | Link współdzielenia |
+| /api/events/... | GET | Wydarzenia + klasyfikacje |
 
-### **Struktura BudgetReport**
-```
+---
+
+## Struktury Danych
+### BudgetReport (przykład)
+```json
 {
-    trip_id: string,
-    currency: string | null,
-    plannedTotal: number,
-    totalSpent: number,
-    totalPrepaid: number,
-    totalOnTrip: number,
-    deltaTotal: number,
-    categories: [{ category_id, name, planned, spent, delta, utilization }],
-    generated_at: string
+  "trip_id": "uuid",
+  "currency": "PLN",
+  "plannedTotal": 5000,
+  "totalSpent": 4200,
+  "totalPrepaid": 1800,
+  "totalOnTrip": 2400,
+  "deltaTotal": -800,
+  "categories": [
+    { "category_id": "food", "name": "Jedzenie", "planned": 1200, "spent": 950, "delta": -250, "utilization": 0.79 }
+  ],
+  "generated_at": "2025-01-05T12:00:00Z"
 }
 ```
 
-### **Zasady Env / Bezpieczeństwo**
-* Sekrety bez prefiksu PUBLIC_
-* Klucze AI i FX przechowuj lokalnie lub w CI (sekrety)
-* Prompty Gemini zwracają czysty JSON – brak Markdown fence
+---
 
-### **Następne Kroki (propozycje)**
+## Testy
+```bash
+npm test
+npm run test:watch
+```
+Obszary: FX (cache/fallback), parsowanie JSON (packing), utils budżetu, kluczowe komponenty UI.
 
 ---
-## **Konwencje Commitów & Styl Kodowania**
 
-### Konwencje Commitów (Conventional Commits)
-Format:
-```
-<type>(scope?): opis w trybie rozkazującym
-```
-**Typy**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`.
+## Deployment (Cloudflare)
+1. Deploy Durable Object Worker:
+   ```bash
+   npx wrangler deploy --config wrangler-worker.toml
+   ```
+2. Ustaw sekrety KV:
+   ```bash
+   wrangler kv:key put --namespace-id <KV_ID> GEMINI_API_KEY <wartość>
+   wrangler kv:key put --namespace-id <KV_ID> SUPABASE_SERVICE_ROLE_KEY <wartość>
+   wrangler kv:key put --namespace-id <KV_ID> TICKETMASTER_API_KEY <wartość>
+   ```
+3. Build + deploy Pages:
+   ```bash
+   npm run build
+   npx wrangler pages deploy dist
+   ```
+4. Weryfikacja: bindingi runtime + middleware języka.
 
-**Przykłady**:
-```
-feat(packing): limit 2 regeneracje listy AI
-fix(fx): popraw fallback przy HTTP 500
-refactor(itinerary): uproszczony parser JSON
-docs(readme): dodano sekcję env
-```
-
-### Styl Kodowania
-* **TypeScript** – nowe typy współdzielone w `src/types.ts`.
-* **Early returns** – ogranicz zagnieżdżenia.
-* **Hooki** dla logiki UI (`src/components/hooks`).
-* **Serwisy** w `src/lib/services` dla integracji (Gemini, FX, itd.).
-* **i18n** – tekst user‑facing w słownikach (`src/lib/i18n.ts`).
-* **Tailwind** – korzystaj z utility-first; unikaj nadmiarowych klas custom.
-* **Prompty AI** – bez markdown fence, deterministyczne JSON contracty.
-* **ESLint** – uruchom `npm run lint` przed PR.
-
-### Branch Naming
-`feat/`, `fix/`, `docs/`, `refactor/`, `chore/`, np. `feat/fx-historical-rates`.
-
-### PR Checklist (skrót)
-- [ ] Testy zielone (`npm test`)
-- [ ] Lint bez błędów
-- [ ] Zmiany w docs / README jeśli wymagane
-- [ ] i18n: klucze dla PL i EN
-- [ ] Brak przypadkowych `console.log`
+Checklist:
+* [ ] Schema w Supabase
+* [ ] RLS aktywne
+* [ ] Sekrety w KV
+* [ ] Durable Object wdrożone
+* [ ] Smoke test AI
 
 ---
-* Persist `fx_rate` w DB
-* Timeline wizualizacja itinerarium
-* Public share itineraries (read-only)
-* Historia wersji listy pakowania
-* PWA / offline (cache itinerary + packing)
+
+## Commity i Styl
+Konwencja Conventional Commits:
+```
+<type>(scope?): rozkazujące streszczenie
+```
+Typy: feat | fix | docs | style | refactor | perf | test | build | ci | chore.
+
+Przykłady:
+```
+feat(packing): dodano diff regeneracji
+fix(fx): fallback przy 500 dostawcy
+refactor(itinerary): uproszczenie chain modeli
+docs(readme): unifikacja tabeli env
+```
+
+Zasady:
+* Wspólne typy w `src/types.ts`
+* Early returns zamiast głębokiego zagnieżdżania
+* Hooki w `src/components/hooks`
+* Serwisy w `src/lib/services`
+* Teksty i18n poza komponentami
+* Prompty AI deterministyczne (czysty JSON)
+* Przed PR: `npm run lint` i `npm test`
+
+Nazewnictwo branchy: `feat/...`, `fix/...`, `docs/...` itd.
+
+PR checklist (skrót): testy zielone, lint czysty, klucze i18n dodane, brak zbędnych logów, README zaktualizowane.
+
+---
+
+## Roadmap
+| Faza | Elementy |
+|------|----------|
+| Itinerary UX | Wizualizacja timeline, public readonly shares |
+| Packing | Historia wersji, rozszerzona kolaboracja |
+| Budget | Persist fx_rate, historyczne kursy |
+| Offline / PWA | Cache itinerary + packing, instalowalna aplikacja |
+| Social | Publiczna galeria itinerariów, notatki i załączniki |
+
+---
+
+## Współtworzenie
+1. Fork repo
+2. `git checkout -b feat/twoja-funkcja`
+3. Implementacja + testy
+4. `npm run lint && npm test`
+5. Commit (`feat(scope): ...`) i push
+6. Pull Request z opisem / zrzutami ekranu
+
+Stworzone z ❤️ dla podróżników kochających czysty kod.
+
+---
+
+> Brak pliku licencji – dodaj (sugerowane MIT) przed publicznym release.
+
