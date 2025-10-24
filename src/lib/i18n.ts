@@ -6,6 +6,14 @@ export interface Dictionary {
     heading: string;
     sub: string;
     cta: string;
+    pitch?: string;
+  };
+  homepageActions?: {
+    createAccount: string;
+    createTrip: string;
+    setBudget: string;
+    generatePlan: string;
+    buildPackingList: string;
   };
   section2: {
     heading: string;
@@ -561,9 +569,10 @@ const year = new Date().getFullYear();
 export const dictionaries: Record<Lang, Dictionary> = {
   pl: {
     hero: {
-      badge: 'Wszechstronne AI narzędzie podróżne',
+      badge: 'Wszechstronne narzędzie podróżne',
       heading: 'Planuj mądrze. Pakuj szybciej. Podróżuj wygodniej.',
-      sub: 'Twoje centrum dowodzenia podróżą. Połącz precyzyjną kontrolę z inteligentnym wsparciem AI i ciesz się każdą chwilą.',
+      sub: 'Jedno miejsce: podróże, budżet, plan dnia AI i lista pakowania.',
+      pitch: 'Od pomysłu do spakowanej walizki — AI plan podróży, budżet i lista pakowania w jednym.',
       cta: 'Zacznij Planować',
     },
     section2: {
@@ -977,6 +986,13 @@ export const dictionaries: Record<Lang, Dictionary> = {
       brandName: 'TripCrafti',
       titleTagline: 'TripCrafti – Plan. Optimize. Travel.',
     },
+    homepageActions: {
+      createAccount: 'Utwórz konto',
+      createTrip: 'Stwórz podróż',
+      setBudget: 'Ustaw budżet',
+      generatePlan: 'Wygeneruj plan podróży',
+      buildPackingList: 'Wygeneruj listę pakowania',
+    },
     packing: {
       header: {
         title: 'Asystent Pakowania',
@@ -1205,9 +1221,10 @@ export const dictionaries: Record<Lang, Dictionary> = {
   },
   en: {
     hero: {
-      badge: 'All-in-one AI travel workspace',
+      badge: 'All-in-one travel workspace',
       heading: 'Plan smarter. Pack faster. Travel easier.',
-      sub: 'Your travel command center. Combine precise control with intelligent AI support and enjoy every moment.',
+      sub: 'One workspace: trips, budget, AI day plan & packing list.',
+      pitch: 'From first idea to packed bag—AI travel plan, budget tracking & smart packing list in one.',
       cta: 'Start Planning',
     },
     section2: {
@@ -1426,7 +1443,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
       },
       tabs: {
         overview: 'Overview',
-        itinerary: 'Itinerary',
+        itinerary: 'Travel Plan',
         budget: 'Budget',
         packing: 'Packing',
         settings: 'Settings',
@@ -1437,7 +1454,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         deleting: 'Deleting…',
       },
       itinerary: {
-        generated: 'Itinerary has been generated',
+        generated: 'Travel plan has been generated',
         errorLabel: 'Error',
       },
       placeholders: {
@@ -1476,9 +1493,9 @@ export const dictionaries: Record<Lang, Dictionary> = {
       },
       submit: 'Generate plan',
       generating: 'Generating plan...',
-      generated: 'Itinerary generated',
-      noItineraryTitle: 'No itinerary yet',
-      noItineraryBody: 'Generate an intelligent travel plan based on your preferences and interests.',
+      generated: 'Travel plan generated',
+      noItineraryTitle: 'No travel plan yet',
+      noItineraryBody: 'Generate a smart travel plan based on your preferences and interests.',
       travelStyles: [
         { value: 'Relaxed', label: 'Relaxed', description: 'Slower pace with more downtime' },
         { value: 'Balanced', label: 'Balanced', description: 'Ideal mix of sightseeing and rest' },
@@ -1587,7 +1604,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
       replaceWith: 'With: {item}',
     },
     itineraryView: {
-      generatedHeading: 'Itinerary generated',
+      generatedHeading: 'Travel plan generated',
       summaryDays: '{count} days',
       summaryActivities: '{count} activities',
       statusReady: 'Ready',
@@ -1605,6 +1622,13 @@ export const dictionaries: Record<Lang, Dictionary> = {
       brandAlt: 'TripCrafti Logo',
       brandName: 'TripCrafti',
       titleTagline: 'TripCrafti – Plan. Optimize. Travel.',
+    },
+    homepageActions: {
+      createAccount: 'Create Account',
+      createTrip: 'Create Trip',
+      setBudget: 'Set Budget',
+      generatePlan: 'Generate Travel Plan',
+      buildPackingList: 'Generate Packing List',
     },
     packing: {
       header: {
