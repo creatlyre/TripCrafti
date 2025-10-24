@@ -11,37 +11,46 @@ interface Props {
 }
 
 const palette = [
-  'from-indigo-500 to-violet-500',
-  'from-fuchsia-500 to-pink-500',
-  'from-emerald-500 to-teal-500',
-  'from-amber-500 to-orange-500',
-  'from-sky-500 to-cyan-500',
-  'from-rose-500 to-red-500',
+  'from-brand-cyan to-brand-cyan/80',
+  'from-brand-orange to-brand-orange/80',
+  'from-brand-cyan/80 to-brand-orange/80',
+  'from-brand-orange/80 to-brand-cyan/80',
+  'from-brand-cyan/60 to-brand-orange/60',
+  'from-brand-orange/60 to-brand-cyan/60',
 ];
 
 const CategorySpendChart: React.FC<Props> = ({ summary }) => {
   if (!summary.spentByCategory.length) {
-    return <div className="text-xs text-slate-500">No category data</div>;
+    return <div className="text-sm text-brand-cyan/60">No category data</div>;
   }
   const total = summary.spentByCategory.reduce((s, c) => s + c.spent, 0) || 1;
   const top = summary.spentByCategory.slice(0, 8);
   return (
-    <div className="space-y-3">
-      <ul className="space-y-2">
+    <div className="space-y-5">
+      <ul className="space-y-4">
         {top.map((c, idx) => {
           const pct = (c.spent / total) * 100;
           const grad = palette[idx % palette.length];
           return (
-            <li key={c.category_id || c.category || 'uncat'} className="text-[11px]">
-              <div className="flex justify-between mb-0.5">
-                <span className="truncate max-w-[60%] text-slate-300" title={c.category || 'Uncategorized'}>
-                  {c.category || 'Uncategorized'}
+            <li key={c.category_id || c.category || 'uncat'} className="text-sm">
+              <div className="flex justify-between mb-2">
+                <span
+                  className="truncate max-w-[60%] text-white font-semibold flex items-center gap-2"
+                  title={c.category || 'Uncategorized'}
+                >
+                  💎 {c.category || 'Uncategorized'}
                 </span>
-                <span className="font-mono text-slate-400">{c.spent.toFixed(0)}</span>
+                <span className="font-mono text-brand-cyan bg-brand-cyan/10 px-2 py-1 rounded border border-brand-cyan/20 font-bold">
+                  {c.spent.toFixed(0)}
+                </span>
               </div>
-              <div className="h-2 w-full rounded bg-slate-800 overflow-hidden">
-                <div className={`h-full bg-gradient-to-r ${grad}`} style={{ width: pct + '%' }} />
+              <div className="h-4 w-full rounded-full bg-brand-navy-dark/60 overflow-hidden shadow-inner border border-brand-cyan/10">
+                <div
+                  className={`h-full bg-gradient-to-r ${grad} transition-all duration-700 ease-out shadow-lg`}
+                  style={{ width: pct + '%' }}
+                />
               </div>
+              <div className="text-xs text-brand-cyan/60 mt-1 font-medium">{pct.toFixed(1)}% of total spend</div>
             </li>
           );
         })}

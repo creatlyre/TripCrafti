@@ -159,6 +159,9 @@ export interface Dictionary {
       prepaid: string;
       adding: string;
       submit: string;
+      noCategories?: string;
+      newCategoryPrompt?: string;
+      plannedAmountPrompt?: string;
     };
     itineraryAdd?: { button: string; added?: string; error?: string; adding?: string };
     page: {
@@ -877,6 +880,9 @@ export const dictionaries: Record<Lang, Dictionary> = {
         prepaid: 'Przedpłata',
         adding: 'Dodawanie…',
         submit: 'Dodaj wydatek',
+        noCategories: 'Brak dostępnych kategorii',
+        newCategoryPrompt: 'Podaj nazwę kategorii:',
+        plannedAmountPrompt: 'Podaj planowaną kwotę:',
       },
       itineraryAdd: { button: 'Dodaj do wydatków', added: 'Dodano', error: 'Błąd dodawania', adding: 'Dodawanie...' },
       page: {
@@ -1657,6 +1663,9 @@ export const dictionaries: Record<Lang, Dictionary> = {
         prepaid: 'Prepaid',
         adding: 'Adding...',
         submit: 'Add Expense',
+        noCategories: 'No categories available',
+        newCategoryPrompt: 'Enter category name:',
+        plannedAmountPrompt: 'Enter planned amount:',
       },
       itineraryAdd: { button: 'Add to expenses', added: 'Added', error: 'Add failed', adding: 'Adding...' },
       page: {

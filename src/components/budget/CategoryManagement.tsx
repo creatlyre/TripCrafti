@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 
 import { getDictionary, type Lang } from '@/lib/i18n';
 
@@ -6,7 +7,6 @@ import type { BudgetCategory, BudgetMode } from '../../types';
 
 import { BUDGET_CATEGORY_TEMPLATES, isRatio } from '../../lib/budget.templates';
 import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Input } from '../ui/input';
 
@@ -34,32 +34,34 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
   // Total planned (for percent display)
   const totalPlanned = useMemo(() => categories.reduce((s, c) => s + (c.planned_amount || 0), 0), [categories]);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/trips/${tripId}/budget/categories`);
       if (!res.ok) throw new Error(dict.errors?.loadCategories || 'Failed to load categories');
-      const data = await res.json();
+      const raw = await res.json();
+      const data = raw as { categories?: BudgetCategory[] };
       setCategories(data.categories || []);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unexpected error');
     } finally {
       setLoading(false);
     }
-  }
+  }, [tripId, dict.errors?.loadCategories]);
 
   useEffect(() => {
     load();
-  }, [tripId]);
+  }, [load]);
   // fetch trip to know overall budget (for ratio templates conversion)
   useEffect(() => {
     (async () => {
       try {
         const res = await fetch(`/api/trips/${tripId}`); // assuming trip endpoint exists
         if (res.ok) {
-          const data = await res.json();
-          if (data?.trip?.budget) setTripBudget(Number(data.trip.budget));
+          const raw = await res.json();
+          const data = raw as { trip?: { budget?: number } };
+          if (data.trip?.budget != null) setTripBudget(Number(data.trip.budget));
         }
       } catch {
         /* ignore */
@@ -68,13 +70,13 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
   }, [tripId]);
 
   async function addCategory() {
-    if (!form.name || !form.planned_amount) return;
+    if (!form.name) return; // planned amount now optional
     setSubmitting(true);
     setError(null);
     try {
       const payload = {
         name: form.name,
-        planned_amount: Number(form.planned_amount),
+        planned_amount: form.planned_amount ? Number(form.planned_amount) : 0,
         icon_name: form.icon_name || undefined,
       };
       const res = await fetch(`/api/trips/${tripId}/budget/categories`, {
@@ -91,8 +93,8 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
         const created = categories[categories.length - 1];
         if (created) onCategoryAdded(created);
       }
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unexpected error');
     } finally {
       setSubmitting(false);
     }
@@ -101,7 +103,7 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
   async function applyTemplate(templateId: string) {
     const template = BUDGET_CATEGORY_TEMPLATES.find((t) => t.id === templateId);
     if (!template) return;
-    if (categories.length > 0 && !confirm(dict.categories.confirmApplyTemplate)) return;
+    if (categories.length > 0 && !confirm(dict.categories?.confirmApplyTemplate || 'Apply template?')) return;
     setApplyingTemplateId(templateId);
     setError(null);
     try {
@@ -124,8 +126,9 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
       if (!res.ok) throw new Error(dict.errors?.loadCategories || 'Failed to apply template');
       await load();
       setTemplatesOpen(false);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unexpected error';
+      setError(message);
     } finally {
       setApplyingTemplateId(null);
     }
@@ -133,7 +136,7 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
 
   async function deleteCategory(id: string) {
     if (deletingId) return; // guard
-    if (!confirm(dict.categories.confirmDeleteCategory || 'Delete this category?')) return;
+    if (!confirm(dict.categories?.confirmDeleteCategory || 'Delete this category?')) return;
     const prev = categories;
     setDeletingId(id);
     setCategories((cs) => cs.filter((c) => c.id !== id)); // optimistic
@@ -141,106 +144,138 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
     try {
       const res = await fetch(`/api/trips/${tripId}/budget/categories/${id}`, { method: 'DELETE' });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const raw = await res.json().catch(() => ({}));
+        const data = raw as { error?: string };
         throw new Error(data.error || dict.errors?.deleteFailed || 'Delete failed');
       }
-    } catch (e: any) {
+    } catch (e) {
       setCategories(prev); // revert
-      setActionError(e.message);
+      setActionError(e instanceof Error ? e.message : 'Unexpected error');
     } finally {
       setDeletingId(null);
     }
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">{dict.categories.heading}</h3>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h3 className="text-lg font-semibold text-white">{dict.categories.heading}</h3>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" variant="outline">
-              {dict.categories.add}
-            </Button>
+            <button className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-cyan/90 text-brand-navy font-semibold hover:from-brand-cyan/90 hover:to-brand-cyan hover:scale-105 hover:shadow-xl hover:shadow-brand-cyan/30 transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 focus:ring-offset-2 focus:ring-offset-brand-navy border-2 border-brand-cyan/30 hover:border-brand-cyan/50">
+              <span className="relative z-10 flex items-center gap-2">➕ {dict.categories.add}</span>
+              <div className="absolute inset-0 rounded-xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-sm">
+          <DialogContent className="sm:max-w-sm bg-brand-navy-light border-brand-navy-lighter">
             <DialogHeader>
-              <DialogTitle>{dict.categories.newCategory}</DialogTitle>
+              <DialogTitle className="text-lg text-white">{dict.categories.newCategory}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <label className="text-xs font-medium">{dict.categories.name}</label>
-                <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+                <label className="text-sm font-medium text-brand-cyan">{dict.categories.name}</label>
+                <Input
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  className="mt-1 bg-brand-navy-dark border-brand-navy-lighter text-white placeholder:text-brand-cyan/50"
+                />
               </div>
               <div>
-                <label className="text-xs font-medium">{dict.categories.plannedAmount}</label>
+                <label className="text-sm font-medium text-brand-cyan">
+                  {dict.categories.plannedAmount}
+                  {lang === 'pl' ? ' (opcjonalnie)' : ' (optional)'}
+                </label>
                 <Input
                   type="number"
                   value={form.planned_amount}
                   onChange={(e) => setForm((f) => ({ ...f, planned_amount: e.target.value }))}
+                  placeholder={lang === 'pl' ? 'np. 500' : 'e.g. 500'}
+                  className="mt-1 bg-brand-navy-dark border-brand-navy-lighter text-white placeholder:text-brand-cyan/50"
                 />
+                <p className="mt-1 text-[11px] text-brand-cyan/60">
+                  {lang === 'pl'
+                    ? 'Pozostaw puste jeśli nie planujesz konkretnego limitu dla tej kategorii.'
+                    : "Leave empty if you don't plan a specific limit for this category."}
+                </p>
               </div>
               <div>
-                <label className="text-xs font-medium">{dict.categories.iconOptional}</label>
+                <label className="text-sm font-medium text-brand-cyan">{dict.categories.iconOptional}</label>
                 <Input
                   value={form.icon_name}
                   onChange={(e) => setForm((f) => ({ ...f, icon_name: e.target.value }))}
                   placeholder={dict.categories.iconPlaceholder}
+                  className="mt-1 bg-brand-navy-dark border-brand-navy-lighter text-white placeholder:text-brand-cyan/50"
                 />
               </div>
-              {error && <div className="text-xs text-red-600">{error}</div>}
+              {error && <div className="text-sm text-brand-orange bg-brand-orange/10 p-3 rounded-lg">{error}</div>}
               <Button
-                disabled={submitting || !form.name || !form.planned_amount}
+                disabled={submitting || !form.name}
                 onClick={addCategory}
-                className="w-full"
+                aria-label={dict.categories.submit}
+                className="relative group w-full bg-brand-cyan text-brand-navy hover:bg-brand-cyan/90 font-medium border-2 border-brand-cyan/40 hover:border-brand-cyan focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-cyan/50 transition-all duration-300 rounded-xl overflow-hidden hover:shadow-lg hover:shadow-brand-cyan/30 active:scale-95 disabled:opacity-50"
               >
-                {submitting ? dict.categories.submitCreating : dict.categories.submit}
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  {submitting ? dict.categories.submitCreating : dict.categories.submit}
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/80 to-brand-cyan/60 opacity-0 group-hover:opacity-20 transition-opacity" />
               </Button>
             </div>
           </DialogContent>
         </Dialog>
         <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" variant="secondary">
-              {dict.categories.templates}
-            </Button>
+            <button className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-brand-orange/20 to-brand-orange/10 text-brand-orange border-2 border-brand-orange/30 hover:from-brand-orange/30 hover:to-brand-orange/20 hover:border-brand-orange/50 hover:scale-105 hover:shadow-xl hover:shadow-brand-orange/20 transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-orange/50 focus:ring-offset-2 focus:ring-offset-brand-navy font-semibold">
+              <span className="relative z-10 flex items-center gap-2">📋 {dict.categories.templates}</span>
+              <div className="absolute inset-0 rounded-xl bg-brand-orange/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto bg-brand-navy-light border-brand-navy-lighter">
             <DialogHeader>
-              <DialogTitle>{dict.categories.selectTemplate}</DialogTitle>
+              <DialogTitle className="text-lg text-white">{dict.categories.selectTemplate}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 text-xs">
+            <div className="space-y-4 text-sm">
               {BUDGET_CATEGORY_TEMPLATES.map((t) => {
                 const loc = dict.categoryTemplates?.[t.id];
                 const label = loc?.label || t.label;
                 const description = loc?.description || t.description;
                 const localizedCategories =
                   (loc?.categories || []).length === t.categories.length ? loc?.categories : undefined;
-                const categoriesForDisplay = localizedCategories
+                interface DisplayCategory {
+                  name: string;
+                  suggested_portion: number | null | undefined;
+                  icon_name?: string;
+                }
+                const categoriesForDisplay: DisplayCategory[] = localizedCategories
                   ? localizedCategories.map((c) => ({ name: c.name, suggested_portion: c.portion, icon_name: c.icon }))
-                  : t.categories;
-                const totalPlanned = categoriesForDisplay.reduce((sum, c: any) => {
+                  : (t.categories as DisplayCategory[]);
+                const totalPlanned = categoriesForDisplay.reduce((sum, c) => {
                   if (isRatio(c.suggested_portion) && tripBudget) return sum + tripBudget * (c.suggested_portion || 0);
                   if (typeof c.suggested_portion === 'number' && !isRatio(c.suggested_portion))
                     return sum + c.suggested_portion;
                   return sum;
                 }, 0);
                 return (
-                  <div key={t.id} className="border rounded-md p-3 bg-slate-900/40 border-slate-700">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-slate-200">{label}</span>
-                      <Button size="sm" disabled={applyingTemplateId === t.id} onClick={() => applyTemplate(t.id)}>
+                  <div key={t.id} className="border rounded-lg p-4 bg-brand-navy-dark/40 border-brand-navy-lighter">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-white">{label}</span>
+                      <Button
+                        size="sm"
+                        disabled={applyingTemplateId === t.id}
+                        onClick={() => applyTemplate(t.id)}
+                        className="bg-brand-cyan text-brand-navy hover:bg-brand-cyan/90"
+                      >
                         {applyingTemplateId === t.id ? dict.categories.applying : dict.categories.apply}
                       </Button>
                     </div>
-                    <p className="text-slate-400 mb-2 leading-snug">{description}</p>
+                    <p className="text-brand-cyan/70 mb-3 leading-relaxed">{description}</p>
                     <div className="grid grid-cols-2 gap-2">
-                      {categoriesForDisplay.map((c: any) => (
+                      {categoriesForDisplay.map((c) => (
                         <div
                           key={c.name}
-                          className="bg-slate-800/50 border border-slate-700 rounded px-2 py-1 flex flex-col"
+                          className="bg-brand-navy-lighter/50 border border-brand-navy-lighter rounded px-3 py-2 flex flex-col"
                         >
-                          <span className="truncate">{c.name}</span>
-                          <span className="text-[10px] text-slate-400">
+                          <span className="truncate text-white text-sm">{c.name}</span>
+                          <span className="text-sm text-brand-cyan/60">
                             {isRatio(c.suggested_portion)
                               ? `${Math.round((c.suggested_portion || 0) * 100)}%`
                               : (c.suggested_portion ?? '-')}
@@ -249,7 +284,7 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
                       ))}
                     </div>
                     {tripBudget && (
-                      <div className="mt-2 text-[10px] text-slate-500">
+                      <div className="mt-3 text-sm text-brand-cyan/60">
                         {dict.categories.estPlannedTotal} {totalPlanned.toFixed(2)} (
                         {tripBudget > 0 ? ((totalPlanned / tripBudget) * 100).toFixed(0) : 0}
                         {dict.categories.ofTripBudget})
@@ -259,27 +294,33 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
                 );
               })}
               {tripBudget === null && (
-                <div className="text-[10px] text-amber-500">{dict.categories.budgetNotLoaded}</div>
+                <div className="text-sm text-brand-orange bg-brand-orange/10 p-3 rounded-lg">
+                  {dict.categories.budgetNotLoaded}
+                </div>
               )}
             </div>
           </DialogContent>
         </Dialog>
       </div>
-      {loading && <div className="text-xs text-muted-foreground">{dict.categories.loading}</div>}
-      {error && !open && <div className="text-xs text-red-600">{error}</div>}
-      {actionError && <div className="text-[11px] text-red-500">{actionError}</div>}
-      {budgetMode === 'simple' && <div className="text-[10px] text-slate-500">{dict.categories.simpleModeHint}</div>}
-      <div className="space-y-1 max-h-64 overflow-auto pr-1 rounded-md bg-slate-900/40 border border-slate-800">
+      {loading && <div className="text-sm text-brand-cyan/60">{dict.categories.loading}</div>}
+      {error && !open && <div className="text-sm text-brand-orange bg-brand-orange/10 p-3 rounded-lg">{error}</div>}
+      {actionError && <div className="text-sm text-brand-orange bg-brand-orange/10 p-3 rounded-lg">{actionError}</div>}
+      {budgetMode === 'simple' && (
+        <div className="text-sm text-brand-cyan/60 bg-brand-cyan/5 p-3 rounded-lg">
+          {dict.categories.simpleModeHint}
+        </div>
+      )}
+      <div className="space-y-2 max-h-80 overflow-auto pr-1 rounded-lg bg-brand-navy-light border border-brand-navy-lighter p-4">
         {categories.map((c) => (
           <div
             key={c.id}
-            className="group flex items-center justify-between gap-3 px-3 py-2 text-xs border-b border-slate-800 last:border-b-0 hover:bg-slate-800/60 transition-colors"
+            className="group flex items-center justify-between gap-4 px-4 py-3 text-sm border-b border-brand-navy-lighter/50 last:border-b-0 hover:bg-brand-navy-lighter/30 transition-colors rounded-lg"
           >
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium text-slate-200" title={c.name}>
+              <p className="truncate font-medium text-white" title={c.name}>
                 {c.name}
               </p>
-              <p className="text-[10px] text-slate-500 font-mono">
+              <p className="text-sm text-brand-cyan/70 font-mono">
                 {c.planned_amount.toFixed(2)}
                 {totalPlanned ? ` · ${((c.planned_amount / totalPlanned) * 100).toFixed(0)}%` : ''}
               </p>
@@ -288,9 +329,11 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
               aria-label={'Delete category'}
               onClick={() => deleteCategory(c.id)}
               disabled={deletingId === c.id}
-              className="opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-50 text-slate-400 hover:text-red-400 transition text-[11px] px-2 py-1 rounded-md hover:bg-red-500/10"
+              className="group h-12 w-12 flex items-center justify-center opacity-100 md:opacity-0 group-hover:opacity-100 focus:opacity-100 disabled:opacity-50 text-brand-cyan/70 hover:text-brand-orange hover:bg-brand-orange/10 hover:scale-110 hover:shadow-lg hover:shadow-brand-orange/20 transition-all duration-300 rounded-xl border-2 border-transparent hover:border-brand-orange/30 font-bold text-lg active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-orange/50 focus:ring-offset-2 focus:ring-offset-brand-navy"
             >
-              {deletingId === c.id ? '…' : '✕'}
+              <span className="relative z-10 transition-transform duration-300 group-hover:rotate-90">
+                {deletingId === c.id ? '⏳' : '🗑️'}
+              </span>
             </button>
           </div>
         ))}
