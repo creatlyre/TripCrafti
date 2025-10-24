@@ -15,7 +15,12 @@ interface Props {
 }
 
 const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
-  const dict = getDictionary(lang).budget!;
+  const dictBudget = getDictionary(lang).budget;
+  if (!dictBudget) {
+    throw new Error('Budget dictionary not found');
+  }
+  const dict = dictBudget;
+
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,25 +31,29 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  async function loadExpenses(opts: { silent?: boolean } = {}) {
-    if (!opts.silent) setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/trips/${trip.id}/expenses`);
-      if (!res.ok) throw new Error(dict.errors?.loadExpenses || 'Failed to load expenses');
-      const data = await res.json();
-      setExpenses(data.expenses || []);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      if (!opts.silent) setLoading(false);
-      setRefreshing(false);
-    }
-  }
+  const loadExpenses = useCallback(
+    async (opts: { silent?: boolean } = {}) => {
+      if (!opts.silent) setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/trips/${trip.id}/expenses`);
+        if (!res.ok) throw new Error(dict.errors?.loadExpenses || 'Failed to load expenses');
+        const data: { expenses?: Expense[] } = await res.json();
+        setExpenses(data.expenses || []);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+        setError(message);
+      } finally {
+        if (!opts.silent) setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [trip.id, dict.errors?.loadExpenses]
+  );
 
   useEffect(() => {
     loadExpenses();
-  }, [trip.id]);
+  }, [loadExpenses]);
 
   function onAdded(e: Expense) {
     setExpenses((prev) => [e, ...prev]);
@@ -83,7 +92,8 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
   const deleteExpense = useCallback(
     async (id: string) => {
       if (deletingId) return;
-      if (!confirm(dict.dashboard.confirmDeleteExpense || 'Delete this expense?')) return;
+      const confirmMessage = dict.dashboard.confirmDeleteExpense || 'Delete this expense?';
+      if (!confirm(confirmMessage)) return;
       const prev = expenses;
       setDeletingId(id);
       setExpenses((es) => es.filter((e) => e.id !== id)); // optimistic
@@ -91,18 +101,25 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
       try {
         const res = await fetch(`/api/trips/${trip.id}/expenses/${id}`, { method: 'DELETE' });
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || dict.errors?.deleteFailed || 'Delete failed');
+          let errorMessage = dict.errors?.deleteFailed || 'Delete failed';
+          try {
+            const data: { error?: string } = await res.json();
+            errorMessage = data.error || errorMessage;
+          } catch {
+            // Ignore JSON parse errors, use default message
+          }
+          throw new Error(errorMessage);
         }
         setSummaryRefresh((r) => r + 1);
-      } catch (e: any) {
+      } catch (error) {
         setExpenses(prev); // revert
-        setActionError(e.message);
+        const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+        setActionError(message);
       } finally {
         setDeletingId(null);
       }
     },
-    [deletingId, expenses, trip.id]
+    [deletingId, expenses, trip.id, dict.dashboard.confirmDeleteExpense, dict.errors?.deleteFailed]
   );
 
   const ExpenseItem: React.FC<{ e: Expense }> = ({ e }) => {
@@ -252,8 +269,8 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
                     {group.day}
                   </h3>
                   <ul className="space-y-2">
-                    {group.list.map((e) => (
-                      <ExpenseItem key={e.id} e={e} />
+                    {group.list.map((expense) => (
+                      <ExpenseItem key={expense.id} e={expense} />
                     ))}
                   </ul>
                 </div>

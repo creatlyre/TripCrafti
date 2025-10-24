@@ -18,7 +18,12 @@ interface Props {
 }
 
 const QuickAddExpense: React.FC<Props> = ({ tripId, onAdded, lang = 'pl', buttonVariant = 'fab' }) => {
-  const dict = getDictionary(lang).budget!;
+  const dictBudget = getDictionary(lang).budget;
+  if (!dictBudget) {
+    throw new Error('Budget dictionary not found');
+  }
+  const dict = dictBudget;
+
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [loadingCats, setLoadingCats] = useState(false);
@@ -32,10 +37,13 @@ const QuickAddExpense: React.FC<Props> = ({ tripId, onAdded, lang = 'pl', button
       setLoadingCats(true);
       try {
         const res = await fetch(`/api/trips/${tripId}/budget/categories`);
-        const data = await res.json();
+        if (!res.ok) {
+          throw new Error('Failed to load categories');
+        }
+        const data: { categories?: BudgetCategory[] } = await res.json();
         setCategories(data.categories || []);
-      } catch (e: any) {
-        // ignore
+      } catch (error) {
+        console.error('Failed to load categories:', error);
       } finally {
         setLoadingCats(false);
       }
@@ -64,12 +72,13 @@ const QuickAddExpense: React.FC<Props> = ({ tripId, onAdded, lang = 'pl', button
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('Failed to add expense');
-      const data = await res.json();
+      const data: { expense: Expense } = await res.json();
       onAdded?.(data.expense);
       setOpen(false);
       setForm({ amount: '', currency: '', description: '', category_id: '', is_prepaid: false });
-    } catch (e: any) {
-      setError(e.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+      setError(message);
     } finally {
       setSubmitting(false);
     }
