@@ -10,6 +10,18 @@ import { geocode } from '../../../../lib/geocoding';
 import { createAdvancedItineraryPrompt } from '../../../../lib/prompts/itineraryPrompt';
 import { getSecret, primeGlobalSecret } from '../../../../lib/secrets';
 
+// Type for Durable Object namespace
+interface DurableObjectNamespace {
+  idFromName(name: string): DurableObjectId;
+  get(id: DurableObjectId): DurableObjectStub;
+}
+
+interface DurableObjectId {}
+
+interface DurableObjectStub {
+  fetch(url: string, init?: RequestInit): Promise<Response>;
+}
+
 export const prerender = false;
 
 const preferencesSchema = z.object({
@@ -43,11 +55,11 @@ async function getGenAI(runtimeEnv?: Record<string, string | undefined>) {
 }
 
 // Ordered list of candidate model names. You can override the first one with GEMINI_MODEL env var.
-// We'll try them in order until one succeeds. This mitigates naming differences across SDK versions.
+// We'll try them in order until one succeeds. Prioritize faster models for Cloudflare Workers.
 const MODEL_CANDIDATES = [
   import.meta.env.GEMINI_MODEL as string | undefined,
-  'gemini-2.5-pro',
-  'gemini-2.5-flash',
+  'gemini-2.5-flash', // Fastest model first for production reliability
+  'gemini-2.5-pro', // Most powerful but slowest, try last
   'gemini-2.5-flash-lite',
   'gemini-2.0-flash',
   'gemini-2.0-flash-lite',
@@ -87,7 +99,7 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
     const model = genAIInstance.getGenerativeModel({ model: resolvedModel });
     return {
       modelName: resolvedModel,
-      result: await withTimeout(model.generateContent(prompt), 300000, 'ModelTimeout'),
+      result: await withTimeout(model.generateContent(prompt), 180000, 'ModelTimeout'),
     };
   }
   let lastError: unknown = null;
@@ -98,12 +110,30 @@ async function generateWithFallback(genAIInstance: GoogleGenerativeAI, prompt: s
       const model = genAIInstance.getGenerativeModel({ model: candidate });
 
       // eslint-disable-next-line no-console
-      console.log('[itinerary-ai] Model instance created, starting generation with timeout 90s...');
+      console.log('[itinerary-ai] Model instance created, starting generation with timeout 120s...');
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] About to call model.generateContent() - this is the critical step');
+
+      // Add memory and timing diagnostics for Cloudflare Workers debugging
+      const memBefore =
+        (globalThis as unknown as { performance?: { memory?: { usedJSHeapSize?: number } } }).performance?.memory
+          ?.usedJSHeapSize || 'unknown';
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] Memory before AI call:', memBefore);
+
       const startTime = Date.now();
 
-      const result = await withTimeout(model.generateContent(prompt), 300000, 'ModelTimeout');
+      // Use appropriate timeout for queue-based processing (3 minutes)
+      const result = await withTimeout(model.generateContent(prompt), 180000, 'ModelTimeout');
 
       const endTime = Date.now();
+      const memAfter =
+        (globalThis as unknown as { performance?: { memory?: { usedJSHeapSize?: number } } }).performance?.memory
+          ?.usedJSHeapSize || 'unknown';
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] model.generateContent() call completed successfully');
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-ai] Memory after AI call:', memAfter);
       // eslint-disable-next-line no-console
       console.log('[itinerary-ai] Model generation completed in', endTime - startTime, 'ms');
 
@@ -236,28 +266,112 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
     const itineraryId = itineraryRecord.id;
 
-    // 5. Asynchronously generate itinerary
-    generateItinerary({
-      itineraryId,
-      trip,
-      preferences: finalPreferences,
-      supabase,
-      language: finalPreferences.language,
-      tableName: tableToUse,
-      runtimeEnv: locals.runtime?.env,
-    }).catch((err) => {
-      // eslint-disable-next-line no-console
-      console.error('[itinerary-ai] CRITICAL: Unhandled error in generateItinerary:', err);
-      // eslint-disable-next-line no-console
-      console.error('[itinerary-ai] Stack trace:', err?.stack);
-      // eslint-disable-next-line no-console
-      console.error('[itinerary-ai] Error name:', err?.name);
-      // eslint-disable-next-line no-console
-      console.error('[itinerary-ai] Error message:', err?.message);
-    });
+    // 5. Start Durable Object generation instead of background generation
+    try {
+      // Get a Durable Object stub for this itinerary
+      const runtimeEnv = locals.runtime?.env as Record<string, unknown>;
+      const durableObjectNamespace = runtimeEnv?.ITINERARY_GENERATOR as DurableObjectNamespace | undefined;
 
-    // Immediately return a response to the client
-    return json({ message: 'Itinerary generation started.', itineraryId }, 202);
+      if (!durableObjectNamespace) {
+        throw new Error('Durable Object not available - check wrangler configuration');
+      }
+
+      const durableObjectId = durableObjectNamespace.idFromName(itineraryId);
+      const durableObjectStub = durableObjectNamespace.get(durableObjectId);
+
+      // Prepare the request data for the Durable Object
+      const generationRequest = {
+        itineraryId,
+        tripId,
+        trip,
+        preferences: finalPreferences,
+        language: finalPreferences.language,
+        tableName: tableToUse,
+        userId: user.id,
+      };
+
+      // Start generation via Durable Object
+      const doResponse = await durableObjectStub.fetch('https://itinerary-do/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(generationRequest),
+      });
+
+      if (!doResponse.ok) {
+        const errorText = await doResponse.text();
+        throw new Error(`Durable Object generation failed: ${errorText}`);
+      }
+
+      const doResult = await doResponse.json();
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-api] Successfully started Durable Object generation:', doResult);
+
+      // Immediately return a response to the client
+      return json(
+        {
+          message: 'Itinerary generation started via Durable Object.',
+          itineraryId,
+          durableObjectStatus: doResult,
+        },
+        202
+      );
+    } catch (durableObjectError) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[itinerary-api] Durable Object not available, falling back to direct execution:',
+        durableObjectError
+      );
+
+      // Fallback to direct execution (for local development)
+      try {
+        // eslint-disable-next-line no-console
+        console.log('[itinerary-api] Starting direct generation fallback...');
+
+        // Update status to GENERATING
+        await supabase
+          .from(tableToUse)
+          .update({ status: 'GENERATING', updated_at: new Date().toISOString() })
+          .eq('id', itineraryId);
+
+        // Start generation in background using the fallback function
+        generateItinerary({
+          itineraryId,
+          trip,
+          preferences: finalPreferences,
+          supabase,
+          language: finalPreferences.language || 'en',
+          tableName: tableToUse,
+          runtimeEnv: process.env as Record<string, string | undefined>,
+        }).catch((fallbackError) => {
+          // eslint-disable-next-line no-console
+          console.error('[itinerary-api] Fallback generation failed:', fallbackError);
+        });
+
+        // Return immediate response
+        return json(
+          {
+            message: 'Itinerary generation started (local fallback mode).',
+            itineraryId,
+            mode: 'local_fallback',
+          },
+          202
+        );
+      } catch (fallbackError) {
+        // eslint-disable-next-line no-console
+        console.error('[itinerary-api] Both Durable Object and fallback failed:', fallbackError);
+
+        // Update the Supabase record to FAILED so the user isn't stuck
+        await supabase
+          .from(tableToUse)
+          .update({ status: 'FAILED', error_message: 'Generation system unavailable' })
+          .eq('id', itineraryId);
+
+        // Return a 500 error to the client
+        return json({ error: 'Failed to start generation job. System error.' }, 500);
+      }
+    }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return json({ error: 'UnhandledServerError', details: msg }, 500);
@@ -316,30 +430,11 @@ async function generateItinerary({
     // eslint-disable-next-line no-console
     console.log('[itinerary-ai] GenAI instance created successfully');
 
-    logProgress('SUPABASE_TEST', 'Testing database connection');
-    // Test Supabase connection with timeout (non-blocking)
+    logProgress('SUPABASE_TEST', 'Skipping connection test - proceeding with generation');
+    // Skip Supabase connection test in Cloudflare Workers environment to prevent hangs
+    // The connection is already validated by the successful record creation in the main handler
     // eslint-disable-next-line no-console
-    console.log('[itinerary-ai] Testing Supabase connection...');
-    try {
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Supabase connection test timeout')), 5000)
-      );
-      const testPromise = supabase.from(tableName).select('id').limit(1);
-
-      const testResult = (await Promise.race([testPromise, timeoutPromise])) as { error?: unknown };
-
-      if (testResult.error) {
-        // eslint-disable-next-line no-console
-        console.error('[itinerary-ai] Supabase connection test failed:', testResult.error);
-      } else {
-        // eslint-disable-next-line no-console
-        console.log('[itinerary-ai] Supabase connection test successful');
-      }
-    } catch (connError) {
-      // eslint-disable-next-line no-console
-      console.error('[itinerary-ai] Supabase connection test threw exception:', connError);
-      // Don't fail the whole process, just log and continue
-    }
+    console.log('[itinerary-ai] Skipping Supabase connection test to prevent hangs');
 
     logProgress('PROMPT_CREATE', 'Creating AI prompt');
     // eslint-disable-next-line no-console

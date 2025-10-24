@@ -35,6 +35,7 @@ Projekt jest aplikacją typu Single Repo opartą o:
 | Stylowanie | Tailwind CSS 4 |
 | Baza / Auth | Supabase (PostgreSQL + row level security + auth) |
 | AI | Google Gemini (itinerary + packing: generowanie, walidacja, kategoryzacja) |
+| Deployment | Cloudflare Pages + Durable Objects (długotrwałe AI generowanie) |
 | Wydarzenia | Ticketmaster Discovery API (z lokalną bazą klasyfikacji) |
 | Waluty (FX) | exchangerate.host (public API z opcjonalnym kluczem) |
 | Testy | Vitest + @testing-library/react |
@@ -42,6 +43,8 @@ Projekt jest aplikacją typu Single Repo opartą o:
 | Ikony / UI | shadcn/ui + Radix Primitives + lucide-react |
 | I18n | Lekki słownik PL/EN (`src/lib/i18n.ts`) |
 | Obrazy destynacji | Unsplash API (opcjonalny klucz) |
+
+**Cloudflare Durable Objects** używane dla długotrwałego generowania itinerariów (60-90s) bez timeoutów.
 
 Brak osobnego backendu typu NestJS – logika biznesowa zaimplementowana w Astro server endpoints (`/src/pages/api/**`).
 🏗️ **Architektura**
@@ -60,8 +63,13 @@ Monorepo aplikacyjne (Astro) + Supabase jako BaaS:
     └─ components/ (UI + hooki)
 
 Supabase (PostgreSQL + Auth)
-    ├─ Tabele: trips, expenses, budget_categories, itineraries
+    ├─ Tabele: trips, expenses, budget_categories, generateditineraries
     └─ Row Level Security (izolacja użytkowników)
+
+Cloudflare (Deployment)
+    ├─ Pages (główna aplikacja Astro + React)
+    ├─ Durable Objects Worker (długotrwałe AI generowanie)
+    └─ KV Storage (sekrety: GEMINI_API_KEY, SUPABASE_SERVICE_ROLE_KEY)
 
 Zewnętrzne:
     • Google Gemini (itinerary JSON + packing list / suggestions / categorization)
@@ -69,6 +77,36 @@ Zewnętrzne:
     • exchangerate.host (kursy walut z cache 6h, fallback = rate 1)
     • Unsplash (opcjonalnie obrazy destynacji)
 ```
+
+☁️ **Architektura Cloudflare**
+
+TripCrafti wykorzystuje hybrydowy model deploymentu:
+
+```
+Cloudflare Pages (główna aplikacja)
+├─ Astro SSR + React komponenty
+├─ API endpoints (/api/*)
+├─ Fallback dla AI gdy Durable Objects niedostępne
+└─ Automatyczne cachowanie statycznych zasobów
+
+Cloudflare Durable Objects Worker (AI generowanie)
+├─ Długotrwałe AI generowanie (bez timeoutów)
+├─ Stan persystentny per itinerary
+├─ Automatyczne timeout handling (5 min)
+└─ Fallback model chain (gemini-2.5-flash → gemini-2.5-pro)
+
+Cloudflare KV (sekrety)
+├─ GEMINI_API_KEY
+├─ SUPABASE_SERVICE_ROLE_KEY
+└─ Inne klucze API
+```
+
+**Tryby pracy:**
+- **Lokalny development**: `npm run dev` (z automatycznym fallbackiem)
+- **Cloudflare dev**: `npm run dev:cloudflare` (z prawdziwymi Durable Objects)
+- **Produkcja**: Pages + Durable Objects Worker
+
+Szczegóły w `docs/architecture.md`.
 
 Mechanizmy:
 * AI Itinerary: fallback lista modeli, pierwsze dostępne; token usage zapisywany (input, output, thought approx).
@@ -119,6 +157,7 @@ Etap 5: Społecznościowe / UX
 Wymagania:
 * Node 20+
 * Konto Supabase (URL + anon key)
+* Konto Cloudflare (dla Durable Objects w produkcji)
 * (Opcjonalnie) Klucze: GEMINI_API_KEY, UNSPLASH_ACCESS_KEY, EXCHANGERATE_API_KEY
 
 Kroki:
@@ -126,15 +165,23 @@ Kroki:
 2. Wejdź do katalogu projektu: `cd 10x-devs-project`
 3. Zainstaluj zależności: `npm install`
 4. Skopiuj `.env.example` → `.env` i uzupełnij wymagane pola
-5. Uruchom dev serwer: `npm run dev`
+5. Uruchom dev serwer: `npm run dev` (z automatycznym fallbackiem dla AI)
 6. Testy: `npm test`
 7. Build produkcyjny: `npm run build` + `npm run preview`
 
+**Deployment w produkcji (Cloudflare Pages + Durable Objects):**
+```bash
+# 1. Deploy Durable Objects Worker
+npx wrangler deploy --config wrangler-worker.toml
+
+# 2. Deploy Pages application
+npm run build
+npx wrangler pages deploy dist
+```
+
+Szczegółowe instrukcje w `docs/deployment.md`.
+
 Brak osobnych kroków frontend/backend – wszystko w jednym pakiecie Astro.
-
-Migracje: struktura tabel utrzymywana w Supabase (SQL w `db_schema.sql` lub panel). Planowane automatyczne migracje.
-
-Hot Reload: Astro + React Fast Refresh.
 
 🤝 **Współtworzenie**
 
@@ -163,6 +210,12 @@ PUBLIC_SUPABASE_URL=...
 PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
+**Produkcja - Cloudflare KV (sekrety):**
+```
+GEMINI_API_KEY=...           # Przechowywane w Cloudflare KV
+SUPABASE_SERVICE_ROLE_KEY=... # Przechowywane w Cloudflare KV
+```
+
 AI (itinerary + packing):
 ```
 GEMINI_API_KEY=...
@@ -186,10 +239,10 @@ Legacy (opcjonalne):
 # SUPABASE_KEY=...
 ```
 
-Uwagi:
-* `EXCHANGERATE_API_KEY` tylko serwer (bez PUBLIC_)
-* Fallback FX = rate 1 + warning
-* Dostawcy alternatywni w `docs/fx-providers.md`
+**Uwagi:**
+* W produkcji sekrety (bez PUBLIC_) przechowywane w Cloudflare KV
+* Local development używa .env file z automatycznym fallbackiem
+* Instrukcje konfiguracji KV w `docs/deployment.md`
 
 ## **Moduły Funkcjonalne**
 

@@ -1,16 +1,40 @@
 import type { APIRoute } from 'astro';
 
-import { z } from 'zod';
-
 export const prerender = false;
 
-function json(data: any, init: number | ResponseInit = 200) {
+function json(data: unknown, init: number | ResponseInit = 200) {
   return new Response(JSON.stringify(data), {
     status: typeof init === 'number' ? init : init.status,
     headers: { 'content-type': 'application/json' },
     ...(typeof init === 'object' ? init : {}),
   });
 }
+
+export const GET: APIRoute = async ({ params, locals }) => {
+  const { supabase } = locals;
+  const { tripId } = params;
+
+  if (!tripId) return json({ error: 'TripIdRequired' }, 400);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return json({ error: 'Unauthorized' }, 401);
+
+  // Get trip with all related data
+  const { data: trip, error: tripError } = await supabase
+    .from('trips')
+    .select('*')
+    .eq('id', tripId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (tripError || !trip) {
+    return json({ error: 'NotFoundOrForbidden' }, 404);
+  }
+
+  return json({ trip });
+};
 
 export const DELETE: APIRoute = async ({ params, locals }) => {
   const { supabase } = locals;

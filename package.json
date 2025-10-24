@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
+    "dev:cloudflare": "wrangler pages dev dist --port 4321 --compatibility-date 2025-02-04",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
