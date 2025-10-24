@@ -126,13 +126,18 @@ export interface Dictionary {
     categories: {
       heading: string;
       add: string;
+      edit: string;
       newCategory: string;
+      editCategory: string;
       name: string;
       plannedAmount: string;
+      plannedAmountHint: string;
       iconOptional: string;
       iconPlaceholder: string;
       submitCreating: string;
+      submitUpdating: string;
       submit: string;
+      update: string;
       templates: string;
       selectTemplate: string;
       applying: string;
@@ -140,6 +145,8 @@ export interface Dictionary {
       estPlannedTotal: string;
       ofTripBudget: string;
       budgetNotLoaded: string;
+      budgetBasedAmounts: string;
+      percentageExplanation: string;
       loading: string;
       empty: string;
       confirmApplyTemplate: string;
@@ -850,13 +857,18 @@ export const dictionaries: Record<Lang, Dictionary> = {
       categories: {
         heading: 'Kategorie budżetu',
         add: 'Dodaj',
+        edit: 'Edytuj',
         newCategory: 'Nowa kategoria',
+        editCategory: 'Edytuj kategorię',
         name: 'Nazwa',
         plannedAmount: 'Kwota planowana',
+        plannedAmountHint: 'Wprowadź kwotę w walucie podróży',
         iconOptional: 'Ikona (opcjonalnie)',
         iconPlaceholder: 'np. food',
         submitCreating: 'Dodawanie…',
+        submitUpdating: 'Aktualizowanie…',
         submit: 'Utwórz kategorię',
+        update: 'Aktualizuj kategorię',
         templates: 'Szablony',
         selectTemplate: 'Wybierz szablon',
         applying: 'Stosowanie…',
@@ -864,12 +876,69 @@ export const dictionaries: Record<Lang, Dictionary> = {
         estPlannedTotal: 'Szac. suma plan:',
         ofTripBudget: '% budżetu podróży',
         budgetNotLoaded: 'Budżet podróży niezaładowany; proporcje tylko jako %.',
+        budgetBasedAmounts: 'Kwoty oparte na budżecie podróży:',
+        percentageExplanation: 'Wartości procentowe będą przeliczone na konkretne kwoty',
         loading: 'Ładowanie…',
         empty: 'Brak kategorii. Kliknij Dodaj aby stworzyć pierwszą.',
         confirmApplyTemplate: 'To doda kategorie do istniejącej listy. Kontynuować?',
         confirmDeleteCategory: 'Usunąć tę kategorię?',
         simpleModeHint:
           'Skup się na zmiennych wydatkach w trakcie podróży (noclegi/bilety opłacone z góry oznacz jako przedpłaty).',
+      },
+      categoryTemplates: {
+        cityBreak: {
+          label: 'Wypad do miasta',
+          description: 'Krótki miejski wypad z jedzeniem, atrakcjami i lokalnym transportem',
+          categories: [
+            { name: 'Transport', icon: 'car', portion: 0.25 },
+            { name: 'Zakwaterowanie', icon: 'hotel', portion: 0.35 },
+            { name: 'Posiłki', icon: 'utensils', portion: 0.25 },
+            { name: 'Rozrywka', icon: 'ticket', portion: 0.15 },
+          ],
+        },
+        roadTrip: {
+          label: 'Podróż samochodem',
+          description: 'Przygodowa podróż z paliwem, kempingiem i elastycznością',
+          categories: [
+            { name: 'Paliwo', icon: 'gas-pump', portion: 0.3 },
+            { name: 'Zakwaterowanie', icon: 'tent', portion: 0.25 },
+            { name: 'Jedzenie', icon: 'shopping-cart', portion: 0.2 },
+            { name: 'Rozrywka', icon: 'ticket', portion: 0.15 },
+            { name: 'Fundusz awaryjny', icon: 'shield', portion: 0.1 },
+          ],
+        },
+        familyHoliday: {
+          label: 'Wakacje rodzinne',
+          description: 'Podróż przyjazna rodzinom z aktywnościami dla wszystkich grup wiekowych',
+          categories: [
+            { name: 'Zakwaterowanie', icon: 'hotel', portion: 0.4 },
+            { name: 'Transport', icon: 'plane', portion: 0.25 },
+            { name: 'Posiłki', icon: 'utensils', portion: 0.2 },
+            { name: 'Rozrywka', icon: 'gamepad-2', portion: 0.15 },
+          ],
+        },
+        backpacking: {
+          label: 'Podróż z plecakiem',
+          description: 'Przygoda z ograniczonym budżetem i najważniejszymi wydatkami',
+          categories: [
+            { name: 'Zakwaterowanie', icon: 'bed', portion: 0.3 },
+            { name: 'Transport', icon: 'bus', portion: 0.25 },
+            { name: 'Jedzenie', icon: 'apple', portion: 0.25 },
+            { name: 'Sprzęt', icon: 'backpack', portion: 0.1 },
+            { name: 'Awaryjne', icon: 'alert-triangle', portion: 0.1 },
+          ],
+        },
+        luxuryGetaway: {
+          label: 'Luksusowy wypad',
+          description: 'Ekskluzywne doświadczenie z wysokiej klasy usługami i komfortem',
+          categories: [
+            { name: 'Zakwaterowanie', icon: 'crown', portion: 0.45 },
+            { name: 'Wykwintne jedzenie', icon: 'chef-hat', portion: 0.25 },
+            { name: 'Transport', icon: 'car-luxury', portion: 0.15 },
+            { name: 'Spa i wellness', icon: 'flower', portion: 0.1 },
+            { name: 'Pamiątki', icon: 'gift', portion: 0.05 },
+          ],
+        },
       },
       quickAdd: {
         fabAria: 'Dodaj wydatek',
@@ -1634,13 +1703,18 @@ export const dictionaries: Record<Lang, Dictionary> = {
       categories: {
         heading: 'Budget Categories',
         add: 'Add',
+        edit: 'Edit',
         newCategory: 'New Category',
+        editCategory: 'Edit Category',
         name: 'Name',
         plannedAmount: 'Planned Amount',
+        plannedAmountHint: 'Enter amount in trip currency',
         iconOptional: 'Icon Name (optional)',
         iconPlaceholder: 'e.g. food',
         submitCreating: 'Adding...',
+        submitUpdating: 'Updating...',
         submit: 'Create Category',
+        update: 'Update Category',
         templates: 'Templates',
         selectTemplate: 'Select Template',
         applying: 'Applying...',
@@ -1648,11 +1722,68 @@ export const dictionaries: Record<Lang, Dictionary> = {
         estPlannedTotal: 'Est. planned total:',
         ofTripBudget: '% of trip budget',
         budgetNotLoaded: 'Trip budget not loaded yet; ratio-based allocations will show as percentages only.',
+        budgetBasedAmounts: 'Budget-based amounts:',
+        percentageExplanation: 'Percentage values will be calculated to actual amounts',
         loading: 'Loading...',
         empty: 'No categories yet. Click Add to create your first.',
         confirmApplyTemplate: 'This will add additional categories to your existing list. Continue?',
         confirmDeleteCategory: 'Delete this category?',
         simpleModeHint: 'Focus on variable on-trip spending (lodging / tickets paid upfront can be marked prepaid).',
+      },
+      categoryTemplates: {
+        cityBreak: {
+          label: 'City Break',
+          description: 'Quick urban getaway with dining, attractions, and local transport',
+          categories: [
+            { name: 'Transportation', icon: 'car', portion: 0.25 },
+            { name: 'Accommodation', icon: 'hotel', portion: 0.35 },
+            { name: 'Meals', icon: 'utensils', portion: 0.25 },
+            { name: 'Entertainment', icon: 'ticket', portion: 0.15 },
+          ],
+        },
+        roadTrip: {
+          label: 'Road Trip',
+          description: 'Adventure-focused travel with fuel, camping, and flexibility',
+          categories: [
+            { name: 'Fuel', icon: 'gas-pump', portion: 0.3 },
+            { name: 'Accommodation', icon: 'tent', portion: 0.25 },
+            { name: 'Food', icon: 'shopping-cart', portion: 0.2 },
+            { name: 'Entertainment', icon: 'ticket', portion: 0.15 },
+            { name: 'Emergency Fund', icon: 'shield', portion: 0.1 },
+          ],
+        },
+        familyHoliday: {
+          label: 'Family Holiday',
+          description: 'Family-friendly trip with activities for all ages',
+          categories: [
+            { name: 'Accommodation', icon: 'hotel', portion: 0.4 },
+            { name: 'Transportation', icon: 'plane', portion: 0.25 },
+            { name: 'Meals', icon: 'utensils', portion: 0.2 },
+            { name: 'Entertainment', icon: 'gamepad-2', portion: 0.15 },
+          ],
+        },
+        backpacking: {
+          label: 'Backpacking',
+          description: 'Budget-conscious adventure with essential expenses',
+          categories: [
+            { name: 'Accommodation', icon: 'bed', portion: 0.3 },
+            { name: 'Transportation', icon: 'bus', portion: 0.25 },
+            { name: 'Food', icon: 'apple', portion: 0.25 },
+            { name: 'Equipment', icon: 'backpack', portion: 0.1 },
+            { name: 'Emergency', icon: 'alert-triangle', portion: 0.1 },
+          ],
+        },
+        luxuryGetaway: {
+          label: 'Luxury Getaway',
+          description: 'Premium experience with high-end services and comfort',
+          categories: [
+            { name: 'Accommodation', icon: 'crown', portion: 0.45 },
+            { name: 'Fine Dining', icon: 'chef-hat', portion: 0.25 },
+            { name: 'Transportation', icon: 'car-luxury', portion: 0.15 },
+            { name: 'Spa & Wellness', icon: 'flower', portion: 0.1 },
+            { name: 'Souvenirs', icon: 'gift', portion: 0.05 },
+          ],
+        },
       },
       quickAdd: {
         fabAria: 'Add expense',
