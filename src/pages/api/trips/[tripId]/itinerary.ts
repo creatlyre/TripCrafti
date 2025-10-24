@@ -328,7 +328,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       try {
         // eslint-disable-next-line no-console
         console.log('[itinerary-api] Starting direct generation fallback...');
-        
+
         // Update status to GENERATING
         await supabase
           .from(tableToUse)
@@ -361,7 +361,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       } catch (fallbackError) {
         // eslint-disable-next-line no-console
         console.error('[itinerary-api] Both Durable Object and fallback failed:', fallbackError);
-        
+
         // Update the Supabase record to FAILED so the user isn't stuck
         await supabase
           .from(tableToUse)
