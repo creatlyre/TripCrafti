@@ -1,4 +1,5 @@
 ---
+import Logo from '../components/ui/Logo.astro';
 import Layout from '../layouts/Layout.astro';
 export const prerender = false;
 import { Map, BaggageClaim, Wallet } from 'lucide-react';
@@ -26,10 +27,7 @@ function switchUrl(target: string) {
 
     <!-- Top bar -->
     <header class="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-5">
-      <div class="flex items-center gap-3">
-        <img src="/Logo_TripCrafti.png" alt={dict.homepage?.brandAlt} class="h-10" />
-        <h1 class="text-xl font-semibold tracking-tight">{dict.homepage?.brandName}</h1>
-      </div>
+      <Logo size="lg" showSubtitle={true} subtitle={dict.hero?.badge || 'AI-Powered Travel Planning'} href="/" />
       <nav aria-label="Primary" class="flex items-center gap-3">
         <div class="flex items-center gap-1" aria-label={dict.langSwitcher.label}>
           <a

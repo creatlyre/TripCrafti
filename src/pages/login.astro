@@ -1,4 +1,5 @@
 ---
+import Logo from '../components/ui/Logo.astro';
 import Layout from '../layouts/Layout.astro';
 export const prerender = false;
 import Auth from '../components/auth/Auth.tsx';
@@ -17,10 +18,7 @@ function switchUrl(target: string) {
 <Layout title={`${dict.login.heading} – TripCrafti`}>
   <main class="min-h-screen bg-slate-950 text-slate-50 flex flex-col">
     <header class="flex items-center justify-between px-6 py-5">
-      <a href={switchUrl(lang)} class="flex items-center gap-3 text-slate-200 hover:text-white transition">
-        <img src="/Logo_TripCrafti.png" alt="TripCrafti Logo" class="h-9" />
-        <span class="text-sm font-semibold tracking-tight">TripCrafti</span>
-      </a>
+      <Logo size="md" href={switchUrl(lang)} />
       <nav aria-label="Secondary" class="flex items-center gap-2">
         <div class="flex items-center gap-1" aria-label={dict.langSwitcher.label}>
           <a

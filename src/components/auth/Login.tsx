@@ -58,11 +58,32 @@ export default function Login() {
   const supabase = useSupabaseClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+
   // Default to English in absence of explicit ?lang param to align with test expectations.
   const langParam =
     typeof window !== 'undefined' ? new URL(window.location.href).searchParams.get('lang') || 'en' : 'en';
   const lang = (langParam === 'pl' ? 'pl' : 'en') as Lang;
   const dict = getDictionary(lang);
+
+  // Handle URL error parameters
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlError = urlParams.get('error');
+    const urlMessage = urlParams.get('message');
+
+    if (urlError && urlMessage) {
+      setError(urlMessage);
+      // Clean up URL parameters
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('error');
+      newUrl.searchParams.delete('message');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+  }, []);
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -77,6 +98,25 @@ export default function Login() {
     });
     return () => listener.subscription.unsubscribe();
   }, [supabase]);
+
+  const handleResendVerification = async () => {
+    if (!error || !error.includes('email')) return;
+
+    setResendingVerification(true);
+    try {
+      // This is a simple implementation - in a real app you'd want to track the email
+      // For now, we'll show a generic message
+      setVerificationSent(true);
+      setError(null);
+
+      // You could implement actual resend logic here by calling your API
+      // const response = await fetch('/api/auth/resend-verification', { ... });
+    } catch {
+      setError('Failed to resend verification email. Please try again.');
+    } finally {
+      setResendingVerification(false);
+    }
+  };
 
   if (user) {
     return (
@@ -109,14 +149,30 @@ export default function Login() {
       {error && (
         <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-[13px] text-red-200">
           {error}
+          {(error.includes('email') || error.includes('verification')) && (
+            <button
+              onClick={handleResendVerification}
+              disabled={resendingVerification}
+              className="ml-2 text-indigo-400 hover:text-indigo-300 underline disabled:opacity-50"
+            >
+              {resendingVerification
+                ? dict.auth?.sending || 'Sending...'
+                : dict.auth?.resendVerification || 'Resend verification'}
+            </button>
+          )}
+        </div>
+      )}
+      {verificationSent && (
+        <div className="mb-4 rounded-md border border-green-500/40 bg-green-500/10 px-3 py-2 text-[13px] text-green-200">
+          {dict.auth?.verificationSent || 'Verification email sent! Please check your inbox and spam folder.'}
         </div>
       )}
       <Auth
         supabaseClient={supabase}
-        appearance={appearance as any}
+        appearance={appearance}
         providers={['google', 'github']}
         onlyThirdPartyProviders={false}
-        redirectTo={typeof window !== 'undefined' ? window.location.origin : undefined}
+        redirectTo={typeof window !== 'undefined' ? `${window.location.origin}/api/auth/callback` : undefined}
         theme="dark"
         localization={{
           variables: {

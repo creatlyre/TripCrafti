@@ -19,10 +19,21 @@ export const createSupabaseServer = (cookies: AstroCookies) => {
         cookies.delete(key, options);
       },
     },
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+    },
   });
 };
 
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+});
 
 export const createSupabase = () => {
   return createClient(supabaseUrl, supabaseAnonKey);
