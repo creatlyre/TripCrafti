@@ -8,6 +8,18 @@ const statusSchema = z.object({
   itineraryId: z.string().uuid(),
 });
 
+// Types for Durable Object
+interface DurableObjectNamespace {
+  idFromName(name: string): DurableObjectId;
+  get(id: DurableObjectId): DurableObjectStub;
+}
+
+interface DurableObjectId {}
+
+interface DurableObjectStub {
+  fetch(url: string, init?: RequestInit): Promise<Response>;
+}
+
 function json(data: unknown, init: number | ResponseInit = 200) {
   return new Response(JSON.stringify(data), {
     status: typeof init === 'number' ? init : init.status,
@@ -61,12 +73,44 @@ export const GET: APIRoute = async ({ url, locals }) => {
       return json({ error: 'Itinerary not found or access denied' }, 404);
     }
 
+    // If status is still GENERATING, try to get more detailed status from Durable Object
+    let durableObjectProgress = null;
+    if (itinerary.status === 'GENERATING') {
+      try {
+        const runtimeEnv = locals.runtime?.env as Record<string, unknown>;
+        const durableObjectNamespace = runtimeEnv?.ITINERARY_GENERATOR as DurableObjectNamespace | undefined;
+
+        if (durableObjectNamespace) {
+          const durableObjectId = durableObjectNamespace.idFromName(itineraryId);
+          const durableObjectStub = durableObjectNamespace.get(durableObjectId);
+
+          const doResponse = await durableObjectStub.fetch('https://itinerary-do/status', {
+            method: 'GET',
+          });
+
+          if (doResponse.ok) {
+            durableObjectProgress = await doResponse.json();
+          }
+        }
+      } catch (doError) {
+        // eslint-disable-next-line no-console
+        console.warn('[status] Failed to get Durable Object status:', doError);
+        // Continue with database status only
+      }
+    }
+
     // Return status with progress information
     const response = {
       id: itinerary.id,
       status: itinerary.status,
       createdAt: itinerary.created_at,
       updatedAt: itinerary.updated_at,
+      ...(durableObjectProgress && {
+        progress: durableObjectProgress.progress,
+        durableObjectStatus: durableObjectProgress.status,
+        startedAt: durableObjectProgress.startedAt,
+        duration: durableObjectProgress.duration,
+      }),
       ...(itinerary.status === 'COMPLETED' && {
         generatedPlan: itinerary.generated_plan_json,
         inputTokens: itinerary.input_tokens,

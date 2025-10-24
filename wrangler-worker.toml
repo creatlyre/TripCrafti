@@ -1,20 +1,21 @@
-name = "tripcrafti"
-pages_build_output_dir = "dist"
+name = "tripcrafti-durable-objects"
+main = "src/workers/index.ts"
 compatibility_date = "2025-02-04"
 
 [vars]
 PUBLIC_SUPABASE_URL = "https://cyusoliinkrsrtxgtbbl.supabase.co"
 PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5dXNvbGlpbmtyc3J0eGd0YmJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTEzNDAsImV4cCI6MjA3NDcyNzM0MH0.rQUT-Em7pzomm0l4JDZbGWcsYk6vfZUL3Xs2NJfmXuM"
-PUBLIC_FX_API_BASE = "https://api.exchangerate.host"
-DEBUG_LOGGING = "false"
 
 [[kv_namespaces]]
-binding = "SECRETS" # KV namespace for runtime secrets (GEMINI_API_KEY, UNSPLASH_ACCESS_KEY, etc.)
+binding = "SECRETS"
 id = "b2c9e78506a7423ba7d15b7bef93d7e4"
 
-# For Pages, Durable Objects need to reference a separate Worker
-# You'll need to deploy the Durable Object as a separate Worker first
+# Durable Objects configuration
 [[durable_objects.bindings]]
 name = "ITINERARY_GENERATOR"
 class_name = "ItineraryDurableObject"
-script_name = "tripcrafti-durable-objects"
+
+# Durable Object migrations
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ItineraryDurableObject"]

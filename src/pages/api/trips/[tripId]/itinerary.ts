@@ -10,6 +10,18 @@ import { geocode } from '../../../../lib/geocoding';
 import { createAdvancedItineraryPrompt } from '../../../../lib/prompts/itineraryPrompt';
 import { getSecret, primeGlobalSecret } from '../../../../lib/secrets';
 
+// Type for Durable Object namespace
+interface DurableObjectNamespace {
+  idFromName(name: string): DurableObjectId;
+  get(id: DurableObjectId): DurableObjectStub;
+}
+
+interface DurableObjectId {}
+
+interface DurableObjectStub {
+  fetch(url: string, init?: RequestInit): Promise<Response>;
+}
+
 export const prerender = false;
 
 const preferencesSchema = z.object({
@@ -254,39 +266,70 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 
     const itineraryId = itineraryRecord.id;
 
-    // 5. Start background generation - use Promise for non-blocking execution
+    // 5. Start Durable Object generation instead of background generation
     try {
-      // Start generation in background without blocking the response
-      // This allows the generation to continue after the response is sent
-      generateItinerary({
+      // Get a Durable Object stub for this itinerary
+      const runtimeEnv = locals.runtime?.env as Record<string, unknown>;
+      const durableObjectNamespace = runtimeEnv?.ITINERARY_GENERATOR as DurableObjectNamespace | undefined;
+
+      if (!durableObjectNamespace) {
+        throw new Error('Durable Object not available - check wrangler configuration');
+      }
+
+      const durableObjectId = durableObjectNamespace.idFromName(itineraryId);
+      const durableObjectStub = durableObjectNamespace.get(durableObjectId);
+
+      // Prepare the request data for the Durable Object
+      const generationRequest = {
         itineraryId,
+        tripId,
         trip,
         preferences: finalPreferences,
-        supabase,
         language: finalPreferences.language,
         tableName: tableToUse,
-        runtimeEnv: locals.runtime?.env,
-      }).catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error('[itinerary-ai] CRITICAL: Unhandled error in background generation:', err);
-        // eslint-disable-next-line no-console
-        console.error('[itinerary-ai] Stack trace:', err?.stack);
-        // eslint-disable-next-line no-console
-        console.error('[itinerary-ai] Error name:', err?.name);
-        // eslint-disable-next-line no-console
-        console.error('[itinerary-ai] Error message:', err?.message);
-      });
-      
-      // eslint-disable-next-line no-console
-      console.log('[itinerary-api] Successfully started background generation for:', itineraryId);
-    } catch (backgroundError) {
-      // eslint-disable-next-line no-console
-      console.error('[itinerary-api] Failed to start background generation:', backgroundError);
-      return json({ error: 'BackgroundProcessError', details: 'Failed to start itinerary generation' }, 500);
-    }
+        userId: user.id,
+      };
 
-    // Immediately return a response to the client
-    return json({ message: 'Itinerary generation started.', itineraryId }, 202);
+      // Start generation via Durable Object
+      const doResponse = await durableObjectStub.fetch('https://itinerary-do/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(generationRequest),
+      });
+
+      if (!doResponse.ok) {
+        const errorText = await doResponse.text();
+        throw new Error(`Durable Object generation failed: ${errorText}`);
+      }
+
+      const doResult = await doResponse.json();
+      // eslint-disable-next-line no-console
+      console.log('[itinerary-api] Successfully started Durable Object generation:', doResult);
+
+      // Immediately return a response to the client
+      return json(
+        {
+          message: 'Itinerary generation started via Durable Object.',
+          itineraryId,
+          durableObjectStatus: doResult,
+        },
+        202
+      );
+    } catch (durableObjectError) {
+      // eslint-disable-next-line no-console
+      console.error('[itinerary-api] CRITICAL: Durable Object fetch failed.', durableObjectError);
+
+      // Update the Supabase record to FAILED so the user isn't stuck
+      await supabase
+        .from(tableToUse)
+        .update({ status: 'FAILED', error_message: 'Durable Object generation failed' })
+        .eq('id', itineraryId);
+
+      // Return a 500 error to the client
+      return json({ error: 'Failed to start generation job. System error.' }, 500);
+    }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return json({ error: 'UnhandledServerError', details: msg }, 500);
