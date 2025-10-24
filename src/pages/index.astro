@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 export const prerender = false;
 import { Map, BaggageClaim, Wallet } from 'lucide-react';
 
-import TestimonialCard from '../components/TestimonialCard';
+// import TestimonialCard from '../components/TestimonialCard'; // unused on current landing
 import { getDictionary } from '../lib/i18n';
 
 const lang = Astro.locals.lang;
@@ -76,6 +76,49 @@ function switchUrl(target: string) {
         <p class="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-slate-200 md:text-xl">
           {dict.hero.sub}
         </p>
+        {dict.hero.pitch && <p class="mx-auto mt-4 max-w-3xl text-base md:text-lg text-slate-300">{dict.hero.pitch}</p>}
+        <!-- Multi-action onboarding CTA buttons -->
+        {
+          dict.homepageActions && (
+            <div class="mt-8 flex flex-wrap justify-center gap-3" aria-label="Primary onboarding actions">
+              <a
+                href="/login"
+                class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                data-action="create-account"
+              >
+                {dict.homepageActions.createAccount}
+              </a>
+              <a
+                href="/login"
+                class="inline-flex items-center gap-2 rounded-md bg-slate-800/70 px-5 py-2.5 text-sm font-medium text-slate-100 border border-slate-700 hover:border-indigo-400/60 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                data-action="create-trip"
+              >
+                {dict.homepageActions.createTrip}
+              </a>
+              <a
+                href="/login"
+                class="inline-flex items-center gap-2 rounded-md bg-slate-800/70 px-5 py-2.5 text-sm font-medium text-slate-100 border border-slate-700 hover:border-fuchsia-400/60 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                data-action="set-budget"
+              >
+                {dict.homepageActions.setBudget}
+              </a>
+              <a
+                href="/login"
+                class="inline-flex items-center gap-2 rounded-md bg-slate-800/70 px-5 py-2.5 text-sm font-medium text-slate-100 border border-slate-700 hover:border-sky-400/60 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                data-action="generate-plan"
+              >
+                {dict.homepageActions.generatePlan}
+              </a>
+              <a
+                href="/login"
+                class="inline-flex items-center gap-2 rounded-md bg-slate-800/70 px-5 py-2.5 text-sm font-medium text-slate-100 border border-slate-700 hover:border-emerald-400/60 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                data-action="generate-packing-list"
+              >
+                {dict.homepageActions.buildPackingList}
+              </a>
+            </div>
+          )
+        }
       </div>
     </section>
 
@@ -95,7 +138,7 @@ function switchUrl(target: string) {
         <div class="grid grid-cols-1 gap-x-12 gap-y-16 lg:grid-cols-3">
           <!-- Feature 1 -->
           <div class="flex flex-col items-center text-center">
-            <Map class="mb-4 text-white" size={48} />
+            <Map className="mb-4 text-white" size={48} />
             <h3 class="text-2xl font-bold tracking-tight text-white">
               {dict.detailedFeatures.feature1.headline}
             </h3>
@@ -105,7 +148,7 @@ function switchUrl(target: string) {
           </div>
           <!-- Feature 2 -->
           <div class="flex flex-col items-center text-center">
-            <BaggageClaim class="mb-4 text-white" size={48} />
+            <BaggageClaim className="mb-4 text-white" size={48} />
             <h3 class="text-2xl font-bold tracking-tight text-white">
               {dict.detailedFeatures.feature2.headline}
             </h3>
@@ -115,7 +158,7 @@ function switchUrl(target: string) {
           </div>
           <!-- Feature 3 -->
           <div class="flex flex-col items-center text-center">
-            <Wallet class="mb-4 text-white" size={48} />
+            <Wallet className="mb-4 text-white" size={48} />
             <h3 class="text-2xl font-bold tracking-tight text-white">{dict.detailedFeatures.feature3.headline}</h3>
             <p class="mt-4 text-base leading-7 text-slate-300">
               {dict.detailedFeatures.feature3.body}
