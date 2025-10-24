@@ -74,6 +74,21 @@ export interface Dictionary {
   tripCard?: {
     budgetLink: string;
     budgetAria: string;
+    quickActions?: {
+      duplicate: string;
+      archive: string;
+      share: string;
+      more: string;
+    };
+    status?: {
+      active: string;
+      upcoming: string;
+      past: string;
+      itineraryReady: string;
+      tomorrow: string;
+      today: string;
+      daysToGo: string;
+    };
   };
   budget?: {
     dashboard: {
@@ -565,6 +580,134 @@ export interface Dictionary {
       };
     };
   };
+  enhancedOverview?: {
+    planning: string;
+    budget: string;
+    packing: string;
+    status: {
+      complete: string;
+      inProgress: string;
+      notStarted: string;
+      notSet: string;
+      setUp: string;
+    };
+    recommendations: {
+      title: string;
+      noItinerary: string;
+      setBudget: string;
+      timeToPack: string;
+      wellPrepared: string;
+      actions: {
+        createPlan: string;
+        manageBudget: string;
+        startPacking: string;
+        viewEvents: string;
+        continuePlanning: string;
+        setBudget: string;
+      };
+    };
+    timeline: string;
+    tripStart: string;
+    tripEnd: string;
+    daysToGo: string;
+    daysAgo: string;
+  };
+  smartTemplates?: {
+    title: string;
+    subtitle: string;
+    templates: {
+      business: {
+        name: string;
+        description: string;
+        tips: string[];
+      };
+      leisure: {
+        name: string;
+        description: string;
+        tips: string[];
+      };
+      adventure: {
+        name: string;
+        description: string;
+        tips: string[];
+      };
+      family: {
+        name: string;
+        description: string;
+        tips: string[];
+      };
+      romantic: {
+        name: string;
+        description: string;
+        tips: string[];
+      };
+      photography: {
+        name: string;
+        description: string;
+        tips: string[];
+      };
+    };
+    customization: {
+      title: string;
+      tripTitle: string;
+      destination: string;
+      duration: string;
+      budget: string;
+      startDate: string;
+      notes: string;
+      cancel: string;
+      create: string;
+    };
+    categories: {
+      transportation: string;
+      accommodation: string;
+      meals: string;
+      food: string;
+      businessSupplies: string;
+      entertainment: string;
+      souvenirs: string;
+      equipment: string;
+      guides: string;
+      insurance: string;
+      toysAndGames: string;
+      medicalCare: string;
+      luxuryAccommodation: string;
+      fineDining: string;
+      spaAndWellness: string;
+      gifts: string;
+      photographyEquipment: string;
+      permits: string;
+      localGuides: string;
+    };
+    labels: {
+      useTemplate: string;
+      days: string;
+      suggestedCategories: string;
+      popularDestinations: string;
+      suggestedBudget: string;
+      chooseDest: string;
+      optional: string;
+    };
+  };
+  tripCard?: {
+    budgetLink: string;
+    budgetAria: string;
+    quickActions?: {
+      duplicate: string;
+      archive: string;
+      share: string;
+      more: string;
+    };
+    status?: {
+      active: string;
+      upcoming: string;
+      past: string;
+      itineraryReady: string;
+      tomorrow: string;
+      today: string;
+      daysToGo: string;
+    };
+  };
 }
 
 const year = new Date().getFullYear();
@@ -653,6 +796,21 @@ export const dictionaries: Record<Lang, Dictionary> = {
     tripCard: {
       budgetLink: 'Budżet',
       budgetAria: 'Otwórz panel budżetu',
+      quickActions: {
+        duplicate: 'Duplikuj',
+        archive: 'Archiwizuj',
+        share: 'Udostępnij',
+        more: 'Więcej działań',
+      },
+      status: {
+        active: 'Aktywna',
+        upcoming: 'Nadchodząca',
+        past: 'Zakończona',
+        itineraryReady: 'Plan podróży gotowy',
+        tomorrow: 'Jutro!',
+        today: 'Dzisiaj!',
+        daysToGo: 'dni do wyjazdu',
+      },
     },
     // Additional labels for trip detail dashboard
     // (Not yet used in dictionary types; lightweight inline usage)
@@ -1224,6 +1382,127 @@ export const dictionaries: Record<Lang, Dictionary> = {
         },
       },
     },
+    enhancedOverview: {
+      planning: 'Planowanie',
+      budget: 'Budżet',
+      packing: 'Pakowanie',
+      status: {
+        complete: 'Kompletne',
+        inProgress: 'W toku',
+        notStarted: 'Nie rozpoczęte',
+        notSet: 'Nie ustawiony',
+        setUp: 'Ustawiony',
+      },
+      recommendations: {
+        title: 'Inteligentne rekomendacje',
+        noItinerary: 'Utwórz plan podróży, aby lepiej zorganizować swoją wycieczkę.',
+        setBudget: 'Określ budżet, aby lepiej kontrolować wydatki podczas podróży.',
+        timeToPack: 'Zostało mniej niż 2 tygodnie. Wygeneruj listę rzeczy do spakowania.',
+        wellPrepared: 'Masz plan i budżet. Możesz teraz dodać szczegóły lub sprawdzić lokalne wydarzenia.',
+        actions: {
+          createPlan: 'Utwórz plan',
+          manageBudget: 'Zarządzaj budżetem',
+          startPacking: 'Rozpocznij pakowanie',
+          viewEvents: 'Zobacz wydarzenia',
+          continuePlanning: 'Kontynuuj planowanie',
+          setBudget: 'Ustaw budżet',
+        },
+      },
+      timeline: 'Harmonogram',
+      tripStart: 'Początek podróży',
+      tripEnd: 'Koniec podróży',
+      daysToGo: 'dni do wyjazdu',
+      daysAgo: 'dni temu',
+    },
+    smartTemplates: {
+      title: 'Inteligentne Szablony Podróży',
+      subtitle: 'Wybierz szablon dostosowany do typu podróży i rozpocznij planowanie z gotowymi rekomendacjami',
+      templates: {
+        business: {
+          name: 'Podróż służbowa',
+          description: 'Profesjonalna podróż z naciskiem na spotkania i networking',
+          tips: [
+            'Zarezerwuj hotel blisko centrum biznesowego',
+            'Uwzględ czas na networking',
+            'Spakuj ubrania formalne',
+          ],
+        },
+        leisure: {
+          name: 'Wakacje',
+          description: 'Relaksujące wakacje z rodziną lub przyjaciółmi',
+          tips: ['Zaplanuj dni relaksu', 'Sprawdź lokalne atrakcje', 'Nie planuj zbyt intensywnie'],
+        },
+        adventure: {
+          name: 'Przygoda',
+          description: 'Aktywna podróż pełna adrenaliny i przygód',
+          tips: ['Sprawdź pogodę w sezonie', 'Spakuj odpowiedni sprzęt', 'Sprawdź wymagania fizyczne'],
+        },
+        family: {
+          name: 'Rodzinne',
+          description: 'Podróż dostosowana do potrzeb całej rodziny',
+          tips: [
+            'Wybierz hotele przyjazne rodzinom',
+            'Planuj krótsze etapy podróży',
+            'Zabierz ulubione przekąski dzieci',
+          ],
+        },
+        romantic: {
+          name: 'Romantyczna',
+          description: 'Intymna podróż dla par w romantycznej atmosferze',
+          tips: ['Zarezerwuj kolacje z widokiem', 'Wybierz hotele z spa', 'Planuj niespodzianki'],
+        },
+        photography: {
+          name: 'Fotograficzna',
+          description: 'Podróż skoncentrowana na fotografii i dokumentowaniu',
+          tips: [
+            'Sprawdź najlepsze godziny dla zdjęć',
+            'Zaplanuj wschody i zachody słońca',
+            'Zabierz dodatkowe baterie',
+          ],
+        },
+      },
+      customization: {
+        title: 'Dostosuj podróż',
+        tripTitle: 'Nazwa podróży',
+        destination: 'Destynacja',
+        duration: 'Długość (dni)',
+        budget: 'Budżet ($)',
+        startDate: 'Data rozpoczęcia',
+        notes: 'Notatki',
+        cancel: 'Anuluj',
+        create: 'Utwórz podróż',
+      },
+      categories: {
+        transportation: 'Transport',
+        accommodation: 'Zakwaterowanie',
+        meals: 'Posiłki',
+        food: 'Jedzenie',
+        businessSupplies: 'Materiały biurowe',
+        entertainment: 'Rozrywka',
+        souvenirs: 'Pamiątki',
+        equipment: 'Sprzęt',
+        guides: 'Przewodnicy',
+        insurance: 'Ubezpieczenie',
+        toysAndGames: 'Zabawki i gry',
+        medicalCare: 'Opieka medyczna',
+        luxuryAccommodation: 'Luksusowe zakwaterowanie',
+        fineDining: 'Kolacje',
+        spaAndWellness: 'Spa i wellness',
+        gifts: 'Prezenty',
+        photographyEquipment: 'Sprzęt fotograficzny',
+        permits: 'Przepustki',
+        localGuides: 'Przewodnicy lokalni',
+      },
+      labels: {
+        useTemplate: 'Użyj szablonu',
+        days: 'dni',
+        suggestedCategories: 'Sugerowane kategorie:',
+        popularDestinations: 'Popularne destynacje:',
+        suggestedBudget: 'Sugerowany budżet:',
+        chooseDest: 'Wybierz destynację',
+        optional: 'Opcjonalnie',
+      },
+    },
   },
   en: {
     hero: {
@@ -1302,6 +1581,21 @@ export const dictionaries: Record<Lang, Dictionary> = {
     tripCard: {
       budgetLink: 'Budget',
       budgetAria: 'Open budget dashboard',
+      quickActions: {
+        duplicate: 'Duplicate',
+        archive: 'Archive',
+        share: 'Share',
+        more: 'More actions',
+      },
+      status: {
+        active: 'Active',
+        upcoming: 'Upcoming',
+        past: 'Past',
+        itineraryReady: 'Travel plan ready',
+        tomorrow: 'Tomorrow!',
+        today: 'Today!',
+        daysToGo: 'days to go',
+      },
     },
     // Additional labels for trip detail dashboard
     budget: {
@@ -1392,6 +1686,115 @@ export const dictionaries: Record<Lang, Dictionary> = {
         createCategory: 'Failed to create category',
         deleteFailed: 'Delete failed',
         summaryFailed: 'Failed to load summary',
+      },
+    },
+    enhancedOverview: {
+      planning: 'Trip Overview',
+      budget: 'Budget tracking',
+      packing: 'Packing list',
+      status: {
+        complete: 'Complete',
+        inProgress: 'In Progress',
+        notStarted: 'Not Started',
+        notSet: 'Not Set',
+        setUp: 'Set Up',
+      },
+      recommendations: {
+        title: 'Smart Recommendations',
+        noItinerary: 'Generate a travel plan',
+        setBudget: 'Set a budget to track expenses',
+        timeToPack: 'Create a packing list',
+        wellPrepared: "You're well prepared for your trip!",
+        actions: {
+          createPlan: 'Generate plan',
+          manageBudget: 'Manage budget',
+          startPacking: 'Start packing',
+          viewEvents: 'View events',
+          continuePlanning: 'Continue planning',
+          setBudget: 'Set budget',
+        },
+      },
+      timeline: 'Trip Timeline',
+      tripStart: 'Trip starts',
+      tripEnd: 'Trip ends',
+      daysToGo: 'days to go',
+      daysAgo: 'days ago',
+    },
+    smartTemplates: {
+      title: 'Smart Trip Templates',
+      subtitle: 'Start with a pre-configured template or create from scratch',
+      templates: {
+        business: {
+          name: 'Business Trip',
+          description: 'Professional travel with meetings',
+          tips: ['Book accommodation near business district', 'Pack formal attire', 'Prepare business cards'],
+        },
+        leisure: {
+          name: 'City Break',
+          description: 'Short urban getaway (2-4 days)',
+          tips: ['Research local attractions', 'Book restaurants in advance', 'Pack comfortable walking shoes'],
+        },
+        adventure: {
+          name: 'Adventure Trip',
+          description: 'Active outdoor exploration',
+          tips: ['Pack appropriate gear', 'Check weather conditions', 'Inform someone of your plans'],
+        },
+        family: {
+          name: 'Family Holiday',
+          description: 'Fun trip for the whole family',
+          tips: ['Plan kid-friendly activities', 'Pack entertainment for travel', 'Book family-friendly accommodation'],
+        },
+        romantic: {
+          name: 'Beach Vacation',
+          description: 'Relaxing coastal holiday',
+          tips: ['Book romantic restaurants', 'Pack beachwear', 'Check sunset times'],
+        },
+        photography: {
+          name: 'Cultural Tour',
+          description: 'Deep dive into local culture and history',
+          tips: ['Research photography rules', 'Pack extra batteries', 'Plan golden hour shots'],
+        },
+      },
+      customization: {
+        title: 'Customize Your Trip',
+        tripTitle: 'Trip Title',
+        destination: 'Destination',
+        duration: 'Duration',
+        budget: 'Budget (optional)',
+        startDate: 'Start Date',
+        notes: 'Notes',
+        cancel: 'Cancel',
+        create: 'Create Trip',
+      },
+      categories: {
+        transportation: 'Transportation',
+        accommodation: 'Accommodation',
+        meals: 'Meals',
+        food: 'Food',
+        businessSupplies: 'Business Supplies',
+        entertainment: 'Entertainment',
+        souvenirs: 'Souvenirs',
+        equipment: 'Equipment',
+        guides: 'Guides',
+        insurance: 'Insurance',
+        toysAndGames: 'Toys and Games',
+        medicalCare: 'Medical Care',
+        luxuryAccommodation: 'Luxury Accommodation',
+        fineDining: 'Fine Dining',
+        spaAndWellness: 'Spa and Wellness',
+        gifts: 'Gifts',
+        photographyEquipment: 'Photography Equipment',
+        permits: 'Permits',
+        localGuides: 'Local Guides',
+      },
+      labels: {
+        useTemplate: 'Use Template',
+        days: 'days',
+        suggestedCategories: 'Suggested Categories',
+        popularDestinations: 'Popular Destinations',
+        suggestedBudget: 'Suggested Budget',
+        chooseDest: 'Choose Destination',
+        optional: 'optional',
       },
     },
     dashboard: {

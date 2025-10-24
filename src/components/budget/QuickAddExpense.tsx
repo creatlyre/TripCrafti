@@ -18,7 +18,12 @@ interface Props {
 }
 
 const QuickAddExpense: React.FC<Props> = ({ tripId, onAdded, lang = 'pl', buttonVariant = 'fab' }) => {
-  const dict = getDictionary(lang).budget!;
+  const dictBudget = getDictionary(lang).budget;
+  if (!dictBudget) {
+    throw new Error('Budget dictionary not found');
+  }
+  const dict = dictBudget;
+
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
   const [loadingCats, setLoadingCats] = useState(false);
@@ -32,10 +37,13 @@ const QuickAddExpense: React.FC<Props> = ({ tripId, onAdded, lang = 'pl', button
       setLoadingCats(true);
       try {
         const res = await fetch(`/api/trips/${tripId}/budget/categories`);
-        const data = await res.json();
+        if (!res.ok) {
+          throw new Error('Failed to load categories');
+        }
+        const data: { categories?: BudgetCategory[] } = await res.json();
         setCategories(data.categories || []);
-      } catch (e: any) {
-        // ignore
+      } catch (error) {
+        console.error('Failed to load categories:', error);
       } finally {
         setLoadingCats(false);
       }

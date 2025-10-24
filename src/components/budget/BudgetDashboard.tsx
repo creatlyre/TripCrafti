@@ -17,7 +17,12 @@ interface Props {
 }
 
 const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
-  const dict = getDictionary(lang).budget!;
+  const dictBudget = getDictionary(lang).budget;
+  if (!dictBudget) {
+    throw new Error('Budget dictionary not found');
+  }
+  const dict = dictBudget;
+
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
