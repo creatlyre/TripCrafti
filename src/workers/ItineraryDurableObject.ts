@@ -272,21 +272,43 @@ export class ItineraryDurableObject {
       }
 
       // Update database with completed result
+      const updateData: Record<string, unknown> = {
+        generated_plan_json: generatedPlan,
+        status: 'COMPLETED',
+        updated_at: new Date().toISOString(),
+      };
+
+      // Add optional columns if they exist in the schema
+      if (inputTokens !== null) updateData.input_tokens = inputTokens;
+      if (outputTokens !== null) updateData.thought_tokens = outputTokens;
+      if (modelUsed) updateData.model_used = modelUsed;
+      if (endTime && startTime) updateData.generation_duration_ms = endTime - startTime;
+
       const { error: updateError } = await supabase
         .from(data.tableName)
-        .update({
-          generated_plan_json: generatedPlan,
-          status: 'COMPLETED',
-          input_tokens: inputTokens,
-          thought_tokens: outputTokens,
-          model_used: modelUsed,
-          generation_duration_ms: endTime - startTime,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', data.itineraryId);
 
       if (updateError) {
-        throw new Error(`Database update failed: ${updateError.message}`);
+        // If it's a column not found error, try with minimal update
+        if (updateError.message.includes('column') && updateError.message.includes('not found')) {
+          console.warn('[ItineraryDO] Some columns not found, trying minimal update:', updateError.message);
+          const { error: minimalUpdateError } = await supabase
+            .from(data.tableName)
+            .update({
+              generated_plan_json: generatedPlan,
+              status: 'COMPLETED',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', data.itineraryId);
+          
+          if (minimalUpdateError) {
+            throw new Error(`Database update failed: ${minimalUpdateError.message}`);
+          }
+          console.log('[ItineraryDO] Minimal database update succeeded');
+        } else {
+          throw new Error(`Database update failed: ${updateError.message}`);
+        }
       }
 
       // Update internal status
@@ -309,7 +331,7 @@ export class ItineraryDurableObject {
       try {
         // Try to update database with failed status
         const supabase = await this.initializeSupabase();
-        await supabase
+        const { error: failedUpdateError } = await supabase
           .from(data.tableName)
           .update({
             status: 'FAILED',
@@ -317,6 +339,17 @@ export class ItineraryDurableObject {
             updated_at: new Date().toISOString(),
           })
           .eq('id', data.itineraryId);
+        
+        // If error_message column doesn't exist, try without it
+        if (failedUpdateError && failedUpdateError.message.includes('error_message')) {
+          await supabase
+            .from(data.tableName)
+            .update({
+              status: 'FAILED',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', data.itineraryId);
+        }
       } catch (dbError) {
         console.error('[ItineraryDO] Failed to update database with error status:', dbError);
       }

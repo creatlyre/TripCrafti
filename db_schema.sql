@@ -6,11 +6,16 @@ CREATE TABLE GeneratedItineraries (
     preferences_json JSONB,
     generated_plan_json JSONB,
     input_tokens INT,
-    thought_tokens INT,
+    thought_tokens INT, 
     status itinerary_status DEFAULT 'GENERATING',
     created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now()
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    model_used TEXT,
+    error_message TEXT,
+    progress TEX,
+    generation_duration_ms INTEGER
 );
+-- =============================================
 
 CREATE TABLE trips (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
