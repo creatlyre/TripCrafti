@@ -70,6 +70,9 @@ export interface Dictionary {
     signOut: string;
     signingOut: string;
     goToDashboard: string;
+    verificationSent?: string;
+    resendVerification?: string;
+    sending?: string;
   };
   tripCard?: {
     budgetLink: string;
@@ -789,6 +792,9 @@ export const dictionaries: Record<Lang, Dictionary> = {
       signOut: 'Wyloguj',
       signingOut: 'Wylogowywanie…',
       goToDashboard: 'Przejdź do panelu',
+      verificationSent: 'E-mail weryfikacyjny został wysłany! Sprawdź swoją skrzynkę odbiorczą i folder spam.',
+      resendVerification: 'Wyślij ponownie weryfikację',
+      sending: 'Wysyłanie...',
     },
     tripCard: {
       budgetLink: 'Budżet',
@@ -1571,6 +1577,9 @@ export const dictionaries: Record<Lang, Dictionary> = {
       signOut: 'Sign Out',
       signingOut: 'Signing out…',
       goToDashboard: 'Go to dashboard',
+      verificationSent: 'Verification email sent! Please check your inbox and spam folder.',
+      resendVerification: 'Resend verification',
+      sending: 'Sending...',
     },
     tripCard: {
       budgetLink: 'Budget',
