@@ -8,6 +8,9 @@ export default {
           cyan: '#4ED8D8',
           orange: '#FF9A52',
           navy: '#0A192F',
+          'navy-light': '#1A2540',
+          'navy-lighter': '#2A3550',
+          'navy-dark': '#050B15',
         },
       },
       animation: {

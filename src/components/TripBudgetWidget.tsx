@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import React, { useEffect, useState, useCallback } from 'react';
 
 import type { BudgetSummary } from '@/types';
 
@@ -23,22 +24,33 @@ export const TripBudgetWidget: React.FC<Props> = ({ tripId, lang = 'pl', classNa
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/trips/${tripId}/budget/summary`);
       if (!res.ok) throw new Error(dict.errors?.summaryFailed || 'Failed');
-      setSummary(await res.json());
-    } catch (e: any) {
-      setError(e.message);
+      const data: BudgetSummary = await res.json();
+      setSummary(data);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unexpected error';
+      setError(message);
     } finally {
       setLoading(false);
     }
-  }
+  }, [tripId, dict.errors?.summaryFailed]);
   useEffect(() => {
     load();
-  }, [tripId]);
+  }, [load]);
+  // Listen for global expense added to update instantly
+  useEffect(() => {
+    function handler(e: Event) {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.tripId === tripId) load();
+    }
+    window.addEventListener('expense:added', handler);
+    return () => window.removeEventListener('expense:added', handler);
+  }, [tripId, load]);
 
   if (loading)
     return (
@@ -63,18 +75,30 @@ export const TripBudgetWidget: React.FC<Props> = ({ tripId, lang = 'pl', classNa
           <span>{lang === 'pl' ? 'Budżet' : 'Budget'}</span>
           {summary.safeToSpendToday != null && (
             <span className="text-[11px] font-medium text-emerald-300">
-              Safe: {summary.safeToSpendToday.toFixed(2)}
+              {lang === 'pl' ? 'Bezpieczne:' : 'Safe:'} {summary.safeToSpendToday.toFixed(2)}
             </span>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-3 pt-0">
         <div className="space-y-1">
-          <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+          <div
+            role="progressbar"
+            aria-valuenow={percent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={dict.summary.progress}
+            className="h-3 w-full rounded-full bg-slate-800/80 overflow-hidden border border-slate-700 shadow-inner relative"
+          >
             <div
-              className="h-full bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 transition-all"
+              className="h-full bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 transition-all duration-700"
               style={{ width: percent + '%' }}
             />
+            <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-white/70">
+              {summary.totalBudget
+                ? `${summary.totalSpent.toFixed(0)} / ${summary.totalBudget.toFixed(0)} (${percent.toFixed(0)}%)`
+                : '—'}
+            </span>
           </div>
           <div className="flex justify-between text-[11px] text-slate-400">
             <span>
