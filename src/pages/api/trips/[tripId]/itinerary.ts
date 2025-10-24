@@ -319,16 +319,58 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       );
     } catch (durableObjectError) {
       // eslint-disable-next-line no-console
-      console.error('[itinerary-api] CRITICAL: Durable Object fetch failed.', durableObjectError);
+      console.warn(
+        '[itinerary-api] Durable Object not available, falling back to direct execution:',
+        durableObjectError
+      );
 
-      // Update the Supabase record to FAILED so the user isn't stuck
-      await supabase
-        .from(tableToUse)
-        .update({ status: 'FAILED', error_message: 'Durable Object generation failed' })
-        .eq('id', itineraryId);
+      // Fallback to direct execution (for local development)
+      try {
+        // eslint-disable-next-line no-console
+        console.log('[itinerary-api] Starting direct generation fallback...');
+        
+        // Update status to GENERATING
+        await supabase
+          .from(tableToUse)
+          .update({ status: 'GENERATING', updated_at: new Date().toISOString() })
+          .eq('id', itineraryId);
 
-      // Return a 500 error to the client
-      return json({ error: 'Failed to start generation job. System error.' }, 500);
+        // Start generation in background using the fallback function
+        generateItinerary({
+          itineraryId,
+          trip,
+          preferences: finalPreferences,
+          supabase,
+          language: finalPreferences.language || 'en',
+          tableName: tableToUse,
+          runtimeEnv: process.env as Record<string, string | undefined>,
+        }).catch((fallbackError) => {
+          // eslint-disable-next-line no-console
+          console.error('[itinerary-api] Fallback generation failed:', fallbackError);
+        });
+
+        // Return immediate response
+        return json(
+          {
+            message: 'Itinerary generation started (local fallback mode).',
+            itineraryId,
+            mode: 'local_fallback',
+          },
+          202
+        );
+      } catch (fallbackError) {
+        // eslint-disable-next-line no-console
+        console.error('[itinerary-api] Both Durable Object and fallback failed:', fallbackError);
+        
+        // Update the Supabase record to FAILED so the user isn't stuck
+        await supabase
+          .from(tableToUse)
+          .update({ status: 'FAILED', error_message: 'Generation system unavailable' })
+          .eq('id', itineraryId);
+
+        // Return a 500 error to the client
+        return json({ error: 'Failed to start generation job. System error.' }, 500);
+      }
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

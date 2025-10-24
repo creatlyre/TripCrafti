@@ -28,8 +28,6 @@ export interface ItineraryGenerationRequest {
 // Cloudflare Workers types
 interface DurableObjectState {
   storage: DurableObjectStorage;
-  setAlarm(scheduledTime: number): Promise<void>;
-  deleteAlarm(): Promise<void>;
   waitUntil(promise: Promise<any>): void;
 }
 
@@ -38,6 +36,7 @@ interface DurableObjectStorage {
   put<T = unknown>(key: string, value: T): Promise<void>;
   setAlarm(scheduledTime: number): Promise<void>;
   deleteAlarm(): Promise<void>;
+  getAlarm(): Promise<number | null>;
 }
 
 export interface Env {
@@ -122,7 +121,7 @@ export class ItineraryDurableObject {
       await this.ctx.storage.put('progress', 'Initializing AI generation...');
 
       // Set an alarm to check for timeout (5 minutes)
-      await this.ctx.setAlarm(Date.now() + 5 * 60 * 1000);
+      await this.ctx.storage.setAlarm(Date.now() + 5 * 60 * 1000);
 
       // Start generation in background
       this.ctx.waitUntil(this.generateItinerary(data));
@@ -288,7 +287,7 @@ export class ItineraryDurableObject {
       await this.ctx.storage.put('progress', 'Generation completed successfully');
 
       // Clear the alarm since we completed successfully
-      await this.ctx.deleteAlarm();
+      await this.ctx.storage.deleteAlarm();
 
       console.log(`[ItineraryDO] Successfully completed generation for: ${data.itineraryId}`);
     } catch (error) {

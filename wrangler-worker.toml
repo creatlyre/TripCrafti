@@ -1,6 +1,7 @@
 name = "tripcrafti-durable-objects"
 main = "src/workers/index.ts"
 compatibility_date = "2025-02-04"
+compatibility_flags = ["durable_object_alarms"]
 
 [vars]
 PUBLIC_SUPABASE_URL = "https://cyusoliinkrsrtxgtbbl.supabase.co"
