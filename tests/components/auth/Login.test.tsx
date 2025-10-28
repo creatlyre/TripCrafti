@@ -20,15 +20,17 @@ vi.mock('@supabase/auth-ui-react', () => ({
 // Mock window location
 const originalLocation = window.location;
 beforeEach(() => {
-  // @ts-ignore
-  delete window.location;
-  window.location = {
-    ...originalLocation,
-    href: 'http://localhost:3000/login',
-    pathname: '/login',
-    replace: vi.fn(),
-    search: '',
-  };
+  // Provide a lightweight location mock; keep existing properties where possible.
+  Object.defineProperty(window, 'location', {
+    writable: true,
+    value: {
+      ...originalLocation,
+      href: 'http://localhost:3000/login',
+      pathname: '/login',
+      replace: vi.fn(),
+      search: '',
+    },
+  });
 });
 
 describe('Login Component', () => {
@@ -44,12 +46,12 @@ describe('Login Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (AuthHelpers.useSupabaseClient as vi.Mock).mockReturnValue(mockSupabaseClient);
+  (AuthHelpers.useSupabaseClient as unknown as { mockReturnValue: (v:any)=>void }).mockReturnValue(mockSupabaseClient);
   });
 
   describe('when user is not logged in', () => {
     beforeEach(() => {
-      (AuthHelpers.useUser as vi.Mock).mockReturnValue(null);
+  (AuthHelpers.useUser as unknown as { mockReturnValue: (v:any)=>void }).mockReturnValue(null);
     });
 
     it('renders the Supabase Auth UI', () => {
@@ -78,12 +80,14 @@ describe('Login Component', () => {
     };
 
     beforeEach(() => {
-      (AuthHelpers.useUser as vi.Mock).mockReturnValue(mockUser);
+  (AuthHelpers.useUser as unknown as { mockReturnValue: (v:any)=>void }).mockReturnValue(mockUser);
     });
 
     it('displays the signed-in user information', () => {
       render(<Login />);
-      expect(screen.getByText('Signed in as')).toBeInTheDocument();
+      // Component defaults to Polish (pl) unless ?lang=en in location.
+      // Polish dictionary value for signedInAs expected: 'Zalogowany jako'.
+      expect(screen.getByText(/Zalogowany jako/i)).toBeInTheDocument();
       expect(screen.getByText('test@example.com')).toBeInTheDocument();
     });
 
@@ -94,22 +98,24 @@ describe('Login Component', () => {
 
     it('renders a "Sign Out" button', () => {
       render(<Login />);
-      expect(screen.getByRole('button', { name: 'Sign Out' })).toBeInTheDocument();
+      // Polish sign out label expected: 'Wyloguj'
+      expect(screen.getByRole('button', { name: /Wyloguj/i })).toBeInTheDocument();
     });
 
     it('calls supabase.auth.signOut when the "Sign Out" button is clicked', async () => {
       const user = userEvent.setup();
       render(<Login />);
-      const signOutButton = screen.getByRole('button', { name: 'Sign Out' });
+      const signOutButton = screen.getByRole('button', { name: /Wyloguj/i });
       await user.click(signOutButton);
       expect(mockSignOut).toHaveBeenCalledTimes(1);
     });
 
     it('renders a link to the dashboard', () => {
       render(<Login />);
-      const dashboardLink = screen.getByRole('link', { name: /go to dashboard/i });
+      // Polish translation expected: 'Przejdź do panelu'
+      const dashboardLink = screen.getByRole('link', { name: /Przejdź do panelu/i });
       expect(dashboardLink).toBeInTheDocument();
-      expect(dashboardLink).toHaveAttribute('href', '/app');
+      expect(dashboardLink).toHaveAttribute('href', '/app?lang=pl');
     });
   });
 });
