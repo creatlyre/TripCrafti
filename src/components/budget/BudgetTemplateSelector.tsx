@@ -79,7 +79,7 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-brand-cyan/70 hover:text-brand-orange"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-brand-cyan/70 hover:text-brand-orange focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 rounded"
               aria-label={lang === 'pl' ? 'Wyczyść' : 'Clear'}
             >
               ✕
@@ -245,18 +245,23 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
                 <Button
                   disabled={!selectedTemplate || applyingTemplateId === selectedTemplate.id}
                   onClick={apply}
-                  className="relative w-full md:w-auto bg-brand-cyan text-brand-navy font-semibold tracking-wide text-sm py-2 px-6 shadow-lg shadow-brand-cyan/40 hover:bg-brand-cyan/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-cyan/40 active:scale-[0.97] transition-transform disabled:opacity-60"
+                  className="relative w-full md:w-auto bg-emerald-500 text-emerald-950 font-semibold tracking-wide text-sm py-2 px-7 shadow-lg shadow-emerald-500/40 hover:bg-emerald-400 hover:shadow-emerald-400/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400/50 active:scale-[0.96] transition-all disabled:opacity-60 border border-emerald-300/40 hover:border-emerald-200/60"
                 >
                   <span className="flex items-center gap-2">
-                    <span aria-hidden className="text-base leading-none">
-                      ⚡
+                    {applyingTemplateId === selectedTemplate?.id ? (
+                      <span aria-hidden className="inline-block size-4 animate-spin rounded-full border-2 border-emerald-900/40 border-t-emerald-100" />
+                    ) : (
+                      <span aria-hidden className="text-base leading-none text-emerald-100">⚡</span>
+                    )}
+                    <span>
+                      {applyingTemplateId === selectedTemplate?.id
+                        ? dict?.categories.applying
+                        : lang === 'pl'
+                          ? 'Zastosuj szablon'
+                          : 'Apply Template'}
                     </span>
-                    {applyingTemplateId === selectedTemplate?.id
-                      ? dict?.categories.applying
-                      : lang === 'pl'
-                        ? 'Zastosuj szablon'
-                        : 'Apply Template'}
                   </span>
+                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-300 shadow ring-2 ring-emerald-600/40 animate-ping [animation-duration:2.5s]" aria-hidden />
                 </Button>
               </div>
             </div>
