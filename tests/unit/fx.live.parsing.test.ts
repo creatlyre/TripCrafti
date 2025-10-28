@@ -21,25 +21,26 @@ describe('fx live endpoint parsing', () => {
     expect(['live','cache']).toContain(res.source); // first call returns live
   });
 
-  it('falls back to /convert when /live missing quote', async () => {
+  it('falls back to /convert when /live missing quote and no generic rates', async () => {
     global.fetch = vi.fn()
-      // live missing
+      // live missing quotes and lacks generic rates shape forcing convert path
       .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, quotes: {} }) })
-      // convert
+      // convert endpoint returns result
       .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, result: 4.01 }) });
-
-    const res = await getFxRate('USD', 'PLN');
+    const res = await getFxRate('GBP', 'PLN'); // use GBP to avoid prior USD cache
     expect(res.rate).toBe(4.01);
+    expect(['live','cache']).toContain(res.source);
   });
 
-  it('returns fallback when both fail', async () => {
+  it('returns fallback when live and convert both fail', async () => {
     global.fetch = vi.fn()
+      // live returns success false triggering error
       .mockResolvedValueOnce({ ok: true, json: async () => ({ success: false, error: { code: 101, info: 'missing key' } }) })
+      // convert attempt fails
       .mockResolvedValueOnce({ ok: false, json: async () => ({}) });
-
-    const res = await getFxRate('USD', 'PLN');
-    expect(res.rate).toBe(1); // fallback
+    const res = await getFxRate('CAD', 'PLN'); // use CAD to avoid cache interference
+    expect(res.rate).toBe(1);
     expect(res.source).toBe('fallback');
-    expect(res.warning).toBeTruthy();
+    expect(res.warning).toMatch(/missing key|fx_fetch_failed/i);
   });
 });

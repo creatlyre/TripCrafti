@@ -72,6 +72,12 @@ async function fetchRate(from: string, to: string): Promise<number> {
     const pairKey = `${from.toUpperCase()}${to.toUpperCase()}`;
     const rate = json?.quotes?.[pairKey];
     if (typeof rate === 'number' && isFinite(rate) && rate > 0) return rate;
+    // Some providers (or mocked tests) might still return a generic `rates` shape.
+    // Gracefully handle that before attempting /convert.
+    const genericRate = json?.rates?.[to];
+    if (typeof genericRate === 'number' && isFinite(genericRate) && genericRate > 0) {
+      return genericRate;
+    }
     // If live failed to give expected key, attempt secondary /convert call
     try {
       const convertUrl = `${baseUrl}/convert?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&amount=1${EX_API_KEY ? `&access_key=${encodeURIComponent(EX_API_KEY)}` : ''}`;
