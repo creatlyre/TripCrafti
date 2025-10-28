@@ -9,6 +9,7 @@ import { BUDGET_CATEGORY_TEMPLATES, isRatio } from '../../lib/budget.templates';
 import { Button } from '../ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Input } from '../ui/input';
+import BudgetTemplateSelector from './BudgetTemplateSelector';
 
 interface Props {
   tripId: string;
@@ -229,72 +230,24 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
               <div className="absolute inset-0 rounded-xl bg-brand-orange/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto bg-brand-navy-light border-brand-navy-lighter">
+          <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto bg-brand-navy-light border-brand-navy-lighter">
             <DialogHeader>
               <DialogTitle className="text-lg text-white">{dict.categories.selectTemplate}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 text-sm">
-              {BUDGET_CATEGORY_TEMPLATES.map((t) => {
-                const loc = dict.categoryTemplates?.[t.id];
-                const label = loc?.label || t.label;
-                const description = loc?.description || t.description;
-                const localizedCategories =
-                  (loc?.categories || []).length === t.categories.length ? loc?.categories : undefined;
-                interface DisplayCategory {
-                  name: string;
-                  suggested_portion: number | null | undefined;
-                  icon_name?: string;
-                }
-                const categoriesForDisplay: DisplayCategory[] = localizedCategories
-                  ? localizedCategories.map((c) => ({ name: c.name, suggested_portion: c.portion, icon_name: c.icon }))
-                  : (t.categories as DisplayCategory[]);
-                const totalPlanned = categoriesForDisplay.reduce((sum, c) => {
-                  if (isRatio(c.suggested_portion) && tripBudget) return sum + tripBudget * (c.suggested_portion || 0);
-                  if (typeof c.suggested_portion === 'number' && !isRatio(c.suggested_portion))
-                    return sum + c.suggested_portion;
-                  return sum;
-                }, 0);
-                return (
-                  <div key={t.id} className="border rounded-lg p-4 bg-brand-navy-dark/40 border-brand-navy-lighter">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-white">{label}</span>
-                      <Button
-                        size="sm"
-                        disabled={applyingTemplateId === t.id}
-                        onClick={() => applyTemplate(t.id)}
-                        className="bg-brand-cyan text-brand-navy hover:bg-brand-cyan/90"
-                      >
-                        {applyingTemplateId === t.id ? dict.categories.applying : dict.categories.apply}
-                      </Button>
-                    </div>
-                    <p className="text-brand-cyan/70 mb-3 leading-relaxed">{description}</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {categoriesForDisplay.map((c) => (
-                        <div
-                          key={c.name}
-                          className="bg-brand-navy-lighter/50 border border-brand-navy-lighter rounded px-3 py-2 flex flex-col"
-                        >
-                          <span className="truncate text-white text-sm">{c.name}</span>
-                          <span className="text-sm text-brand-cyan/60">
-                            {isRatio(c.suggested_portion)
-                              ? `${Math.round((c.suggested_portion || 0) * 100)}%`
-                              : (c.suggested_portion ?? '-')}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    {tripBudget && (
-                      <div className="mt-3 text-sm text-brand-cyan/60">
-                        {dict.categories.estPlannedTotal} {totalPlanned.toFixed(2)} (
-                        {tripBudget > 0 ? ((totalPlanned / tripBudget) * 100).toFixed(0) : 0}
-                        {dict.categories.ofTripBudget})
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="space-y-6 text-sm">
+              {dict.categories.templatesNote && (
+                <div className="rounded-lg border border-brand-cyan/30 bg-brand-cyan/10 p-3 text-brand-cyan/90 text-xs leading-relaxed">
+                  {dict.categories.templatesNote}
+                </div>
+              )}
+              <BudgetTemplateSelector
+                lang={lang}
+                tripBudget={tripBudget}
+                applyingTemplateId={applyingTemplateId}
+                onApply={applyTemplate}
+              />
               {tripBudget === null && (
-                <div className="text-sm text-brand-orange bg-brand-orange/10 p-3 rounded-lg">
+                <div className="text-xs text-brand-orange bg-brand-orange/10 p-3 rounded-lg">
                   {dict.categories.budgetNotLoaded}
                 </div>
               )}

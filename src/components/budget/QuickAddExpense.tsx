@@ -40,10 +40,11 @@ const QuickAddExpense: React.FC<Props> = ({ tripId, onAdded, lang = 'pl', button
         if (!res.ok) {
           throw new Error('Failed to load categories');
         }
-        const data: { categories?: BudgetCategory[] } = await res.json();
+        const json = (await res.json()) as unknown;
+        const data = json as { categories?: BudgetCategory[] };
         setCategories(data.categories || []);
-      } catch (error) {
-        console.error('Failed to load categories:', error);
+      } catch {
+        // swallow load error; UI will show empty list
       } finally {
         setLoadingCats(false);
       }
@@ -98,12 +99,19 @@ const QuickAddExpense: React.FC<Props> = ({ tripId, onAdded, lang = 'pl', button
             aria-label={dict.quickAdd.fabAria}
             className="group fixed bottom-6 right-6 h-20 w-20 rounded-full bg-gradient-to-r from-brand-cyan to-brand-cyan/80 hover:from-brand-cyan hover:to-brand-cyan text-brand-navy text-3xl font-bold shadow-2xl shadow-brand-cyan/40 hover:shadow-brand-cyan/60 flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-cyan/50 transition-all duration-300 hover:scale-110 active:scale-95 border-2 border-brand-cyan/20 hover:border-brand-cyan/40"
           >
-            <span className="relative z-10 transition-transform duration-300 group-hover:rotate-90">➕</span>
+            <span aria-hidden className="relative z-10 transition-transform duration-300 group-hover:rotate-90">
+              ➕
+            </span>
             <div className="absolute inset-0 rounded-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </button>
         ) : (
-          <button className="group relative text-sm px-6 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-cyan/90 text-brand-navy hover:from-brand-cyan/90 hover:to-brand-cyan font-semibold shadow-lg hover:shadow-xl hover:shadow-brand-cyan/30 border-2 border-brand-cyan/30 hover:border-brand-cyan/50 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 focus:ring-offset-2 focus:ring-offset-brand-navy">
-            <span className="relative z-10 flex items-center gap-2">➕ Add Expense</span>
+          <button
+            aria-label={dict.quickAdd.submit}
+            className="group relative text-sm px-6 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-cyan/90 text-brand-navy hover:from-brand-cyan/90 hover:to-brand-cyan font-semibold shadow-lg hover:shadow-xl hover:shadow-brand-cyan/30 border-2 border-brand-cyan/30 hover:border-brand-cyan/50 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 focus:ring-offset-2 focus:ring-offset-brand-navy"
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              <span aria-hidden>➕</span> {dict.quickAdd.submit}
+            </span>
             <div className="absolute inset-0 rounded-xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </button>
         )}
@@ -111,7 +119,7 @@ const QuickAddExpense: React.FC<Props> = ({ tripId, onAdded, lang = 'pl', button
       <DialogContent className="sm:max-w-md bg-brand-navy-dark/95 backdrop-blur-sm border-2 border-brand-cyan/40 shadow-2xl shadow-brand-cyan/20">
         <DialogHeader>
           <DialogTitle className="text-xl text-white font-bold flex items-center gap-2">
-            ➕ {dict.quickAdd.title}
+            {dict.quickAdd.title}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-5">
@@ -186,8 +194,9 @@ const QuickAddExpense: React.FC<Props> = ({ tripId, onAdded, lang = 'pl', button
                         if (res.ok) {
                           // Reload categories
                           const res2 = await fetch(`/api/trips/${tripId}/budget/categories`);
-                          const data = await res2.json();
-                          setCategories(data.categories || []);
+                          const json2: unknown = await res2.json();
+                          const data2 = json2 as { categories?: BudgetCategory[] } | undefined;
+                          setCategories(data2?.categories || []);
                         }
                       });
                     }

@@ -100,12 +100,7 @@ export interface Dictionary {
       modes?: { simple: string; full: string };
       confirmDeleteExpense?: string;
       refresh: { action: string; refreshing: string };
-      expenses: {
-        heading: string;
-        empty: string;
-        prepaidBadge: string;
-        fallbackTitle: string;
-      };
+      expenses: { heading: string; empty: string; prepaidBadge: string; fallbackTitle: string };
     };
     summary: {
       totalBudget: string;
@@ -145,6 +140,7 @@ export interface Dictionary {
       confirmApplyTemplate: string;
       confirmDeleteCategory?: string;
       simpleModeHint?: string;
+      templatesNote?: string;
     };
     categoryTemplates?: Record<
       string,
@@ -169,10 +165,10 @@ export interface Dictionary {
     itineraryAdd?: { button: string; added?: string; error?: string; adding?: string };
     page: {
       titleBase: string;
-      titleForTrip: string; // use {title}
+      titleForTrip: string;
       breadcrumb: { dashboard: string; budget: string };
       overview: string;
-      baseCurrency: string; // label prefix
+      baseCurrency: string;
       notFound: { heading: string; body: string; back: string };
     };
     errors?: {
@@ -193,14 +189,7 @@ export interface Dictionary {
     openPlan: string;
     dates: string;
     budget: string;
-    delete?: {
-      heading: string;
-      body: string;
-      confirm: string;
-      cancel: string;
-      cascadingNote: string;
-      action?: string;
-    };
+    delete?: { heading: string; body: string; confirm: string; cancel: string; cascadingNote: string; action?: string };
     create: {
       add: string;
       heading: string;
@@ -215,14 +204,8 @@ export interface Dictionary {
       submit: string;
       cancel: string;
     };
-    empty: {
-      heading: string;
-      description: string;
-    };
-    authGate?: {
-      mustBeSignedIn: string;
-      goToLogin: string;
-    };
+    empty: { heading: string; description: string };
+    authGate?: { mustBeSignedIn: string; goToLogin: string };
     form?: {
       placeholders: {
         titleExample: string;
@@ -230,31 +213,12 @@ export interface Dictionary {
         durationExample: string;
         lodgingPlaceholder: string;
       };
-      lodging: {
-        label: string;
-        tooltip: string;
-      };
-      currency: {
-        label: string;
-        selectPlaceholder: string;
-      };
+      lodging: { label: string; tooltip: string };
+      currency: { label: string; selectPlaceholder: string };
     };
-    tabs?: {
-      overview: string;
-      itinerary: string;
-      budget: string;
-      packing: string;
-      settings: string;
-      events?: string;
-    };
-    status?: {
-      creating: string;
-      deleting: string;
-    };
-    itinerary?: {
-      generated: string;
-      errorLabel: string;
-    };
+    tabs?: { overview: string; itinerary: string; budget: string; packing: string; settings: string; events?: string };
+    status?: { creating: string; deleting: string };
+    itinerary?: { generated: string; errorLabel: string };
     placeholders?: {
       budget: { title: string; body: string };
       packing: { title: string; body: string };
@@ -692,25 +656,6 @@ export interface Dictionary {
       optional: string;
     };
   };
-  tripCard?: {
-    budgetLink: string;
-    budgetAria: string;
-    quickActions?: {
-      duplicate: string;
-      archive: string;
-      share: string;
-      more: string;
-    };
-    status?: {
-      active: string;
-      upcoming: string;
-      past: string;
-      itineraryReady: string;
-      tomorrow: string;
-      today: string;
-      daysToGo: string;
-    };
-  };
 }
 
 const year = new Date().getFullYear();
@@ -873,6 +818,106 @@ export const dictionaries: Record<Lang, Dictionary> = {
         confirmDeleteCategory: 'Usunąć tę kategorię?',
         simpleModeHint:
           'Skup się na zmiennych wydatkach w trakcie podróży (noclegi/bilety opłacone z góry oznacz jako przedpłaty).',
+        templatesNote: 'Kwoty oparte na budżecie podróży: wartości procentowe zostaną przeliczone na konkretne kwoty.',
+      },
+      categoryTemplates: {
+        city_break_basic: {
+          label: 'Wypad do miasta',
+          description: 'Krótki miejski wypad z jedzeniem, atrakcjami i lokalnym transportem',
+          categories: [
+            { name: 'Transport', icon: 'bus', portion: 0.25 },
+            { name: 'Zakwaterowanie', icon: 'bed', portion: 0.35 },
+            { name: 'Posiłki', icon: 'utensils', portion: 0.25 },
+            { name: 'Rozrywka', icon: 'ticket', portion: 0.15 },
+          ],
+        },
+        road_trip: {
+          label: 'Podróż samochodem',
+          description: 'Przygodowa podróż z paliwem, kempingiem i elastycznością',
+          categories: [
+            { name: 'Paliwo', icon: 'fuel', portion: 0.3 },
+            { name: 'Zakwaterowanie', icon: 'bed', portion: 0.25 },
+            { name: 'Jedzenie', icon: 'utensils', portion: 0.2 },
+            { name: 'Rozrywka', icon: 'ticket', portion: 0.15 },
+            { name: 'Fundusz awaryjny', icon: 'alert-triangle', portion: 0.1 },
+          ],
+        },
+        family_holiday: {
+          label: 'Wakacje rodzinne',
+          description: 'Podróż przyjazna rodzicom z aktywnościami dla wszystkich grup wiekowych',
+          categories: [
+            { name: 'Zakwaterowanie', icon: 'bed', portion: 0.4 },
+            { name: 'Transport', icon: 'bus', portion: 0.25 },
+            { name: 'Jedzenie', icon: 'utensils', portion: 0.2 },
+            { name: 'Rozrywka', icon: 'play', portion: 0.15 },
+          ],
+        },
+        business_trip: {
+          label: 'Podróż służbowa',
+          description: 'Wyjazd nastawiony na pracę z naciskiem na noclegi i posiłki',
+          categories: [
+            { name: 'Zakwaterowanie', icon: 'bed', portion: 0.45 },
+            { name: 'Posiłki', icon: 'utensils', portion: 0.25 },
+            { name: 'Transport', icon: 'bus', portion: 0.15 },
+            { name: 'Dodatkowe wydatki', icon: 'more-horizontal', portion: 0.1 },
+            { name: 'Networking / Rozrywka', icon: 'ticket', portion: 0.05 },
+          ],
+        },
+        backpacking: {
+          label: 'Backpacking',
+          description: 'Budżetowa wieloetapowa podróż z hostelami i transportem publicznym',
+          categories: [
+            { name: 'Zakwaterowanie', icon: 'bed', portion: 0.25 },
+            { name: 'Transport', icon: 'bus', portion: 0.3 },
+            { name: 'Jedzenie', icon: 'utensils', portion: 0.25 },
+            { name: 'Aktywności', icon: 'compass', portion: 0.15 },
+            { name: 'Fundusz awaryjny', icon: 'alert-triangle', portion: 0.05 },
+          ],
+        },
+        beach_holiday: {
+          label: 'Urlop plażowy',
+          description: 'Relaks nad morzem: dominują noclegi i jedzenie',
+          categories: [
+            { name: 'Zakwaterowanie', icon: 'bed', portion: 0.4 },
+            { name: 'Jedzenie', icon: 'utensils', portion: 0.25 },
+            { name: 'Transport lokalny', icon: 'bus', portion: 0.1 },
+            { name: 'Aktywności / Wycieczki', icon: 'sun', portion: 0.15 },
+            { name: 'Pamiątki / Zakupy', icon: 'shopping-bag', portion: 0.1 },
+          ],
+        },
+        luxury_getaway: {
+          label: 'Luksusowy wyjazd',
+          description: 'Premium doświadczenie z ekskluzywnym noclegiem i gastronomią',
+          categories: [
+            { name: 'Zakwaterowanie', icon: 'bed', portion: 0.5 },
+            { name: 'Ekskluzywne posiłki', icon: 'utensils', portion: 0.25 },
+            { name: 'Transport', icon: 'bus', portion: 0.1 },
+            { name: 'Doświadczenia', icon: 'star', portion: 0.1 },
+            { name: 'Zakupy', icon: 'shopping-bag', portion: 0.05 },
+          ],
+        },
+        ski_trip: {
+          label: 'Wyjazd na narty',
+          description: 'Górska podróż z karnetami, sprzętem i noclegiem',
+          categories: [
+            { name: 'Zakwaterowanie', icon: 'bed', portion: 0.35 },
+            { name: 'Karnet i sprzęt', icon: 'snowflake', portion: 0.25 },
+            { name: 'Jedzenie', icon: 'utensils', portion: 0.2 },
+            { name: 'Transport', icon: 'bus', portion: 0.1 },
+            { name: 'Après-ski / Rozrywka', icon: 'play', portion: 0.1 },
+          ],
+        },
+        adventure_trek: {
+          label: 'Wyprawa trekkingowa',
+          description: 'Trekking z przewodnikami, pozwoleniami i sprzętem',
+          categories: [
+            { name: 'Przewodnicy / Zezwolenia', icon: 'map', portion: 0.25 },
+            { name: 'Sprzęt', icon: 'backpack', portion: 0.25 },
+            { name: 'Zakwaterowanie', icon: 'bed', portion: 0.15 },
+            { name: 'Jedzenie', icon: 'utensils', portion: 0.2 },
+            { name: 'Transport', icon: 'bus', portion: 0.15 },
+          ],
+        },
       },
       quickAdd: {
         fabAria: 'Dodaj wydatek',
@@ -1659,6 +1704,106 @@ export const dictionaries: Record<Lang, Dictionary> = {
         confirmApplyTemplate: 'This will add additional categories to your existing list. Continue?',
         confirmDeleteCategory: 'Delete this category?',
         simpleModeHint: 'Focus on variable on-trip spending (lodging / tickets paid upfront can be marked prepaid).',
+        templatesNote: 'Amounts based on trip budget: percentage values will be converted into concrete amounts.',
+      },
+      categoryTemplates: {
+        city_break_basic: {
+          label: 'City Break',
+          description: 'Short city getaway (2–4 days) with food, attractions & transit',
+          categories: [
+            { name: 'Transport', icon: 'bus', portion: 0.25 },
+            { name: 'Accommodation', icon: 'bed', portion: 0.35 },
+            { name: 'Meals', icon: 'utensils', portion: 0.25 },
+            { name: 'Entertainment', icon: 'ticket', portion: 0.15 },
+          ],
+        },
+        road_trip: {
+          label: 'Road Trip',
+          description: 'Driving adventure with fuel, lodging & flexible stops',
+          categories: [
+            { name: 'Fuel', icon: 'fuel', portion: 0.3 },
+            { name: 'Accommodation', icon: 'bed', portion: 0.25 },
+            { name: 'Food', icon: 'utensils', portion: 0.2 },
+            { name: 'Entertainment', icon: 'ticket', portion: 0.15 },
+            { name: 'Emergency Fund', icon: 'alert-triangle', portion: 0.1 },
+          ],
+        },
+        family_holiday: {
+          label: 'Family Holiday',
+          description: 'Family-friendly trip with balanced spending',
+          categories: [
+            { name: 'Accommodation', icon: 'bed', portion: 0.4 },
+            { name: 'Transport', icon: 'bus', portion: 0.25 },
+            { name: 'Food', icon: 'utensils', portion: 0.2 },
+            { name: 'Entertainment', icon: 'play', portion: 0.15 },
+          ],
+        },
+        business_trip: {
+          label: 'Business Trip',
+          description: 'Work-focused travel prioritizing lodging & meals',
+          categories: [
+            { name: 'Accommodation', icon: 'bed', portion: 0.45 },
+            { name: 'Meals', icon: 'utensils', portion: 0.25 },
+            { name: 'Transport', icon: 'bus', portion: 0.15 },
+            { name: 'Misc / Incidental', icon: 'more-horizontal', portion: 0.1 },
+            { name: 'Networking / Entertainment', icon: 'ticket', portion: 0.05 },
+          ],
+        },
+        backpacking: {
+          label: 'Backpacking',
+          description: 'Budget multi-stop travel with public transit & hostels',
+          categories: [
+            { name: 'Accommodation', icon: 'bed', portion: 0.25 },
+            { name: 'Transport', icon: 'bus', portion: 0.3 },
+            { name: 'Food', icon: 'utensils', portion: 0.25 },
+            { name: 'Activities', icon: 'compass', portion: 0.15 },
+            { name: 'Emergency Fund', icon: 'alert-triangle', portion: 0.05 },
+          ],
+        },
+        beach_holiday: {
+          label: 'Beach Holiday',
+          description: 'Relaxed coastal stay: lodging & food dominate',
+          categories: [
+            { name: 'Accommodation', icon: 'bed', portion: 0.4 },
+            { name: 'Food', icon: 'utensils', portion: 0.25 },
+            { name: 'Local Transport', icon: 'bus', portion: 0.1 },
+            { name: 'Activities / Excursions', icon: 'sun', portion: 0.15 },
+            { name: 'Souvenirs / Shopping', icon: 'shopping-bag', portion: 0.1 },
+          ],
+        },
+        luxury_getaway: {
+          label: 'Luxury Getaway',
+          description: 'Premium experience with upscale lodging & dining',
+          categories: [
+            { name: 'Accommodation', icon: 'bed', portion: 0.5 },
+            { name: 'Fine Dining', icon: 'utensils', portion: 0.25 },
+            { name: 'Transport', icon: 'bus', portion: 0.1 },
+            { name: 'Experiences', icon: 'star', portion: 0.1 },
+            { name: 'Shopping', icon: 'shopping-bag', portion: 0.05 },
+          ],
+        },
+        ski_trip: {
+          label: 'Ski Trip',
+          description: 'Mountain travel with passes, gear & lodging',
+          categories: [
+            { name: 'Accommodation', icon: 'bed', portion: 0.35 },
+            { name: 'Ski Pass & Gear', icon: 'snowflake', portion: 0.25 },
+            { name: 'Food', icon: 'utensils', portion: 0.2 },
+            { name: 'Transport', icon: 'bus', portion: 0.1 },
+            { name: 'Après-ski / Entertainment', icon: 'play', portion: 0.1 },
+          ],
+        },
+        adventure_trek: {
+          label: 'Adventure Trek',
+          description: 'Outdoor trekking with guides, permits & gear',
+          categories: [
+            { name: 'Guides / Permits', icon: 'map', portion: 0.25 },
+            { name: 'Gear / Equipment', icon: 'backpack', portion: 0.25 },
+            { name: 'Accommodation', icon: 'bed', portion: 0.15 },
+            { name: 'Food', icon: 'utensils', portion: 0.2 },
+            { name: 'Transport', icon: 'bus', portion: 0.15 },
+          ],
+        },
       },
       quickAdd: {
         fabAria: 'Add expense',

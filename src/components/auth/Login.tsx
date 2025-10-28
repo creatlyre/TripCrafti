@@ -61,10 +61,10 @@ export default function Login() {
   const [resendingVerification, setResendingVerification] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
 
-  // Default to English in absence of explicit ?lang param to align with test expectations.
+  // Default to Polish in absence of explicit ?lang param (tests expect PL as default)
   const langParam =
-    typeof window !== 'undefined' ? new URL(window.location.href).searchParams.get('lang') || 'en' : 'en';
-  const lang = (langParam === 'pl' ? 'pl' : 'en') as Lang;
+    typeof window !== 'undefined' ? new URL(window.location.href).searchParams.get('lang') || 'pl' : 'pl';
+  const lang = (langParam === 'en' ? 'en' : 'pl') as Lang;
   const dict = getDictionary(lang);
 
   // Handle URL error parameters

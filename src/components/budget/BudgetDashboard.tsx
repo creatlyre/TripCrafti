@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 
 import { getDictionary, type Lang } from '@/lib/i18n';
@@ -207,30 +207,28 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
           </button>
 
           <div className="inline-flex rounded-xl overflow-hidden border-2 border-brand-cyan/30 bg-gradient-to-r from-brand-navy-light to-brand-navy-lighter shadow-lg hover:shadow-xl hover:shadow-brand-cyan/10 transition-all duration-300">
-            {(['simple', 'full'] as BudgetMode[]).map((val) => (
-              <button
-                key={val}
-                onClick={() => setBudgetMode(val)}
-                aria-pressed={budgetMode === val}
-                className={`group relative px-4 sm:px-6 py-3 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-cyan/60 hover:scale-105 active:scale-95 transform ${
-                  budgetMode === val
-                    ? 'bg-brand-cyan text-white shadow-lg shadow-brand-cyan/40 z-10 border-2 border-brand-cyan scale-105'
-                    : 'bg-brand-navy-lighter/50 text-brand-cyan hover:text-white hover:bg-brand-cyan/20 hover:shadow-md border border-brand-cyan/30 hover:border-brand-cyan/70'
-                } rounded-none first:rounded-l-xl last:rounded-r-xl`}
-              >
-                <span className="relative z-10 whitespace-nowrap">
-                  <span className="hidden sm:inline">
-                    {val === 'simple'
-                      ? dict.dashboard.modes?.simple || 'On-Trip'
-                      : dict.dashboard.modes?.full || 'Full'}
-                  </span>
-                  <span className="sm:hidden">{val === 'simple' ? 'Trip' : 'Full'}</span>
-                </span>
-                {budgetMode !== val && (
-                  <div className="absolute inset-0 bg-brand-cyan/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                )}
-              </button>
-            ))}
+            {(['simple', 'full'] as BudgetMode[]).map((val) => {
+              const label =
+                val === 'simple' ? dict.dashboard.modes?.simple || 'On-Trip' : dict.dashboard.modes?.full || 'Full';
+              return (
+                <button
+                  key={val}
+                  onClick={() => setBudgetMode(val)}
+                  aria-pressed={budgetMode === val}
+                  aria-label={label}
+                  className={`group relative px-4 sm:px-6 py-3 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-cyan/60 hover:scale-105 active:scale-95 transform ${
+                    budgetMode === val
+                      ? 'bg-brand-cyan text-white shadow-lg shadow-brand-cyan/40 z-10 border-2 border-brand-cyan scale-105'
+                      : 'bg-brand-navy-lighter/50 text-brand-cyan hover:text-white hover:bg-brand-cyan/20 hover:shadow-md border border-brand-cyan/30 hover:border-brand-cyan/70'
+                  } rounded-none first:rounded-l-xl last:rounded-r-xl`}
+                >
+                  <span className="relative z-10 whitespace-nowrap">{label}</span>
+                  {budgetMode !== val && (
+                    <div className="absolute inset-0 bg-brand-cyan/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           <div className="inline-flex rounded-xl overflow-hidden border-2 border-brand-orange/30 bg-gradient-to-r from-brand-navy-light to-brand-navy-lighter shadow-lg hover:shadow-xl hover:shadow-brand-orange/10 transition-all duration-300">
@@ -249,6 +247,7 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
                   onClick={() => setPrepaidMode(val)}
                   aria-pressed={prepaidMode === val}
                   aria-disabled={disabled}
+                  aria-label={label}
                   disabled={disabled}
                   className={`group relative px-3 sm:px-6 py-3 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-orange/60 hover:scale-105 active:scale-95 transform ${
                     prepaidMode === val
@@ -260,10 +259,7 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
                       : ''
                   } rounded-none first:rounded-l-xl last:rounded-r-xl`}
                 >
-                  <span className="relative z-10 whitespace-nowrap">
-                    <span className="hidden sm:inline">{label}</span>
-                    <span className="sm:hidden">{val === 'all' ? 'All' : val === 'exclude' ? 'Trip' : 'Pre'}</span>
-                  </span>
+                  <span className="relative z-10 whitespace-nowrap">{label}</span>
                   {prepaidMode !== val && !disabled && (
                     <div className="absolute inset-0 bg-brand-orange/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                   )}
@@ -275,13 +271,19 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
           <button
             onClick={manualRefresh}
             disabled={refreshing}
-            aria-label={refreshing ? 'Refreshing expenses' : 'Refresh expenses list'}
+            aria-label={
+              refreshing
+                ? dict.dashboard.refresh.refreshing || 'Refreshing...'
+                : dict.dashboard.refresh.action || 'Refresh'
+            }
             className="group relative text-sm px-6 py-3 rounded-xl border-2 border-brand-cyan/50 bg-brand-cyan/10 text-brand-cyan hover:bg-brand-cyan/90 hover:text-brand-navy hover:border-brand-cyan hover:shadow-xl hover:shadow-brand-cyan/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-cyan/60 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none disabled:hover:bg-brand-cyan/10 disabled:hover:text-brand-cyan disabled:hover:border-brand-cyan/50 transition-all duration-300 font-semibold active:scale-95"
           >
             <span className="relative z-10 flex items-center gap-2">
-              {refreshing
-                ? `🔄 ${dict.dashboard.refresh.refreshing || (lang === 'pl' ? 'Odświeżanie…' : 'Refreshing…')}`
-                : `🔄 ${dict.dashboard.refresh.action || (lang === 'pl' ? 'Odśwież' : 'Refresh')}`}
+              {refreshing ? (
+                <>🔄 {dict.dashboard.refresh.refreshing || (lang === 'pl' ? 'Odświeżanie…' : 'Refreshing…')}</>
+              ) : (
+                <>🔄 {dict.dashboard.refresh.action || (lang === 'pl' ? 'Odśwież' : 'Refresh')}</>
+              )}
             </span>
             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-cyan/80 to-brand-cyan/60 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
           </button>
