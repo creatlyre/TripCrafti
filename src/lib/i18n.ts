@@ -144,6 +144,36 @@ export interface Dictionary {
       applyOverwriteHint?: string;
       applyingAnnounce?: string;
       appliedAnnounce?: string;
+      templateSelectorTitle?: string;
+      templateSelectorSubtitle?: string;
+      categoriesLabel?: string;
+      categoryDetailsHeading?: string;
+      selectTemplatePrompt?: string;
+      budgetDistribution?: string;
+      percentOfBudget?: string;
+      applyTemplateButton?: string;
+      filtersLabel?: string;
+      templatesLabel?: string;
+      searchPlaceholder?: string;
+      clearSearch?: string;
+      noMatchesFound?: string;
+      tryDifferentKeywords?: string;
+      selectTemplateText?: string;
+      selectTemplateHelp?: string;
+      selectedTemplateLabel?: string;
+      chooseFromList?: string;
+    };
+    budgetTemplates?: {
+      templates: Record<
+        string,
+        {
+          label: string;
+          description: string;
+          categories: { name: string; icon_name?: string; suggested_portion?: number }[];
+        }
+      >;
+      tags: Record<string, string>;
+      categories: Record<string, string>;
     };
     categoryTemplates?: Record<
       string,
@@ -825,6 +855,176 @@ export const dictionaries: Record<Lang, Dictionary> = {
         applyOverwriteHint: 'Zastosowanie szablonu doda lub nadpisze istniejące kategorie.',
         applyingAnnounce: 'Stosowanie szablonu w toku…',
         appliedAnnounce: 'Szablon zastosowany.',
+        templateSelectorTitle: 'Wybierz szablon budżetu',
+        templateSelectorSubtitle:
+          'Skorzystaj z gotowych szablonów kategorii budżetowych dostosowanych do różnych typów podróży.',
+        categoriesLabel: 'kategorii',
+        categoryDetailsHeading: 'Szczegóły kategorii',
+        selectTemplatePrompt:
+          'Wybierz szablon z listy po lewej stronie, aby zobaczyć podgląd kategorii budżetowych i ich rozkład.',
+        budgetDistribution: 'Dystrybucja budżetu',
+        percentOfBudget: '% całkowitego budżetu',
+        applyTemplateButton: 'Zastosuj szablon',
+        filtersLabel: 'Filtry',
+        templatesLabel: 'Szablony',
+        searchPlaceholder: 'Wpisz nazwę szablonu...',
+        clearSearch: 'Wyczyść',
+        noMatchesFound: 'Brak wyników',
+        tryDifferentKeywords: 'Spróbuj innych słów kluczowych',
+        selectTemplateText: 'Wybierz szablon',
+        selectTemplateHelp: 'Wybierz szablon z listy, aby zobaczyć podgląd kategorii budżetowych i ich rozkład.',
+        selectedTemplateLabel: 'Wybrany szablon:',
+        chooseFromList: 'Wybierz szablon z listy.',
+      },
+      budgetTemplates: {
+        templates: {
+          city_break_basic: {
+            label: 'Wypad do miasta',
+            description: 'Krótki miejski wypad (2-4 dni) z jedzeniem, atrakcjami i lokalnym transportem.',
+            categories: [
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.25 },
+              { name: 'Zakwaterowanie', icon_name: 'bed', suggested_portion: 0.35 },
+              { name: 'Posiłki', icon_name: 'utensils', suggested_portion: 0.25 },
+              { name: 'Rozrywka', icon_name: 'ticket', suggested_portion: 0.15 },
+            ],
+          },
+          road_trip: {
+            label: 'Podróż samochodem',
+            description: 'Przygodowa podróż z paliwem, noclegiem i elastycznymi przystankami.',
+            categories: [
+              { name: 'Paliwo', icon_name: 'fuel', suggested_portion: 0.3 },
+              { name: 'Zakwaterowanie', icon_name: 'bed', suggested_portion: 0.25 },
+              { name: 'Jedzenie', icon_name: 'utensils', suggested_portion: 0.2 },
+              { name: 'Rozrywka', icon_name: 'ticket', suggested_portion: 0.15 },
+              { name: 'Fundusz awaryjny', icon_name: 'alert-triangle', suggested_portion: 0.1 },
+            ],
+          },
+          family_holiday: {
+            label: 'Wakacje rodzinne',
+            description: 'Podróż przyjazna rodzinom ze zrównoważonymi wydatkami.',
+            categories: [
+              { name: 'Zakwaterowanie', icon_name: 'bed', suggested_portion: 0.4 },
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.25 },
+              { name: 'Jedzenie', icon_name: 'utensils', suggested_portion: 0.2 },
+              { name: 'Rozrywka', icon_name: 'play', suggested_portion: 0.15 },
+            ],
+          },
+          business_trip: {
+            label: 'Podróż służbowa',
+            description: 'Wyjazd nastawiony na pracę z naciskiem na noclegi i posiłki z dodatkowymi wydatkami.',
+            categories: [
+              { name: 'Zakwaterowanie', icon_name: 'bed', suggested_portion: 0.45 },
+              { name: 'Posiłki', icon_name: 'utensils', suggested_portion: 0.25 },
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.15 },
+              { name: 'Dodatkowe wydatki', icon_name: 'more-horizontal', suggested_portion: 0.1 },
+              { name: 'Networking / Rozrywka', icon_name: 'ticket', suggested_portion: 0.05 },
+            ],
+          },
+          backpacking: {
+            label: 'Backpacking',
+            description: 'Budżetowa wieloetapowa podróż z transportem publicznym i hostelami.',
+            categories: [
+              { name: 'Zakwaterowanie', icon_name: 'bed', suggested_portion: 0.25 },
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.3 },
+              { name: 'Jedzenie', icon_name: 'utensils', suggested_portion: 0.25 },
+              { name: 'Aktywności', icon_name: 'compass', suggested_portion: 0.15 },
+              { name: 'Fundusz awaryjny', icon_name: 'alert-triangle', suggested_portion: 0.05 },
+            ],
+          },
+          beach_holiday: {
+            label: 'Urlop plażowy',
+            description: 'Relaksacyjny pobyt nad morzem: dominują noclegi i jedzenie.',
+            categories: [
+              { name: 'Zakwaterowanie', icon_name: 'bed', suggested_portion: 0.4 },
+              { name: 'Jedzenie', icon_name: 'utensils', suggested_portion: 0.25 },
+              { name: 'Transport lokalny', icon_name: 'bus', suggested_portion: 0.1 },
+              { name: 'Aktywności / Wycieczki', icon_name: 'sun', suggested_portion: 0.15 },
+              { name: 'Pamiątki / Zakupy', icon_name: 'shopping-bag', suggested_portion: 0.1 },
+            ],
+          },
+          luxury_getaway: {
+            label: 'Luksusowy wyjazd',
+            description: 'Premium doświadczenie z ekskluzywnym noclegiem i gastronomią.',
+            categories: [
+              { name: 'Zakwaterowanie', icon_name: 'bed', suggested_portion: 0.5 },
+              { name: 'Ekskluzywne posiłki', icon_name: 'utensils', suggested_portion: 0.25 },
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.1 },
+              { name: 'Doświadczenia', icon_name: 'star', suggested_portion: 0.1 },
+              { name: 'Zakupy', icon_name: 'shopping-bag', suggested_portion: 0.05 },
+            ],
+          },
+          ski_trip: {
+            label: 'Wyjazd na narty',
+            description: 'Górska podróż z karnetami, sprzętem i noclegiem.',
+            categories: [
+              { name: 'Zakwaterowanie', icon_name: 'bed', suggested_portion: 0.35 },
+              { name: 'Karnet i sprzęt', icon_name: 'snowflake', suggested_portion: 0.25 },
+              { name: 'Jedzenie', icon_name: 'utensils', suggested_portion: 0.2 },
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.1 },
+              { name: 'Après-ski / Rozrywka', icon_name: 'play', suggested_portion: 0.1 },
+            ],
+          },
+          adventure_trek: {
+            label: 'Wyprawa trekkingowa',
+            description: 'Outdoor trekking ze sprzętem, przewodnikami i pozwoleniami.',
+            categories: [
+              { name: 'Przewodnicy / Pozwolenia', icon_name: 'map', suggested_portion: 0.25 },
+              { name: 'Sprzęt / Ekwipunek', icon_name: 'backpack', suggested_portion: 0.25 },
+              { name: 'Zakwaterowanie', icon_name: 'bed', suggested_portion: 0.15 },
+              { name: 'Jedzenie', icon_name: 'utensils', suggested_portion: 0.2 },
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.15 },
+            ],
+          },
+        },
+        tags: {
+          city: 'miasto',
+          short: 'krótki',
+          weekend: 'weekend',
+          adventure: 'przygoda',
+          driving: 'jazda',
+          flexible: 'elastyczny',
+          family: 'rodzina',
+          balanced: 'zrównoważony',
+          'multi-age': 'różne-wieki',
+          business: 'biznes',
+          work: 'praca',
+          urban: 'miejski',
+          budget: 'budżet',
+          'multi-stop': 'wieloetapowy',
+          beach: 'plaża',
+          relax: 'relaks',
+          sun: 'słońce',
+          luxury: 'luksus',
+          premium: 'premium',
+          dining: 'gastronomia',
+          winter: 'zima',
+          snow: 'śnieg',
+          sport: 'sport',
+          outdoor: 'outdoor',
+          trek: 'trekking',
+        },
+        categories: {
+          transport: 'Transport',
+          accommodation: 'Zakwaterowanie',
+          meals: 'Posiłki',
+          entertainment: 'Rozrywka',
+          fuel: 'Paliwo',
+          food: 'Jedzenie',
+          'emergency fund': 'Fundusz awaryjny',
+          activities: 'Aktywności',
+          'local transport': 'Transport lokalny',
+          'activities / excursions': 'Aktywności / Wycieczki',
+          'souvenirs / shopping': 'Pamiątki / Zakupy',
+          'fine dining': 'Ekskluzywne posiłki',
+          experiences: 'Doświadczenia',
+          shopping: 'Zakupy',
+          'ski pass & gear': 'Karnet i sprzęt',
+          'après-ski / entertainment': 'Après-ski / Rozrywka',
+          'guides / permits': 'Przewodnicy / Pozwolenia',
+          'gear / equipment': 'Sprzęt / Ekwipunek',
+          'misc / incidental': 'Dodatkowe wydatki',
+          'networking / entertainment': 'Networking / Rozrywka',
+        },
       },
       categoryTemplates: {
         city_break_basic: {
@@ -1714,6 +1914,176 @@ export const dictionaries: Record<Lang, Dictionary> = {
         applyOverwriteHint: 'Applying a template will add or overwrite existing categories.',
         applyingAnnounce: 'Applying template in progress…',
         appliedAnnounce: 'Template applied.',
+        templateSelectorTitle: 'Choose Budget Template',
+        templateSelectorSubtitle: 'Use pre-made budget category templates tailored for different types of trips.',
+        categoriesLabel: 'categories',
+        categoryDetailsHeading: 'Category Details',
+        selectTemplatePrompt:
+          'Choose a template from the list on the left to see a preview of budget categories and their distribution.',
+        budgetDistribution: 'Budget Distribution',
+        percentOfBudget: '% of total budget',
+        applyTemplateButton: 'Apply Template',
+        filtersLabel: 'Filters',
+        templatesLabel: 'Templates',
+        searchPlaceholder: 'Type template name...',
+        clearSearch: 'Clear',
+        noMatchesFound: 'No matches found',
+        tryDifferentKeywords: 'Try different keywords',
+        selectTemplateText: 'Select a Template',
+        selectTemplateHelp:
+          'Choose a template from the list to see a preview of budget categories and their distribution.',
+        selectedTemplateLabel: 'Selected template:',
+        chooseFromList: 'Choose a template from the list.',
+      },
+      budgetTemplates: {
+        templates: {
+          city_break_basic: {
+            label: 'City Break',
+            description: 'Short city getaway (2–4 days) with food, attractions & transit.',
+            categories: [
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.25 },
+              { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.35 },
+              { name: 'Meals', icon_name: 'utensils', suggested_portion: 0.25 },
+              { name: 'Entertainment', icon_name: 'ticket', suggested_portion: 0.15 },
+            ],
+          },
+          road_trip: {
+            label: 'Road Trip',
+            description: 'Driving adventure with fuel, lodging & flexible stops.',
+            categories: [
+              { name: 'Fuel', icon_name: 'fuel', suggested_portion: 0.3 },
+              { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.25 },
+              { name: 'Food', icon_name: 'utensils', suggested_portion: 0.2 },
+              { name: 'Entertainment', icon_name: 'ticket', suggested_portion: 0.15 },
+              { name: 'Emergency Fund', icon_name: 'alert-triangle', suggested_portion: 0.1 },
+            ],
+          },
+          family_holiday: {
+            label: 'Family Holiday',
+            description: 'Family-friendly trip with balanced spending.',
+            categories: [
+              { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.4 },
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.25 },
+              { name: 'Food', icon_name: 'utensils', suggested_portion: 0.2 },
+              { name: 'Entertainment', icon_name: 'play', suggested_portion: 0.15 },
+            ],
+          },
+          business_trip: {
+            label: 'Business Trip',
+            description: 'Work-focused travel prioritizing lodging & meals with incidentals.',
+            categories: [
+              { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.45 },
+              { name: 'Meals', icon_name: 'utensils', suggested_portion: 0.25 },
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.15 },
+              { name: 'Misc / Incidental', icon_name: 'more-horizontal', suggested_portion: 0.1 },
+              { name: 'Networking / Entertainment', icon_name: 'ticket', suggested_portion: 0.05 },
+            ],
+          },
+          backpacking: {
+            label: 'Backpacking',
+            description: 'Budget multi-stop travel with public transit & hostels.',
+            categories: [
+              { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.25 },
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.3 },
+              { name: 'Food', icon_name: 'utensils', suggested_portion: 0.25 },
+              { name: 'Activities', icon_name: 'compass', suggested_portion: 0.15 },
+              { name: 'Emergency Fund', icon_name: 'alert-triangle', suggested_portion: 0.05 },
+            ],
+          },
+          beach_holiday: {
+            label: 'Beach Holiday',
+            description: 'Relaxed coastal stay: lodging & food dominate.',
+            categories: [
+              { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.4 },
+              { name: 'Food', icon_name: 'utensils', suggested_portion: 0.25 },
+              { name: 'Local Transport', icon_name: 'bus', suggested_portion: 0.1 },
+              { name: 'Activities / Excursions', icon_name: 'sun', suggested_portion: 0.15 },
+              { name: 'Souvenirs / Shopping', icon_name: 'shopping-bag', suggested_portion: 0.1 },
+            ],
+          },
+          luxury_getaway: {
+            label: 'Luxury Getaway',
+            description: 'Premium experience with upscale lodging & dining.',
+            categories: [
+              { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.5 },
+              { name: 'Fine Dining', icon_name: 'utensils', suggested_portion: 0.25 },
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.1 },
+              { name: 'Experiences', icon_name: 'star', suggested_portion: 0.1 },
+              { name: 'Shopping', icon_name: 'shopping-bag', suggested_portion: 0.05 },
+            ],
+          },
+          ski_trip: {
+            label: 'Ski Trip',
+            description: 'Mountain travel with passes, gear & lodging.',
+            categories: [
+              { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.35 },
+              { name: 'Ski Pass & Gear', icon_name: 'snowflake', suggested_portion: 0.25 },
+              { name: 'Food', icon_name: 'utensils', suggested_portion: 0.2 },
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.1 },
+              { name: 'Après-ski / Entertainment', icon_name: 'play', suggested_portion: 0.1 },
+            ],
+          },
+          adventure_trek: {
+            label: 'Adventure Trek',
+            description: 'Outdoor trekking with guides, permits & gear.',
+            categories: [
+              { name: 'Guides / Permits', icon_name: 'map', suggested_portion: 0.25 },
+              { name: 'Gear / Equipment', icon_name: 'backpack', suggested_portion: 0.25 },
+              { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.15 },
+              { name: 'Food', icon_name: 'utensils', suggested_portion: 0.2 },
+              { name: 'Transport', icon_name: 'bus', suggested_portion: 0.15 },
+            ],
+          },
+        },
+        tags: {
+          city: 'city',
+          short: 'short',
+          weekend: 'weekend',
+          adventure: 'adventure',
+          driving: 'driving',
+          flexible: 'flexible',
+          family: 'family',
+          balanced: 'balanced',
+          'multi-age': 'multi-age',
+          business: 'business',
+          work: 'work',
+          urban: 'urban',
+          budget: 'budget',
+          'multi-stop': 'multi-stop',
+          beach: 'beach',
+          relax: 'relax',
+          sun: 'sun',
+          luxury: 'luxury',
+          premium: 'premium',
+          dining: 'dining',
+          winter: 'winter',
+          snow: 'snow',
+          sport: 'sport',
+          outdoor: 'outdoor',
+          trek: 'trek',
+        },
+        categories: {
+          transport: 'Transport',
+          accommodation: 'Accommodation',
+          meals: 'Meals',
+          entertainment: 'Entertainment',
+          fuel: 'Fuel',
+          food: 'Food',
+          'emergency fund': 'Emergency Fund',
+          activities: 'Activities',
+          'local transport': 'Local Transport',
+          'activities / excursions': 'Activities / Excursions',
+          'souvenirs / shopping': 'Souvenirs / Shopping',
+          'fine dining': 'Fine Dining',
+          experiences: 'Experiences',
+          shopping: 'Shopping',
+          'ski pass & gear': 'Ski Pass & Gear',
+          'après-ski / entertainment': 'Après-ski / Entertainment',
+          'guides / permits': 'Guides / Permits',
+          'gear / equipment': 'Gear / Equipment',
+          'misc / incidental': 'Misc / Incidental',
+          'networking / entertainment': 'Networking / Entertainment',
+        },
       },
       categoryTemplates: {
         city_break_basic: {
