@@ -6,20 +6,47 @@ import type { Trip, GeneratedItinerary, Itinerary, ItineraryPreferences } from '
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
-// Lazy load the tab components
-const OverviewTab = lazy(() => import('./tabs/OverviewTab'));
-const ItineraryTab = lazy(() => import('./tabs/ItineraryTab'));
-const BudgetTab = lazy(() => import('./tabs/BudgetTab'));
-const PackingTab = lazy(() => import('./tabs/PackingTab'));
-const EventsTab = lazy(() => import('./tabs/EventsTab'));
-const SettingsTab = lazy(() => import('./tabs/SettingsTab'));
+// Error fallback component
+const ErrorFallback = ({ tabName }: { tabName: string }) => (
+  <div className="p-6 text-center text-red-600 dark:text-red-400">
+    {tabName} {/* Tab loading error */}
+  </div>
+);
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="p-6 flex items-center justify-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+  </div>
+);
+
+// Lazy load the tab components with error boundaries
+const OverviewTab = lazy(() =>
+  import('./tabs/OverviewTab').catch(() => ({ default: () => <ErrorFallback tabName="Overview" /> }))
+);
+const ItineraryTab = lazy(() =>
+  import('./tabs/ItineraryTab').catch(() => ({ default: () => <ErrorFallback tabName="Itinerary" /> }))
+);
+const BudgetTab = lazy(() =>
+  import('./tabs/BudgetTab').catch(() => ({ default: () => <ErrorFallback tabName="Budget" /> }))
+);
+const PackingTab = lazy(() =>
+  import('./tabs/PackingTab').catch(() => ({ default: () => <ErrorFallback tabName="Packing" /> }))
+);
+const EventsTab = lazy(() =>
+  import('./tabs/EventsTab').catch(() => ({ default: () => <ErrorFallback tabName="Events" /> }))
+);
+const SettingsTab = lazy(() =>
+  import('./tabs/SettingsTab').catch(() => ({ default: () => <ErrorFallback tabName="Settings" /> }))
+);
 
 interface TripDetailsModalProps {
   trip: Trip & { itineraries: GeneratedItinerary[] };
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   lang: Lang;
-  dict: any; // Consider creating a more specific type for the dictionary
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dict: any; // TODO: Create proper dictionary type interface
   activeTab: string;
   onTabChange: (tab: string) => void;
   onItineraryGenerate: (preferences: ItineraryPreferences) => void;
@@ -106,7 +133,7 @@ export function TripDetailsModal({
               </TabsList>
 
               <div>
-                <Suspense fallback={<div>Loading...</div>}>
+                <Suspense fallback={<LoadingFallback />}>
                   <TabsContent value="overview" className="p-6 space-y-6 m-0">
                     {activeTab === 'overview' && <OverviewTab trip={trip} lang={lang} />}
                   </TabsContent>
