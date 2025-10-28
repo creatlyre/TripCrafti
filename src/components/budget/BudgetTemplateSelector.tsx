@@ -86,9 +86,11 @@ const BudgetTemplateSelector: React.FC<Props> = ({
   }
 
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:gap-6 h-full bg-brand-navy-dark rounded-lg p-3 md:p-4 ring-1 ring-brand-navy-lighter/60">
+    /* Root container: explicit height ensures left list (flex child) isn't collapsed inside modal with only max-height.
+       Previously using min-h sometimes allowed the browser to treat child as auto height 0 in certain flex contexts. */
+    <div className="flex flex-col gap-4 md:flex-row md:gap-6 bg-brand-navy-dark rounded-lg p-3 md:p-4 ring-1 ring-brand-navy-lighter/60 text-white flex-1 min-h-[60vh]">
       {/* Left column: search, tags, list */}
-      <div className="md:w-60 flex-shrink-0 flex flex-col gap-4 bg-gradient-to-b from-brand-navy-dark to-brand-navy-light rounded-xl p-3 border border-brand-navy-lighter/70 shadow-inner shadow-black/30">
+      <div className="w-80 md:w-80 flex-shrink-0 flex flex-col gap-4 bg-gradient-to-b from-brand-navy-dark to-brand-navy-light rounded-xl p-3 border border-brand-navy-lighter/70 shadow-inner shadow-black/30 relative z-20 bg-red-500/20">
         <div className="relative">
           <Input
             aria-label={lang === 'pl' ? 'Szukaj szablonów' : 'Search templates'}
@@ -130,7 +132,8 @@ const BudgetTemplateSelector: React.FC<Props> = ({
         <ul
           role="listbox"
           aria-label={dict?.categories.selectTemplate}
-          className="flex-1 overflow-y-auto rounded-lg border border-brand-navy-lighter/70 divide-y divide-brand-navy-lighter/50 bg-brand-navy-light shadow-sm"
+          /* Provide a minimum height so content isn't collapsed when parent height is auto; flex-1 lets it fill remaining vertical space. */
+          className="min-h-[220px] max-h-[280px] overflow-y-auto rounded-lg border border-brand-navy-lighter/70 divide-y divide-brand-navy-lighter/50 bg-brand-navy-light shadow-sm"
         >
           {filtered.map((t) => {
             const selected =
@@ -148,13 +151,13 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                     setSelectedId(t.id);
                   }
                 }}
-                className={`cursor-pointer group px-3 py-2 text-xs flex flex-col gap-0.5 focus:outline-none transition-colors rounded-md ${
+                className={`cursor-pointer group px-3 py-2 text-xs flex flex-col gap-0.5 focus:outline-none transition-colors rounded-md outline outline-1 outline-transparent bg-yellow-400/30 ${
                   selected
                     ? 'bg-brand-cyan/10 border border-brand-cyan/60 shadow-inner shadow-brand-cyan/20'
                     : 'hover:bg-brand-navy-dark/60 border border-transparent'
                 }`}
               >
-                <span className="flex items-center gap-1 font-medium text-brand-cyan/90 group-hover:text-white transition-colors">
+                <span className="flex items-center gap-1 font-medium text-black bg-white/90 px-1 rounded group-hover:text-black transition-colors">
                   {t.emoji && <span aria-hidden>{t.emoji}</span>}
                   {t.label}
                 </span>
@@ -173,16 +176,16 @@ const BudgetTemplateSelector: React.FC<Props> = ({
       </div>
 
       {/* Right column: preview */}
-      <div className="flex-1 flex flex-col gap-4 min-h-0 bg-brand-navy-dark rounded-xl p-4 border border-brand-navy-lighter/70 overflow-hidden shadow-inner shadow-black/40">
+      <div className="flex-1 flex flex-col gap-4 bg-brand-navy-dark rounded-xl p-4 border border-brand-navy-lighter/70 shadow-inner shadow-black/40 relative z-10">
         {selectedTemplate && (
-          <div className="space-y-4 overflow-auto pr-1 pb-28">
+          <div className="flex-1 space-y-4 overflow-auto pr-1 pb-28 min-h-0">
             {/* leave space for sticky bar */}
             <header className="space-y-1">
-              <h4 className="text-brand-cyan font-semibold flex items-center gap-2 text-sm tracking-wide">
+              <h4 className="font-semibold flex items-center gap-2 text-sm tracking-wide text-white">
                 {selectedTemplate.emoji && <span aria-hidden>{selectedTemplate.emoji}</span>}
                 {selectedTemplate.label}
               </h4>
-              <p className="text-[11px] leading-relaxed text-brand-cyan/80">{selectedTemplate.description}</p>
+              <p className="text-[11px] leading-relaxed text-brand-cyan/90">{selectedTemplate.description}</p>
               <div className="flex flex-wrap gap-1">
                 {(selectedTemplate.tags || []).map((tag) => (
                   <span

@@ -9,7 +9,6 @@ import { BUDGET_CATEGORY_TEMPLATES, isRatio } from '../../lib/budget.templates';
 import { Button } from '../ui/button';
 import {
   Dialog,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
@@ -187,9 +186,9 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
             <span className="relative z-10 flex items-center gap-2">➕ {dict.categories.add}</span>
             <div className="absolute inset-0 rounded-xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </button>
-          <DialogContent
+          <DialogTemplateCategoryContent
             aria-describedby="add-category-desc"
-            className="sm:max-w-sm bg-brand-navy-light border-brand-navy-lighter"
+            className="max-w-sm bg-brand-navy-dark border-brand-navy-lighter"
           >
             <DialogHeader>
               <DialogTitle className="text-lg text-white">{dict.categories.newCategory}</DialogTitle>
@@ -248,7 +247,7 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
                 <div className="absolute inset-0 bg-gradient-to-r from-brand-cyan/80 to-brand-cyan/60 opacity-0 group-hover:opacity-20 transition-opacity" />
               </Button>
             </div>
-          </DialogContent>
+          </DialogTemplateCategoryContent>
         </Dialog>
         <Dialog open={templatesOpen} onOpenChange={handleTemplateOpenChange}>
           <DialogTrigger asChild>
@@ -272,7 +271,7 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
                   : 'Select and apply a budget template for the trip.'}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-6 text-sm">
+            <div className="space-y-6 text-sm flex flex-col flex-1 min-h-0">
               {dict.categories.templatesNote && (
                 <div className="rounded-lg border border-brand-cyan/30 bg-brand-cyan/10 p-3 text-brand-cyan/90 text-xs leading-relaxed">
                   {dict.categories.templatesNote}

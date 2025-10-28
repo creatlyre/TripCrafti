@@ -36,4 +36,20 @@ describe('BudgetTemplateSelector', () => {
     fireEvent.click(applyBtn);
     expect(handler).toHaveBeenCalledTimes(1);
   });
+
+  it('shows visible list and preview content (not hidden)', () => {
+    const noop = vi.fn();
+    render(<BudgetTemplateSelector onApply={noop} tripBudget={1500} />);
+    // Listbox should be in document
+    const listbox = screen.getByRole('listbox');
+    expect(listbox).toBeInTheDocument();
+    // At least one option visible (not display:none)
+    const option = screen.getAllByRole('option')[0];
+    const styles = getComputedStyle(option);
+    expect(styles.display).not.toBe('none');
+    // Preview header text should be readable (not transparent)
+    const header = screen.getAllByText(/City Break/i)[1]; // second instance from preview header
+    const headerStyles = getComputedStyle(header);
+    expect(headerStyles.color).not.toBe('transparent');
+  });
 });

@@ -77,6 +77,13 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  /* Brand color palette tokens (needed for utilities like bg-brand-navy-dark) */
+  --color-brand-cyan: #4ED8D8;
+  --color-brand-orange: #FF9A52;
+  --color-brand-navy: #0A192F;
+  --color-brand-navy-light: #1A2540;
+  --color-brand-navy-lighter: #2A3550;
+  --color-brand-navy-dark: #050B15;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -158,11 +165,21 @@
 
   /* Opaque budget template dialog surface */
   .dialog-template-category {
-    @apply bg-brand-navy-dark border border-brand-navy-lighter shadow-2xl shadow-black/50 relative rounded-xl p-6;
+    background-color: var(--brand-navy-dark, #1e293b);
+    border-width: 1px;
+    border-style: solid;
+    border-color: var(--brand-navy-lighter, #334155);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), 0 0 #0000;
+    position: relative;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
   }
   .dialog-template-category::before {
     content: "";
-    @apply absolute inset-0 rounded-xl bg-brand-navy-dark;
+    position: absolute;
+    inset: 0;
+    border-radius: 0.75rem;
+    background-color: var(--brand-navy-dark, #1e293b);
     /* Ensures no transparency bleed if parent layer has opacity */
     pointer-events: none;
   }
