@@ -65,9 +65,9 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
   }
 
   return (
-  <div className="flex flex-col gap-4 md:flex-row md:gap-6 h-full bg-brand-navy-dark rounded-lg p-2 md:p-3">
+    <div className="flex flex-col gap-4 md:flex-row md:gap-6 h-full bg-brand-navy-dark rounded-lg p-3 md:p-4 ring-1 ring-brand-navy-lighter/60">
       {/* Left column: search, tags, list */}
-  <div className="md:w-56 flex-shrink-0 flex flex-col gap-4 bg-brand-navy-dark rounded-md p-2 border border-brand-navy-lighter">
+      <div className="md:w-60 flex-shrink-0 flex flex-col gap-4 bg-gradient-to-b from-brand-navy-dark to-brand-navy-light rounded-xl p-3 border border-brand-navy-lighter/70 shadow-inner shadow-black/30">
         <div className="relative">
           <Input
             aria-label={lang === 'pl' ? 'Szukaj szablonów' : 'Search templates'}
@@ -94,10 +94,10 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
                 key={tag}
                 type="button"
                 onClick={() => toggleTag(tag)}
-                className={`px-2 py-1 rounded-full text-[11px] border transition-colors ${
+                className={`px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-cyan/60 focus:ring-offset-brand-navy-dark ${
                   active
-                    ? 'bg-brand-cyan text-brand-navy border-brand-cyan'
-                    : 'border-brand-navy-lighter text-brand-cyan/70 hover:border-brand-cyan/40'
+                    ? 'bg-brand-cyan text-brand-navy shadow-sm shadow-brand-cyan/40'
+                    : 'bg-brand-navy-light text-brand-cyan/70 hover:text-brand-cyan border border-brand-navy-lighter/60 hover:border-brand-cyan/50'
                 }`}
                 aria-pressed={active}
               >
@@ -109,7 +109,7 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
         <ul
           role="listbox"
           aria-label={dict?.categories.selectTemplate}
-          className="flex-1 overflow-y-auto rounded-lg border border-brand-navy-lighter divide-y divide-brand-navy-lighter/60 bg-brand-navy-lighter"
+          className="flex-1 overflow-y-auto rounded-lg border border-brand-navy-lighter/70 divide-y divide-brand-navy-lighter/50 bg-brand-navy-light shadow-sm"
         >
           {filtered.map((t) => {
             const selected =
@@ -127,15 +127,17 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
                     setSelectedId(t.id);
                   }
                 }}
-                className={`cursor-pointer group px-3 py-2 text-xs flex flex-col gap-0.5 focus:outline-none focus:bg-brand-navy-lighter transition-colors ${
-                  selected ? 'bg-brand-navy-lighter border-l-2 border-brand-cyan' : 'hover:bg-brand-navy-lighter'
+                className={`cursor-pointer group px-3 py-2 text-xs flex flex-col gap-0.5 focus:outline-none transition-colors rounded-md ${
+                  selected
+                    ? 'bg-brand-cyan/10 border border-brand-cyan/60 shadow-inner shadow-brand-cyan/20'
+                    : 'hover:bg-brand-navy-dark/60 border border-transparent'
                 }`}
               >
-                <span className="flex items-center gap-1 font-medium text-white">
+                <span className="flex items-center gap-1 font-medium text-brand-cyan/90 group-hover:text-white transition-colors">
                   {t.emoji && <span aria-hidden>{t.emoji}</span>}
                   {t.label}
                 </span>
-                <span className="text-[10px] text-brand-cyan/60 line-clamp-1">
+                <span className="text-[10px] text-brand-cyan/50 group-hover:text-brand-cyan/70 line-clamp-1">
                   {(t.tags || []).slice(0, 3).join(' • ')}
                 </span>
               </li>
@@ -150,20 +152,21 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
       </div>
 
       {/* Right column: preview */}
-  <div className="flex-1 flex flex-col gap-4 min-h-0 bg-brand-navy-dark rounded-md p-3 border border-brand-navy-lighter overflow-hidden">
+      <div className="flex-1 flex flex-col gap-4 min-h-0 bg-brand-navy-dark rounded-xl p-4 border border-brand-navy-lighter/70 overflow-hidden shadow-inner shadow-black/40">
         {selectedTemplate && (
-          <div className="space-y-4 overflow-auto pr-1 pb-28">{/* leave space for sticky bar */}
+          <div className="space-y-4 overflow-auto pr-1 pb-28">
+            {/* leave space for sticky bar */}
             <header className="space-y-1">
-              <h4 className="text-white font-semibold flex items-center gap-2 text-sm">
+              <h4 className="text-brand-cyan font-semibold flex items-center gap-2 text-sm tracking-wide">
                 {selectedTemplate.emoji && <span aria-hidden>{selectedTemplate.emoji}</span>}
                 {selectedTemplate.label}
               </h4>
-              <p className="text-[11px] leading-relaxed text-brand-cyan/70">{selectedTemplate.description}</p>
+              <p className="text-[11px] leading-relaxed text-brand-cyan/80">{selectedTemplate.description}</p>
               <div className="flex flex-wrap gap-1">
                 {(selectedTemplate.tags || []).map((tag) => (
                   <span
                     key={tag}
-                    className="px-2 py-0.5 rounded-full bg-brand-navy-lighter/50 text-[10px] text-brand-cyan/70 border border-brand-navy-lighter"
+                    className="px-2 py-0.5 rounded-full bg-brand-navy-light text-[10px] text-brand-cyan/70 border border-brand-navy-lighter/60"
                   >
                     {tag}
                   </span>
@@ -175,24 +178,30 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
               <p className="text-[11px] mb-1 font-medium text-brand-cyan/70">
                 {lang === 'pl' ? 'Dystrybucja kategorii' : 'Category Distribution'}
               </p>
-              <div className="flex h-5 w-full overflow-hidden rounded-md border border-brand-navy-lighter">
-                {selectedTemplate.categories.map((c) => {
+              <div className="flex h-4 w-full overflow-hidden rounded-md border border-brand-navy-lighter/70 ring-1 ring-black/20">
+                {selectedTemplate.categories.map((c, idx) => {
                   const portion = c.suggested_portion;
-                  const ratio = isRatio(portion) ? portion || 0 : 0; // treat absolutes later
+                  const ratio = isRatio(portion) ? portion || 0 : 0;
                   const width = `${Math.round(ratio * 100)}%`;
+                  const palette = ['bg-brand-cyan/70', 'bg-brand-orange/60', 'bg-brand-cyan/50', 'bg-brand-orange/50'];
+                  const color = palette[idx % palette.length];
                   return (
                     <div
                       key={c.name}
                       style={{ width }}
-                      className="relative group bg-gradient-to-r from-brand-cyan/40 to-brand-cyan/30 border-r border-brand-navy-lighter last:border-r-0"
+                      className={`relative group ${color} border-r border-brand-navy-dark last:border-r-0`}
                       title={`${c.name} ${Math.round(ratio * 100)}%`}
-                    />
+                    >
+                      <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] flex items-center justify-center font-medium tracking-wide text-brand-navy-dark/90">
+                        {Math.round(ratio * 100)}%
+                      </span>
+                    </div>
                   );
                 })}
               </div>
             </div>
             {/* Category list */}
-            <div className="rounded-lg border border-brand-navy-lighter divide-y divide-brand-navy-lighter/60 bg-brand-navy-lighter">
+            <div className="rounded-lg border border-brand-navy-lighter/70 divide-y divide-brand-navy-lighter/50 bg-brand-navy-light shadow-sm">
               {selectedTemplate.categories.map((c) => {
                 const portion = c.suggested_portion;
                 const percent = isRatio(portion) ? Math.round((portion || 0) * 100) : null;
@@ -202,7 +211,7 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
                     <div className="flex items-center gap-2 min-w-0">
                       {c.icon_name && (
                         <span
-                          className="w-6 h-6 flex items-center justify-center rounded-md bg-brand-navy-lighter/40 text-[13px] text-brand-cyan/80 border border-brand-navy-lighter/70"
+                          className="w-6 h-6 flex items-center justify-center rounded-md bg-brand-navy-dark/60 text-[12px] text-brand-cyan border border-brand-navy-lighter/70"
                           aria-hidden
                         >
                           {c.icon_name.slice(0, 2).toUpperCase()}
@@ -225,8 +234,8 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
         <div className="pointer-events-none">
           <div className="fixed md:static left-0 right-0 bottom-4 md:bottom-auto px-4 md:px-0">
             <div className="pointer-events-auto mx-auto md:ml-auto md:mr-0 w-full md:w-auto max-w-md md:max-w-none">
-              <div className="rounded-xl border border-brand-cyan/50 bg-brand-navy-dark p-3 shadow-lg shadow-brand-cyan/10 flex items-center justify-between gap-4">
-                <div className="text-[11px] text-brand-cyan/80 hidden md:block">
+              <div className="rounded-2xl border-2 border-brand-cyan/60 bg-gradient-to-r from-brand-navy-dark via-brand-navy-dark to-brand-navy-light p-4 shadow-lg shadow-brand-cyan/20 flex flex-col md:flex-row md:items-center md:justify-between gap-3 backdrop-blur-sm">
+                <div className="text-[11px] text-brand-cyan/70 hidden md:block font-medium tracking-wide">
                   {selectedTemplate
                     ? (lang === 'pl' ? 'Wybrany szablon:' : 'Selected template:') + ' ' + selectedTemplate.label
                     : lang === 'pl'
@@ -236,13 +245,18 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
                 <Button
                   disabled={!selectedTemplate || applyingTemplateId === selectedTemplate.id}
                   onClick={apply}
-                  className="bg-brand-cyan text-brand-navy hover:bg-brand-cyan/90 font-semibold shadow-inner shadow-brand-cyan/40"
+                  className="relative w-full md:w-auto bg-brand-cyan text-brand-navy font-semibold tracking-wide text-sm py-2 px-6 shadow-lg shadow-brand-cyan/40 hover:bg-brand-cyan/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-cyan/40 active:scale-[0.97] transition-transform disabled:opacity-60"
                 >
-                  {applyingTemplateId === selectedTemplate?.id
-                    ? dict?.categories.applying
-                    : lang === 'pl'
-                      ? 'Zastosuj szablon'
-                      : 'Apply Template'}
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden className="text-base leading-none">
+                      ⚡
+                    </span>
+                    {applyingTemplateId === selectedTemplate?.id
+                      ? dict?.categories.applying
+                      : lang === 'pl'
+                        ? 'Zastosuj szablon'
+                        : 'Apply Template'}
+                  </span>
                 </Button>
               </div>
             </div>

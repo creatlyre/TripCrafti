@@ -155,4 +155,15 @@
   .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: rgb(100 116 139);
   }
+
+  /* Opaque budget template dialog surface */
+  .dialog-template-category {
+    @apply bg-brand-navy-dark border border-brand-navy-lighter shadow-2xl shadow-black/50 relative rounded-xl p-6;
+  }
+  .dialog-template-category::before {
+    content: "";
+    @apply absolute inset-0 rounded-xl bg-brand-navy-dark;
+    /* Ensures no transparency bleed if parent layer has opacity */
+    pointer-events: none;
+  }
 }

@@ -7,7 +7,7 @@ import type { BudgetCategory, BudgetMode } from '../../types';
 
 import { BUDGET_CATEGORY_TEMPLATES, isRatio } from '../../lib/budget.templates';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogTemplateCategoryContent } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Input } from '../ui/input';
 import BudgetTemplateSelector from './BudgetTemplateSelector';
 
@@ -230,7 +230,7 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
               <div className="absolute inset-0 rounded-xl bg-brand-orange/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </button>
           </DialogTrigger>
-          <DialogTemplateCategoryContent className="max-h-[85vh] overflow-y-auto">
+          <DialogContent className="dialog-template-category max-w-4xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-lg text-white">{dict.categories.selectTemplate}</DialogTitle>
             </DialogHeader>
@@ -252,7 +252,7 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
                 </div>
               )}
             </div>
-          </DialogTemplateCategoryContent>
+          </DialogContent>
         </Dialog>
       </div>
       {loading && <div className="text-sm text-brand-cyan/60">{dict.categories.loading}</div>}
