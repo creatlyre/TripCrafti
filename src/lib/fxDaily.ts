@@ -34,7 +34,7 @@ export async function getOrFetchDailyQuotes(supabase: any, base: string): Promis
 
 // Full snapshot seeding: fetch /live quotes for base USD once per day and store entire quotes set.
 // Only runs if there is no row for today.
-export async function seedFullDailyIfAbsent(supabase: any, base: string = 'USD'): Promise<boolean> {
+export async function seedFullDailyIfAbsent(supabase: any, base = 'USD'): Promise<boolean> {
   const existing = await getOrFetchDailyQuotes(supabase, base);
   if (existing) return false; // already seeded today
   // We rely on underlying provider; call its live endpoint directly using fetch for completeness.
@@ -46,7 +46,7 @@ export async function seedFullDailyIfAbsent(supabase: any, base: string = 'USD')
     if (API_KEY && /exchangerate\.host$/i.test(new URL(BASE_ENDPOINT).host)) {
       url += `&access_key=${encodeURIComponent(API_KEY)}`;
     }
-    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
     if (!res.ok) return false;
     const json: any = await res.json();
     if (!json || json.success === false || !json.quotes || typeof json.quotes !== 'object') return false;
@@ -80,7 +80,13 @@ export function pivotRate(quotes: Record<string, number>, base: string, from: st
 }
 
 // Insert daily quotes blob (idempotent) - caller ensures provider normalization.
-export async function upsertDailyQuotes(supabase: any, base: string, provider: string, quotes: Record<string, number>, source_api?: string) {
+export async function upsertDailyQuotes(
+  supabase: any,
+  base: string,
+  provider: string,
+  quotes: Record<string, number>,
+  source_api?: string
+) {
   const date = todayUTC();
   const upperBase = base.toUpperCase();
   // Fetch existing to merge
@@ -95,13 +101,16 @@ export async function upsertDailyQuotes(supabase: any, base: string, provider: s
   if (existing && existing.quotes) {
     merged = { ...(existing.quotes as any), ...quotes };
   }
-  await supabase.from('fx_daily_cache').upsert({
-    base_currency: upperBase,
-    rate_date: date,
-    provider,
-    quotes: merged,
-    source_api: source_api || null,
-  }, { onConflict: 'base_currency,rate_date,provider' });
+  await supabase.from('fx_daily_cache').upsert(
+    {
+      base_currency: upperBase,
+      rate_date: date,
+      provider,
+      quotes: merged,
+      source_api: source_api || null,
+    },
+    { onConflict: 'base_currency,rate_date,provider' }
+  );
 }
 
 async function ensureUsdLegs(supabase: any, symbols: string[]): Promise<Record<string, number>> {
@@ -113,13 +122,20 @@ async function ensureUsdLegs(supabase: any, symbols: string[]): Promise<Record<s
       if (rate && isFinite(rate) && rate > 0 && source !== 'fallback' && !warning) {
         out[`USD${sym.toUpperCase()}`] = rate;
       }
-    } catch { /* ignore individual leg */ }
+    } catch {
+      /* ignore individual leg */
+    }
   }
   return out;
 }
 
 // Attempt to convert using daily cached quotes; if not possible, returns null.
-export async function convertUsingDailyCache(supabase: any, from: string, to: string, preferredBases: string[] = ['USD']): Promise<{ rate: number; base: string } | null> {
+export async function convertUsingDailyCache(
+  supabase: any,
+  from: string,
+  to: string,
+  preferredBases: string[] = ['USD']
+): Promise<{ rate: number; base: string } | null> {
   // Step 1: try existing cache
   for (const base of preferredBases) {
     const row = await getOrFetchDailyQuotes(supabase, base);

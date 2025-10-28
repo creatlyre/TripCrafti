@@ -9,7 +9,9 @@ export const GET: APIRoute = async ({ params, locals }) => {
   if (!tripId) return new Response(JSON.stringify({ error: 'Missing tripId' }), { status: 400 });
   const supabase = locals.supabase;
   if (!supabase) return new Response(JSON.stringify({ error: 'Supabase client not available' }), { status: 500 });
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
 
   const { data: trip, error: tripErr } = await supabase
@@ -35,10 +37,13 @@ export const GET: APIRoute = async ({ params, locals }) => {
   if (expErr) return new Response(JSON.stringify({ error: expErr.message }), { status: 500 });
 
   const byCategory: Record<string, { planned: number; spent: number; name: string }> = {};
-  categories?.forEach(c => { byCategory[c.id] = { planned: Number(c.planned_amount || 0), spent: 0, name: c.name }; });
+  categories?.forEach((c) => {
+    byCategory[c.id] = { planned: Number(c.planned_amount || 0), spent: 0, name: c.name };
+  });
 
-  let totalSpent = 0; let totalPrepaid = 0;
-  (expenses || []).forEach(e => {
+  let totalSpent = 0;
+  let totalPrepaid = 0;
+  (expenses || []).forEach((e) => {
     const amt = Number(e.amount_in_home_currency || 0);
     totalSpent += amt;
     if (e.is_prepaid) totalPrepaid += amt;
@@ -47,16 +52,18 @@ export const GET: APIRoute = async ({ params, locals }) => {
     }
   });
 
-  const categoryRows = Object.entries(byCategory).map(([id, v]) => ({
-    category_id: id,
-    name: v.name,
-    planned: v.planned,
-    spent: v.spent,
-    delta: v.spent - v.planned,
-    utilization: v.planned ? (v.spent / v.planned) : null,
-  })).sort((a,b) => (b.spent - a.spent));
+  const categoryRows = Object.entries(byCategory)
+    .map(([id, v]) => ({
+      category_id: id,
+      name: v.name,
+      planned: v.planned,
+      spent: v.spent,
+      delta: v.spent - v.planned,
+      utilization: v.planned ? v.spent / v.planned : null,
+    }))
+    .sort((a, b) => b.spent - a.spent);
 
-  const plannedTotal = categoryRows.reduce((s,r)=> s + r.planned, 0);
+  const plannedTotal = categoryRows.reduce((s, r) => s + r.planned, 0);
   const deltaTotal = totalSpent - plannedTotal;
 
   const report = {

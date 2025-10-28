@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { TripImage } from '@/components/TripImage';
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+import { TripImage } from '@/components/TripImage';
 
 describe('TripImage', () => {
   const mockFetch = vi.fn();

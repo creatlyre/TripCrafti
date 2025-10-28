@@ -1,142 +1,228 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { AIPackingListResponse, GenerateDetails, PackingItem, PackingListMeta, ValidationResult, ChecklistItem, CategorizationResult } from '@/types';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+import type {
+  AIPackingListResponse,
+  GenerateDetails,
+  PackingItem,
+  PackingListMeta,
+  ValidationResult,
+  ChecklistItem,
+  CategorizationResult,
+} from '@/types';
+
+import { logDebug, logError } from '@/lib/log';
+import { resolveRuntimeEnv } from '@/lib/utils';
+
+// (types import moved above to satisfy lint ordering)
 
 // This service should only be called from server-side code (e.g., API routes)
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-    // This will only log on the server, which is safe.
-    console.error("GEMINI_API_KEY environment variable is not set.");
-    // We don't throw an error here, but functions will fail if the key is missing.
-}
+// Prefer build-time substitution (import.meta.env). Provide runtime fallbacks for robustness (tests, some CF quirks).
+// Model is static-ish, but allow override at runtime too
+const resolvedModel = resolveRuntimeEnv('GEMINI_MODEL') || 'gemini-2.5-flash';
 
-const ai = new GoogleGenerativeAI(apiKey || "");
-
+let ai: GoogleGenerativeAI | null = null;
 const getModel = () => {
-    if (!apiKey) {
-        throw new Error("Gemini API Key is not configured on the server.");
-    }
-    return ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-}
+  // Resolve key lazily so middleware/global injections have already happened
+  const apiKey = resolveRuntimeEnv('GEMINI_API_KEY');
+  if (!apiKey) {
+    logError('Gemini API key missing at runtime', {
+      buildHasKey: !!import.meta.env.GEMINI_API_KEY,
+      processHasKey: typeof process !== 'undefined' ? !!process.env?.GEMINI_API_KEY : 'n/a',
+      globalHasKey: !!(globalThis as unknown as Record<string, unknown>).GEMINI_API_KEY,
+    });
+    throw new Error('Gemini API Key (GEMINI_API_KEY) is not configured.');
+  }
+  if (!ai) {
+    logDebug('Initializing Gemini client', { model: resolvedModel });
+    ai = new GoogleGenerativeAI(apiKey);
+  }
+  return ai.getGenerativeModel({ model: resolvedModel });
+};
 
-const getGeneratePrompt = (details: GenerateDetails): string => {
-    const { destination, days, adults, childrenAges, season, transport, accommodation, activities, special, region, travelStyle } = details;
+const getGeneratePrompt = (details: GenerateDetails, language: string): string => {
+  const {
+    destination,
+    days,
+    adults,
+    childrenAges,
+    season,
+    transport,
+    accommodation,
+    activities,
+    special,
+    region,
+    travelStyle,
+  } = details;
 
-    return `
-<Persona>
-Jesteś precyzyjnym AI, ekspertem od logistyki podróży. Twoim jedynym celem jest wygenerowanie perfekcyjnej, zoptymalizowanej i minimalistycznej listy pakowania w formacie JSON, ściśle przestrzegając podanych reguł i schematu. Działasz w sposób deterministyczny, unikając kreatywnych dewiacji.
-</Persona>
+  return `
+<persona>
+You are "TripCrafti Packing Architect", a specialized AI module. Your sole purpose is to create optimized packing lists. You are guided by three overarching principles:
+1.  **Smart Minimalism:** Every item must have a justification. Prefer multi-functional items. Avoid unnecessary "just-in-case" items.
+2.  **No Critical Failures:** Documents, medication, and key items for safety and health are non-negotiable and cannot be missed.
+3.  **Context is King:** The list must be perfectly tailored to the data from <InputData>. Every choice stems directly from this data.
+Your responses must be consistent and logic-based, not based on random creativity.
+</persona>
+
+<language>${language}</language>
+
+<critical_language_rule>
+ALL text fields (item names, categories, notes, checklist tasks, archetype, archetype_reasoning) MUST be in the specified language: ${language}. Mixing languages, transliterations, or leaving Anglicisms is not allowed (unless a given name is a global standard, e.g., "Powerbank"). If the model is unsure of a translation, it must choose the most common form in the ${language}. Violation of this rule = critical failure.
+</critical_language_rule>
 
 <InputData>
   <Destination>${destination}</Destination>
-  <Region>${region || 'nieokreślony'}</Region>
-  <TravelStyle>${travelStyle || 'nieokreślony'}</TravelStyle>
+  <Region>${region || 'unspecified'}</Region>
+  <TravelStyle>${travelStyle || 'unspecified'}</TravelStyle>
   <Duration days="${days}"/>
-  <Travelers adults="${adults}" childrenAges="${childrenAges || 'brak'}"/>
+  <Travelers adults="${adults}" childrenAges="${childrenAges || 'none'}"/>
   <Season>${season}</Season>
   <Transport>${transport}</Transport>
   <Accommodation>${accommodation}</Accommodation>
-  <Activities>${activities || 'brak'}</Activities>
-  <SpecialNeeds>${special || 'brak'}</SpecialNeeds>
+  <Activities>${activities || 'none'}</Activities>
+  <SpecialNeeds>${special || 'none'}</SpecialNeeds>
 </InputData>
 
 <Task>
+  <Step name="InputValidationAndAssumption">
+    0. Analyze <InputData>. If you find contradictions (e.g., summer season and 'skiing' as an activity) or extreme ambiguities, identify the issue, choose the most likely scenario, and record your assumption. This assumption MUST be included in the 'archetype_reasoning' field in the final JSON.
+  </Step>
   <Step name="ArchetypeDefinition">
-    1. Na podstawie wszystkich danych z sekcji <InputData>, zdefiniuj wewnętrznie jeden "Archetyp Podróży". Przykłady: "Luksusowy City Break", "Rodzinne wakacje w kurorcie all-inclusive", "Przygoda z plecakiem w Azji Płd.-Wsch.", "Służbowa delegacja", "Górski trekking od schroniska do schroniska". Ten archetyp będzie główną wytyczną dla wszystkich kolejnych decyzji.
+    1. Based on all data from the <InputData> section, internally define one "Travel Archetype" and a one-sentence justification for this choice. Example archetypes: "Luxury City Break", "Family All-Inclusive Resort Vacation", "Backpacking Adventure in SE Asia", "Business Trip", "Hut-to-Hut Mountain Trek".
   </Step>
   <Step name="DraftGeneration">
-    2. Na podstawie Archetypu Podróży oraz wszystkich reguł z sekcji <Rules>, wygeneruj roboczą listę przedmiotów w pamięci.
+    2. Based on the Travel Archetype and all rules from the <Rules> section, generate a draft list of items in memory.
+  </Step>
+  <Step name="ApplyExclusions">
+    3. Analyze the draft list and apply the rules from the <ExclusionRules> section to remove unnecessary items.
   </Step>
   <Step name="SelfCritiqueAndCorrection">
-    3. Przeanalizuj roboczą listę pod kątem zgodności z każdą regułą w sekcji <AutoCorrectionRules>. Wprowadź wymagane poprawki. Ten krok jest obowiązkowy.
+    4. Analyze the list after exclusions for compliance with every rule in the <AutoCorrectionRules> section. Implement required corrections. This step is mandatory.
   </Step>
   <Step name="FinalizeJSON">
-    4. Wygeneruj ostateczny obiekt JSON zgodny ze schematem w <OutputSchema>. Wynik musi zawierać WYŁĄCZNIE poprawny składniowo obiekt JSON, bez żadnych dodatkowych tekstów, wyjaśnień czy znaczników markdown.
+    5. Generate the final JSON object compliant with the schema in <OutputSchema>. The output must contain ONLY a syntactically correct JSON object, with no additional text, explanations, or markdown formatting.
   </Step>
 </Task>
 
 <Rules>
   <Rule id="item_structure">
-    Każdy element na liście musi mieć format: { "name": string, "qty": number | string, "notes"?: string, "category": string, "optional"?: boolean }.
+    Each item in the list must have the format: { "name": string, "qty": number | string, "notes"?: string, "category": string, "optional"?: boolean }.
   </Rule>
 
   <Rule id="category_structure">
-    Grupuj przedmioty w stałych kategoriach: "Dokumenty i Finanse", "Ubrania", "Obuwie", "Higiena i Kosmetyki", "Apteczka", "Elektronika", "Dzieci" (jeśli są), "Aktywności Specjalne", "W Podróży (Podręczne)", "Inne". Dodatkowo, wygeneruj listę zadań w "Przed Wyjazdem (Checklista)".
+    Group items into fixed categories: "Documents & Finances", "Clothes", "Footwear", "Hygiene & Cosmetics", "First-Aid Kit", "Electronics", "Kids" (if applicable), "Special Activities", "On the Go (Carry-on)", "Other". Additionally, generate a task list under "Before Departure (Checklist)".
   </Rule>
 
   <Rule id="clothing_ratios">
-    Dla kategorii 'Ubrania', stosuj następujące wzory (zaokrąglaj w górę do najbliższej liczby całkowitej):
-    - bielizna_qty = days + 1
-    - skarpety_qty = days
-    - koszulki_tshirty_qty = CEIL(days * 0.8)
-    - spodnie_dlugie_qty = CEIL(days / 3)
-    - spodnie_krotkie_qty (tylko lato/tropiki) = CEIL(days / 2)
+    For the 'Clothes' category, apply the following formulas (rounding up to the nearest integer). This rule has a lower priority than 'laundry_assumption'.
+    - underwear_qty = days + 1
+    - socks_qty = days
+    - tshirts_qty = CEIL(days * 0.8)
+    - long_trousers_qty = CEIL(days / 3)
+    - shorts_qty (only summer/tropics) = CEIL(days / 2)
+  </Rule>
+
+  <Rule id="laundry_assumption">
+    IF (days > 10) AND (accommodation is NOT 'campsite' AND accommodation is NOT 'mountain hut'):
+      SET laundry_cycle = 7; // Assume laundry is done every 7 days.
+      underwear_qty = laundry_cycle + 2;
+      socks_qty = laundry_cycle + 1;
+      tshirts_qty = CEIL(laundry_cycle * 0.8);
+      ADD to "Before Departure (Checklist)": { "task": "Plan where and when you will do laundry", "done": false };
+      ADD to "Other": { "name": "Laundry detergent sheets", "qty": "2-3", "notes": "In case of hand washing or machine use", "category": "Other", "optional": true };
+    ENDIF
   </Rule>
 
   <Rule id="clothing_modifiers">
-    Zastosuj następujące modyfikatory do ilości ubrań:
+    Apply the following modifiers to clothing quantities:
     - IF (any child_age < 4): base_clothing_qty *= 1.3;
-    - IF (ArchetypPodróży zawiera "trekking" OR "przygoda z plecakiem"): preferuj odzież szybkoschnącą (syntetyczną/merino), dodaj do notatek 'szybkoschnące'.
+    - IF (TravelArchetype includes "trekking" OR "backpacking"): prefer quick-drying clothes (synthetic/merino), add 'quick-drying' to the notes.
   </Rule>
 
   <Rule id="first_aid_kit_module">
-    Apteczka musi zawsze zawierać: podstawowe środki opatrunkowe (plastry, gaza, środek do dezynfekcji), leki przeciwbólowe/przeciwgorączkowe, leki na problemy żołądkowe, osobiste leki na receptę (jako placeholder: 'Leki na receptę').
-    <Condition check="region" includes="Azja Południowo-Wschodnia,Ameryka Południowa,Afryka Subsaharyjska">
-      ADD: Repelent z wysoką zawartością DEET, doustne sole nawadniające (elektrolity), probiotyki.
+    The First-Aid Kit must always include: basic wound care (plasters, gauze, antiseptic), painkillers/fever reducers, stomach ache medicine, and personal prescription drugs (as a placeholder: 'Personal prescription medication').
+    <Condition check="region" includes="Southeast Asia,South America,Sub-Saharan Africa">
+      ADD: High-DEET insect repellent, oral rehydration salts (electrolytes), probiotics.
     </Condition>
-    <Condition check="activities" includes="trekking,wędrówka,góry">
-      ADD: Plastry na pęcherze, folia NRC, maść przeciwbólowa/rozgrzewająca.
+    <Condition check="activities" includes="trekking,hiking,mountains">
+      ADD: Blister plasters, emergency blanket (space blanket), pain-relief/warming ointment.
     </Condition>
     <Condition check="childrenAges" exists="true">
-      ADD: Termometr cyfrowy, leki przeciwhistaminowe dla dzieci, środek na ukąszenia.
+      ADD: Digital thermometer, antihistamines for children, insect bite relief cream.
     </Condition>
   </Rule>
 
   <Rule id="electronics_module">
-    Domyślnie: 1x powerbank na rodzinę, 1x ładowarka wieloportowa (np. GaN) z odpowiednimi kablami.
-    <Condition check="special" includes="praca zdalna,remote work">
-      ADD: Laptop, zasilacz do laptopa, słuchawki z redukcją szumów, przenośna podstawka pod laptopa.
+    Default: 1x power bank per family, 1x multi-port charger (e.g., GaN) with appropriate cables.
+    <Condition check="special" includes="remote work">
+      ADD: Laptop, laptop charger, noise-cancelling headphones, portable laptop stand.
     </Condition>
-    <Condition check="region" is_different_than="Europa/UE">
-      ADD: Adapter do gniazdek (typ zgodny z regionem), dodaj w notes typ gniazdka jeśli znany.
+    <Condition check="region" is_different_than="Europe/EU">
+      ADD: Travel adapter (type corresponding to the region), add socket type to notes if known.
     </Condition>
   </Rule>
 
   <Rule id="activity_specific_modules">
-    <Condition check="activities" includes="plaża,pływanie,snorkeling">
-      ADD: Strój kąpielowy, krem z filtrem UV (min. SPF 30, dla dzieci 50), nakrycie głowy, okulary przeciwsłoneczne, ręcznik szybkoschnący.
-      ADD (optional): Buty do wody, worek wodoodporny.
+    <Condition check="activities" includes="beach,swimming,snorkeling">
+      ADD: Swimsuit, UV sunscreen (min. SPF 30, 50 for kids), hat/cap, sunglasses, quick-drying towel.
+      ADD (optional): Water shoes, waterproof bag.
     </Condition>
-    <Condition check="activities" includes="trekking,wędrówka,góry">
-      ADD: Bielizna termiczna (jeśli sezon != lato), bluza/polar (warstwa środkowa), kurtka softshell/przeciwdeszczowa (warstwa zewnętrzna), czapka i rękawiczki (zależnie od sezonu), latarka czołowa, numer ICE w telefonie (dodaj do checklisty).
+    <Condition check="activities" includes="trekking,hiking,mountains">
+      ADD: Thermal underwear (if season != summer), fleece/mid-layer jacket, softshell/rain jacket (outer layer), hat and gloves (depending on season), headlamp, add ICE number to phone (add to checklist).
     </Condition>
   </Rule>
 
   <Rule id="cultural_nuances">
-    <Condition check="region" includes="Bliski Wschód,Azja Południowa">
-      ADD: Lekka chusta/szal (dla kobiet), długie, przewiewne spodnie/spódnica. W notes dodaj: 'Skromny ubiór do zwiedzania miejsc kultu'.
+    <Condition check="region" includes="Middle East,South Asia">
+      ADD: Lightweight scarf/shawl (for women), long, breathable trousers/skirt. In notes, add: 'For modest dress when visiting places of worship'.
     </Condition>
   </Rule>
 
   <Rule id="buy_on_arrival_strategy">
-    Dla podróży > 7 dni do zurbanizowanych regionów, dla przedmiotów łatwo dostępnych i zajmujących dużo miejsca (np. żel pod prysznic, szampon, krem do opalania, pieluchy), dodaj w polu "notes" sugestię: 'Rozważ zakup na miejscu, aby oszczędzić miejsce.'.
+    For trips > 7 days to urbanized regions, for items that are easily available and bulky (e.g., shower gel, shampoo, sunscreen, diapers), add a suggestion in the "notes" field: 'Consider buying at destination to save space.'.
+  </Rule>
+
+  <Rule id="language_enforcement">
+    Every string (in the name, notes, category, task, archetype fields) must be in ${language}. If other languages appear in the input data, normalize them to ${language}.
   </Rule>
 </Rules>
 
+<ExclusionRules>
+  <Rule id="hotel_amenities">
+    IF (accommodation CONTAINS 'hotel' AND NOT (accommodation CONTAINS 'cheap' OR accommodation CONTAINS 'hostel' OR accommodation CONTAINS 'motel')):
+      REMOVE 'Towel', 'Shower Gel', 'Shampoo', 'Soap', 'Hairdryer' FROM list.
+      ADD to "Before Departure (Checklist)": { "task": "Confirm available amenities at the hotel (toiletries, towels)", "done": false }.
+    ENDIF
+  </Rule>
+  <Rule id="carry_on_only">
+    IF (transport CONTAINS 'plane' AND special CONTAINS 'carry-on only'):
+      PRIORITIZE multi-functional solid cosmetics (e.g., shampoo bar).
+      FOR each liquid in 'Hygiene & Cosmetics': ensure notes includes 'Mini version / up to 100ml'.
+    ENDIF
+  </Rule>
+</ExclusionRules>
+
+<ExecutionPlan>
+Before generating the final JSON, follow the steps in the <Task> section EXACTLY. Conduct an internal step-by-step analysis. Your final response must ONLY contain the JSON object.
+</ExecutionPlan>
+
 <AutoCorrectionRules>
   <Check id="duplicate_items">
-    Przed finalizacją, usuń duplikaty nazw (case-insensitive), łącząc ich ilości lub notatki.
+    Before finalizing, remove duplicate item names (case-insensitive), merging their quantities or notes.
   </Check>
   <Check id="toddler_essentials">
-    IF (any child_age < 3) AND (list LACKS 'Mokre chusteczki' OR list LACKS 'Pieluchy' OR list LACKS 'Krem ochronny'): ADD missing items. Ilość pieluch = dni * 5.
+    IF (any child_age < 3) AND (list LACKS 'Wet wipes' OR list LACKS 'Diapers' OR list LACKS 'Barrier cream'): ADD missing items. Diaper quantity = days * 5.
   </Check>
   <Check id="shoe_count">
-    IF (days < 8) AND (count(category='Obuwie') > 3 per person): Zredukuj ilość, łącząc funkcjonalność butów. Np. zamiast butów trekkingowych i adidasów, zaproponuj jedne 'buty podejściowe'. Zaktualizuj notatki.
+    IF (days < 8) AND (count(category='Footwear') > 3 per person): Reduce the quantity by combining the functionality of shoes. E.g., instead of hiking boots and sneakers, suggest 'approach shoes'. Update the notes accordingly.
   </Check>
   <Check id="airline_liquids">
-    IF (transport CONTAINS 'samolot' OR 'lot'): Sprawdź kategorię 'Higiena i Kosmetyki'. Dla wszystkich płynów, dodaj w notes: 'Pojemność do 100ml lub nadaj w bagażu rejestrowanym'.
+    IF (transport CONTAINS 'plane' OR 'flight'): Check the 'Hygiene & Cosmetics' category. For all liquids, add to notes: 'Must be in containers up to 100ml or packed in checked luggage'.
   </Check>
   <Check id="leave_space">
-    W kategorii 'Inne', dodaj pozycję: { "name": "Wolne miejsce w bagażu", "qty": "ok. 10-15%", "notes": "Na zakupy i pamiątki", "category": "Inne", "optional": true }.
+    In the 'Other' category, add the item: { "name": "Free space in luggage", "qty": "approx. 10-15%", "notes": "For shopping and souvenirs", "category": "Other", "optional": true }.
+  </Check>
+  <Check id="language_final_check">
+    As the absolute final step before outputting the JSON, meticulously review every single generated string ('name', 'notes', 'category', 'task', 'archetype', 'archetype_reasoning'). Confirm that 100% of the text complies with the <critical_language_rule> and is in the target language: ${language}. If any stray words from another language are found, correct them immediately. This is a mandatory final quality gate.
   </Check>
 </AutoCorrectionRules>
 
@@ -147,14 +233,15 @@ Jesteś precyzyjnym AI, ekspertem od logistyki podróży. Twoim jedynym celem je
     "days": "number",
     "people": { "adults": "number", "children": "number" },
     "season": "string",
-    "archetype": "string"
+    "archetype": "string",
+    "archetype_reasoning": "string"
   },
   "checklist": [
-    { "task": "Zeskanuj dokumenty (paszport, wiza) i zapisz w chmurze", "done": false },
-    { "task": "Powiadom bank o wyjeździe za granicę", "done": false }
+    { "task": "Scan documents (passport, visa) and save to the cloud", "done": false },
+    { "task": "Notify your bank about traveling abroad", "done": false }
   ],
   "items": [
-    { "name": "Paszport", "qty": 1, "category": "Dokumenty i Finanse", "notes": "Sprawdź datę ważności!", "optional": false }
+    { "name": "Passport", "qty": 1, "category": "Documents & Finances", "notes": "Check expiration date!", "optional": false }
   ]
 }
 </OutputSchema>
@@ -162,7 +249,7 @@ Jesteś precyzyjnym AI, ekspertem od logistyki podróży. Twoim jedynym celem je
 };
 
 const getValidatePrompt = (currentList: PackingItem[], changes: object): string => {
-    return `
+  return `
 <Persona>
 Jesteś precyzyjnym i doświadczonym AI, ekspertem od optymalizacji list podróżnych. Twoim celem jest nie tylko walidacja, ale proaktywne doradztwo. Analizujesz listę i zmiany, aby uczynić ją mądrzejszą, lżejszą i lepiej dopasowaną do realnych potrzeb podróżnika. Twoje sugestie są konstruktywne, logiczne i zawsze poparte rzeczowym uzasadnieniem.
 </Persona>
@@ -257,69 +344,138 @@ Jesteś precyzyjnym i doświadczonym AI, ekspertem od optymalizacji list podró�
 `;
 };
 
-export const generatePackingList = async (details: GenerateDetails): Promise<{ meta: PackingListMeta, items: PackingItem[], checklist: ChecklistItem[] }> => {
+export const generatePackingList = async (
+  details: GenerateDetails,
+  language: string
+): Promise<{
+  meta: PackingListMeta;
+  items: PackingItem[];
+  checklist: ChecklistItem[];
+  usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number; thoughtTokens?: number };
+}> => {
+  try {
+    const model = getModel();
+    const chosenLanguage = language || details.language || 'Polish';
+    const result = await model.generateContent(getGeneratePrompt(details, chosenLanguage));
+
+    const response = result.response;
+    const rawText = response.text();
+
+    // Helper: extract first valid JSON object from raw model text (handles markdown fences, extra prose)
+    const extractJson = (text: string): string => {
+      if (!text) throw new Error('Empty AI response');
+      // Remove common markdown fences ```json ... ``` or ``` ... ```
+      let cleaned = text.trim();
+      const fenceRegex = /^```[a-zA-Z]*\n([\s\S]*?)```$/m;
+      const fenceMatch = cleaned.match(fenceRegex);
+      if (fenceMatch) {
+        cleaned = fenceMatch[1].trim();
+      }
+      // Sometimes model prepends explanation; find first '{' and attempt to parse progressively
+      const firstBrace = cleaned.indexOf('{');
+      if (firstBrace === -1) throw new Error('No JSON object found in AI response');
+      cleaned = cleaned.slice(firstBrace);
+      // Heuristic: try to balance braces to isolate JSON object
+      let depth = 0;
+      let endIndex = -1;
+      for (let i = 0; i < cleaned.length; i++) {
+        const ch = cleaned[i];
+        if (ch === '{') depth++;
+        else if (ch === '}') {
+          depth--;
+          if (depth === 0) {
+            endIndex = i + 1;
+            break;
+          }
+        }
+      }
+      if (endIndex !== -1) {
+        cleaned = cleaned.slice(0, endIndex);
+      }
+      return cleaned;
+    };
+
+    let parsedList: AIPackingListResponse;
     try {
-        const model = getModel();
-        const generationConfig = { responseMimeType: "application/json" };
-        const result = await model.generateContent(getGeneratePrompt(details));
-
-        const response = result.response;
-        const jsonText = response.text();
-        const parsedList: AIPackingListResponse = JSON.parse(jsonText);
-
-        const itemsWithClientProps = parsedList.items.map((item, index) => ({
-            ...item,
-            id: Date.now() + index,
-            packed: false,
-        }));
-
-        const checklistWithClientProps = (parsedList.checklist || []).map((task, index) => ({
-            ...task,
-            id: Date.now() + 10000 + index,
-        }));
-
-        return { meta: parsedList.meta, items: itemsWithClientProps, checklist: checklistWithClientProps };
-
-    } catch (error) {
-        console.error("Błąd podczas generowania listy przez Gemini:", error);
-        throw new Error("Nie udało się wygenerować listy. Sprawdź format danych i spróbuj ponownie.");
+      const candidate = extractJson(rawText);
+      parsedList = JSON.parse(candidate);
+    } catch (inner) {
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.warn('Primary JSON extraction failed, raw text snippet:', rawText.slice(0, 500));
+      }
+      throw inner;
     }
+
+    const itemsWithClientProps = parsedList.items.map((item, index) => ({
+      ...item,
+      id: Date.now() + index,
+      packed: false,
+    }));
+
+    const checklistWithClientProps = (parsedList.checklist || []).map((task, index) => ({
+      ...task,
+      id: Date.now() + 10000 + index,
+    }));
+
+    // Attempt to read usage metadata (SDK may expose usageMetadata)
+    // @ts-expect-error - experimental field in SDK
+    const usageMeta = result?.response?.usageMetadata || result?.usageMetadata || {};
+    const inputTokens = typeof usageMeta.promptTokenCount === 'number' ? usageMeta.promptTokenCount : undefined;
+    const outputTokens =
+      typeof usageMeta.candidatesTokenCount === 'number' ? usageMeta.candidatesTokenCount : undefined;
+    const totalTokens = typeof usageMeta.totalTokenCount === 'number' ? usageMeta.totalTokenCount : undefined;
+    // We don't get explicit "thought" tokens from Gemini; approximate as difference if available
+    const thoughtTokens =
+      typeof totalTokens === 'number' && typeof outputTokens === 'number'
+        ? Math.max(totalTokens - outputTokens - (inputTokens || 0), 0)
+        : undefined;
+
+    return {
+      meta: parsedList.meta,
+      items: itemsWithClientProps,
+      checklist: checklistWithClientProps,
+      usage: { inputTokens, outputTokens, totalTokens, thoughtTokens },
+    };
+  } catch (error) {
+    logError('Gemini generate error', error);
+    throw new Error('Nie udało się wygenerować listy. Sprawdź format danych i spróbuj ponownie.');
+  }
 };
 
 export const validatePackingList = async (currentList: PackingItem[], changes: object): Promise<ValidationResult> => {
-    try {
-        const model = getModel();
-        const result = await model.generateContent(getValidatePrompt(currentList, changes));
+  try {
+    const model = getModel();
+    const result = await model.generateContent(getValidatePrompt(currentList, changes));
 
-        const response = result.response;
-        const jsonText = response.text();
-        const parsedResult = JSON.parse(jsonText);
+    const response = result.response;
+    const jsonText = response.text();
+    const parsedResult = JSON.parse(jsonText);
 
-        return {
-            missing: parsedResult.missing || [],
-            remove: parsedResult.remove || [],
-            adjust: parsedResult.adjust || [],
-            replace: parsedResult.replace || [],
-        };
-
-    } catch (error) {
-        console.error("Błąd podczas sprawdzania listy przez Gemini:", error);
-        throw new Error("Nie udało się sprawdzić listy. Spróbuj ponownie.");
-    }
+    return {
+      missing: parsedResult.missing || [],
+      remove: parsedResult.remove || [],
+      adjust: parsedResult.adjust || [],
+      replace: parsedResult.replace || [],
+    };
+  } catch (error) {
+    logError('Gemini validate error', error);
+    throw new Error('Nie udało się sprawdzić listy. Spróbuj ponownie.');
+  }
 };
 
 const getRecategorizePrompt = (items: PackingItem[], categories: string[]): string => {
-    return `
+  return `
 <Persona>
 Jesteś inteligentnym asystentem do organizacji. Twoim zadaniem jest przypisanie każdej rzeczy z listy do najbardziej pasującej kategorii z podanej listy kategorii. Działaj precyzyznie.
 </Persona>
 
 <InputData>
   <AvailableCategories>
-    ${JSON.stringify(categories.filter(c => c !== 'Nieskategoryzowane'))}
+    ${JSON.stringify(categories.filter((c) => c !== 'Nieskategoryzowane'))}
   </AvailableCategories>
   <ItemsToCategorize>
-    ${JSON.stringify(items.map(i => ({ id: i.id, name: i.name, notes: i.notes || '', current_category: i.category })))}
+    ${JSON.stringify(items.map((i) => ({ id: i.id, name: i.name, notes: i.notes || '', current_category: i.category })))}
   </ItemsToCategorize>
 </InputData>
 
@@ -340,22 +496,25 @@ Przeanalizuj każdy przedmiot z <ItemsToCategorize>. Dla każdego przedmiotu, wy
 `;
 };
 
-export const categorizePackingList = async (items: PackingItem[], categories: string[]): Promise<CategorizationResult[]> => {
-    try {
-        const model = getModel();
-        const result = await model.generateContent(getRecategorizePrompt(items, categories));
+export const categorizePackingList = async (
+  items: PackingItem[],
+  categories: string[]
+): Promise<CategorizationResult[]> => {
+  try {
+    const model = getModel();
+    const result = await model.generateContent(getRecategorizePrompt(items, categories));
 
-        const response = result.response;
-        const jsonText = response.text();
-        const parsedResult = JSON.parse(jsonText);
+    const response = result.response;
+    const jsonText = response.text();
+    const parsedResult = JSON.parse(jsonText);
 
-        if (!parsedResult.categorization || !Array.isArray(parsedResult.categorization)) {
-            throw new Error("Invalid response structure from AI.");
-        }
-
-        return parsedResult.categorization;
-    } catch (error) {
-        console.error("Błąd podczas kategoryzacji listy przez Gemini:", error);
-        throw new Error("Nie udało się skategoryzować listy. Spróbuj ponownie.");
+    if (!parsedResult.categorization || !Array.isArray(parsedResult.categorization)) {
+      throw new Error('Invalid response structure from AI.');
     }
+
+    return parsedResult.categorization;
+  } catch (error) {
+    logError('Gemini categorize error', error);
+    throw new Error('Nie udało się skategoryzować listy. Spróbuj ponownie.');
+  }
 };

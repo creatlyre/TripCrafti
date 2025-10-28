@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+
 import { computeDailySpendTarget } from '../../src/lib/utils';
 
 describe('computeDailySpendTarget', () => {

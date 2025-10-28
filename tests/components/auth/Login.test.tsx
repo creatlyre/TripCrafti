@@ -1,9 +1,11 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import Login from '@/components/auth/Login';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as AuthHelpers from '@supabase/auth-helpers-react';
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
+import { render, screen, fireEvent } from '@testing-library/react';
+
+import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import Login from '@/components/auth/Login';
 
 // Mock the external dependencies
 vi.mock('@supabase/auth-helpers-react', () => ({

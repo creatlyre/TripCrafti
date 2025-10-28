@@ -13,6 +13,11 @@ export interface Trip {
   lodging?: string | null;
   lodging_lat?: number | null;
   lodging_lon?: number | null;
+  // AI packing token usage (nullable until any generation occurs)
+  packing_ai_input_tokens?: number | null;
+  packing_ai_output_tokens?: number | null;
+  packing_ai_total_tokens?: number | null;
+  packing_ai_thought_tokens?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -93,6 +98,7 @@ export interface PackingListMeta {
   accommodation?: string;
   activities?: string[];
   archetype?: string;
+  regenerationCount?: number; // number of times user requested AI regeneration (persisted)
 }
 
 // The direct response from the AI
@@ -114,12 +120,13 @@ export interface GenerateDetails {
   special: string;
   region?: string;
   travelStyle?: string;
+  language?: string; // desired output language for AI generated packing list (e.g. "Polish", "English")
 }
 
 export interface ValidationResult {
   missing: { name: string; category: string; reason: string }[];
   remove: { name: string; reason: string }[];
-  adjust: { name: string; field: string; current: any; suggested: any; reason: string }[];
+  adjust: { name: string; field: string; current: unknown; suggested: unknown; reason: string }[];
   replace: {
     items_to_remove: string[];
     suggested_item: { name: string; category: string };
@@ -145,15 +152,15 @@ export interface ItemDefinition {
 }
 
 export interface ItemLibraryCategory {
-    title: string;
-    itemIds: string[];
+  title: string;
+  itemIds: string[];
 }
 
 export interface SavedList {
-    packingItems: PackingItem[];
-    checklistItems: ChecklistItem[];
-    categories: string[];
-    listMeta: PackingListMeta | null;
+  packingItems: PackingItem[];
+  checklistItems: ChecklistItem[];
+  categories: string[];
+  listMeta: PackingListMeta | null;
 }
 
 export interface CategorizationResult {
@@ -231,3 +238,15 @@ export interface BudgetReport {
 
 // Budget display mode for UI (purely front-end, does not affect API responses)
 export type BudgetMode = 'simple' | 'full';
+
+// ========================= Packing Share Links =========================
+// Represents a temporary collaborative access grant to a trip's packing list.
+export interface PackingShareLink {
+  id: string;
+  trip_id: string;
+  token: string; // opaque random string
+  can_modify: boolean;
+  expires_at?: string | null; // ISO timestamp or null for no expiry
+  created_at?: string;
+  revoked?: boolean;
+}

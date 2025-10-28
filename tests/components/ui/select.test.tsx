@@ -1,5 +1,8 @@
 import { render, screen } from '@testing-library/react';
+
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
+
 import {
   Select,
   SelectGroup,
@@ -9,7 +12,6 @@ import {
   SelectItem,
   SelectLabel,
 } from '@/components/ui/select';
-import { describe, it, expect, vi, beforeAll } from 'vitest';
 
 // JSDOM doesn't implement hasPointerCapture or scrollIntoView, so we polyfill them.
 beforeAll(() => {

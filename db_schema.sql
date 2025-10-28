@@ -6,11 +6,16 @@ CREATE TABLE GeneratedItineraries (
     preferences_json JSONB,
     generated_plan_json JSONB,
     input_tokens INT,
-    thought_tokens INT,
+    thought_tokens INT, 
     status itinerary_status DEFAULT 'GENERATING',
     created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now()
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    model_used TEXT,
+    error_message TEXT,
+    progress TEX,
+    generation_duration_ms INTEGER
 );
+-- =============================================
 
 CREATE TABLE trips (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -24,6 +29,13 @@ CREATE TABLE trips (
   lodging TEXT,
   lodging_lat DOUBLE PRECISION,
   lodging_lon DOUBLE PRECISION,
+  -- Tracks how many times the user re-generated the packing list (AI) for this trip
+  packing_regenerations INT NOT NULL DEFAULT 0,
+  -- AI Packing token usage metrics (nullable until first generation)
+  packing_ai_input_tokens INT,
+  packing_ai_output_tokens INT,
+  packing_ai_total_tokens INT,
+  packing_ai_thought_tokens INT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -161,3 +173,52 @@ CREATE TABLE IF NOT EXISTS fx_daily_cache (
   fetched_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE(base_currency, rate_date, provider)
 );
+
+-- =============================================================
+-- Packing Share Links (Temporary collaborative access tokens)
+-- =============================================================
+-- A share link grants limited access to a trip's packing list via a random token.
+-- Rules:
+--  * Viewer identified only by possession of token (no auth context required for shared view endpoints)
+--  * Can read packing list, items, checklist
+--  * Can add or update (toggle packed, update qty/name/category, add checklist/task)
+--  * Cannot delete items or checklist tasks
+--  * Cannot regenerate or perform AI-cost operations
+--  * Optional expiration revokes access automatically
+--  * Owner can revoke by deleting the row
+-- NOTE: Because anonymous access is required, RLS alone cannot authorize token-based access.
+-- Strategy:
+--  * RLS remains strict (auth.uid() must match) for base tables
+--  * Share endpoints run with a service role key server-side and manually enforce token scope
+--  * Token lookups performed server-side; client never receives service key
+
+CREATE TABLE IF NOT EXISTS packing_share_links (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  token TEXT NOT NULL UNIQUE, -- opaque random string (e.g. 32-40 chars)
+  can_modify BOOLEAN DEFAULT TRUE, -- future flexibility; if false treat as read-only
+  expires_at TIMESTAMPTZ, -- null = no expiration
+  created_at TIMESTAMPTZ DEFAULT now(),
+  revoked BOOLEAN DEFAULT FALSE
+);
+
+ALTER TABLE packing_share_links ENABLE ROW LEVEL SECURITY;
+
+-- Only trip owner can manage share links through authenticated context
+CREATE POLICY "Select own share links" ON packing_share_links
+  FOR SELECT USING (EXISTS (SELECT 1 FROM trips t WHERE t.id = packing_share_links.trip_id AND t.user_id = auth.uid()));
+CREATE POLICY "Insert own share links" ON packing_share_links
+  FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM trips t WHERE t.id = trip_id AND t.user_id = auth.uid()));
+CREATE POLICY "Update own share links" ON packing_share_links
+  FOR UPDATE USING (EXISTS (SELECT 1 FROM trips t WHERE t.id = trip_id AND t.user_id = auth.uid()));
+CREATE POLICY "Delete own share links" ON packing_share_links
+  FOR DELETE USING (EXISTS (SELECT 1 FROM trips t WHERE t.id = trip_id AND t.user_id = auth.uid()));
+
+-- NOTE: Anonymous token-based access DOES NOT go directly to Supabase client-side.
+-- Endpoints will:
+--   1. Accept token in path.
+--   2. Validate not expired / not revoked.
+--   3. Fetch packing list + items via service role.
+--   4. Allow only allowed mutation set (no deletes) when can_modify = true.
+--   5. Reject if token invalid, expired, revoked.
+-- Consider scheduled cleanup of expired tokens.

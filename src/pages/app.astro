@@ -1,7 +1,9 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { getDictionary } from "@/lib/i18n";
-import { TripDashboard } from "@/components/TripDashboard.tsx";
+import Logo from '../components/ui/Logo.astro';
+import Layout from '../layouts/Layout.astro';
+
+import { TripDashboard } from '@/components/TripDashboard.tsx';
+import { getDictionary } from '@/lib/i18n';
 export const prerender = false;
 
 const lang = Astro.locals.lang;
@@ -9,33 +11,77 @@ const dict = getDictionary(lang);
 // console.log("SESSION IN APP.ASTRO", Astro.locals.session);
 function switchUrl(target: string) {
   const url = new URL(Astro.request.url);
-  url.searchParams.set("lang", target);
-  return url.pathname + "?" + url.searchParams.toString();
+  url.searchParams.set('lang', target);
+  return url.pathname + '?' + url.searchParams.toString();
 }
 ---
 
-<Layout title={(lang === "pl" ? "Panel podróży" : "Trips Dashboard") + " – TripCrafti"}>
+<Layout title={(lang === 'pl' ? 'Panel podróży' : 'Trips Dashboard') + ' – TripCrafti'}>
   <main class="min-h-screen flex flex-col bg-slate-950 text-slate-50">
-    <header class="flex items-center justify-between px-6 py-4 border-b border-slate-800/60 sticky top-0 bg-slate-950/80 backdrop-blur-sm z-20">
-      <a href="/" class="flex items-center gap-2 text-slate-200 hover:text-white transition">
-        <span
-          class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 font-bold text-white shadow"
-          >TC</span
-        >
-        <span class="text-sm font-semibold tracking-tight">TripCrafti</span>
-      </a>
-      <nav aria-label={dict.langSwitcher.label} class="flex items-center gap-2">
-        <a
-          href={switchUrl("pl")}
-          class={`text-xs font-medium px-2.5 py-1 rounded-md border transition ${lang === "pl" ? "border-indigo-400/60 text-white bg-slate-800/60" : "border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50"}`}
-          >PL</a
-        >
-        <a
-          href={switchUrl("en")}
-          class={`text-xs font-medium px-2.5 py-1 rounded-md border transition ${lang === "en" ? "border-indigo-400/60 text-white bg-slate-800/60" : "border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50"}`}
-          >EN</a
-        >
-      </nav>
+    <header
+      class="flex items-center justify-between px-6 py-4 border-b border-slate-800/60 sticky top-0 bg-slate-950/80 backdrop-blur-sm z-20"
+    >
+      <Logo size="lg" showSubtitle={true} subtitle={dict.dashboard?.sub || 'Travel Planning Dashboard'} href="/" />
+      <div class="flex items-center gap-4">
+        <nav aria-label={dict.langSwitcher.label} class="flex items-center gap-2">
+          <a
+            href={switchUrl('pl')}
+            class={`text-xs font-medium px-2.5 py-1 rounded-md border transition ${lang === 'pl' ? 'border-indigo-400/60 text-white bg-slate-800/60' : 'border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50'}`}
+            >PL</a
+          >
+          <a
+            href={switchUrl('en')}
+            class={`text-xs font-medium px-2.5 py-1 rounded-md border transition ${lang === 'en' ? 'border-indigo-400/60 text-white bg-slate-800/60' : 'border-slate-700/70 text-slate-300 hover:text-white hover:border-indigo-400/50'}`}
+            >EN</a
+          >
+        </nav>
+        <!-- User Menu with Logout -->
+        <div class="relative group">
+          <button
+            class="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white bg-slate-800/50 hover:bg-slate-800 rounded-lg border border-slate-700/50 hover:border-slate-600 transition-all duration-200"
+            id="user-menu-button"
+          >
+            <div
+              class="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium"
+            >
+              {Astro.locals.session?.user?.email?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            <svg
+              class="w-4 h-4 transition-transform duration-200 group-hover:rotate-180"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <div
+            class="absolute right-0 top-full mt-2 w-64 bg-slate-900 border border-slate-700/60 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
+            id="user-menu"
+          >
+            <div class="p-3 border-b border-slate-700/60">
+              <p class="text-sm font-medium text-white truncate">{Astro.locals.session?.user?.email}</p>
+              <p class="text-xs text-slate-400 mt-1">{dict.auth?.signedInAs || 'Signed in as'}</p>
+            </div>
+            <div class="p-2">
+              <button
+                onclick="handleSignOut()"
+                class="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-md transition-colors duration-200"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                  ></path>
+                </svg>
+                {dict.auth?.signOut || 'Sign Out'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </header>
     <div class="flex-1 p-6 sm:p-8 md:p-10">
       <TripDashboard lang={lang} client:load />
@@ -45,3 +91,72 @@ function switchUrl(target: string) {
     </footer>
   </main>
 </Layout>
+
+<script>
+  import { supabase } from '@/lib/supabase';
+
+  // Handle sign out function
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error signing out:', error);
+      alert('Error signing out. Please try again.');
+    }
+  };
+
+  // Make function globally available
+  Object.assign(window, { handleSignOut });
+
+  // Handle user menu dropdown with better interaction
+  document.addEventListener('DOMContentLoaded', () => {
+    const userMenuButton = document.getElementById('user-menu-button');
+    const userMenu = document.getElementById('user-menu');
+
+    if (userMenuButton && userMenu) {
+      let timeout: NodeJS.Timeout;
+
+      const showMenu = () => {
+        clearTimeout(timeout);
+        userMenu.classList.remove('opacity-0', 'invisible');
+        userMenu.classList.add('opacity-100', 'visible');
+      };
+
+      const hideMenu = () => {
+        timeout = setTimeout(() => {
+          userMenu.classList.remove('opacity-100', 'visible');
+          userMenu.classList.add('opacity-0', 'invisible');
+        }, 150);
+      };
+
+      // Show on hover/focus
+      userMenuButton.addEventListener('mouseenter', showMenu);
+      userMenuButton.addEventListener('focus', showMenu);
+      userMenu.addEventListener('mouseenter', showMenu);
+
+      // Hide on leave
+      userMenuButton.addEventListener('mouseleave', hideMenu);
+      userMenu.addEventListener('mouseleave', hideMenu);
+      userMenuButton.addEventListener('blur', hideMenu);
+
+      // Handle click toggle
+      userMenuButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (userMenu.classList.contains('opacity-100')) {
+          hideMenu();
+        } else {
+          showMenu();
+        }
+      });
+
+      // Close on click outside
+      document.addEventListener('click', (e) => {
+        if (!userMenuButton.contains(e.target as Node) && !userMenu.contains(e.target as Node)) {
+          hideMenu();
+        }
+      });
+    }
+  });
+</script>

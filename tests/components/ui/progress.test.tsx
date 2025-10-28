@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { Progress } from '@/components/ui/progress';
+
 import { describe, it, expect } from 'vitest';
+
+import { Progress } from '@/components/ui/progress';
 
 describe('Progress', () => {
   it('renders with default props', () => {

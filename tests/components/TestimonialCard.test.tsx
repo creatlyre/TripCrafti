@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import TestimonialCard from '@/components/TestimonialCard';
-import { describe, it, expect, vi } from 'vitest';
+
 import { motion } from 'framer-motion';
+import { describe, it, expect, vi } from 'vitest';
+
+import TestimonialCard from '@/components/TestimonialCard';
 
 // Mock framer-motion
 vi.mock('framer-motion', async () => {

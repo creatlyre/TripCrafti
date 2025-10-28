@@ -1,6 +1,7 @@
-import React from "react";
-import SuitcaseIcon from "@/components/icons/SuitcaseIcon";
-import { Button } from "@/components/ui/button";
+import React from 'react';
+
+import SuitcaseIcon from '@/components/icons/SuitcaseIcon';
+import { Button } from '@/components/ui/button';
 
 interface EmptyStateProps {
   onActionClick: () => void;

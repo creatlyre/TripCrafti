@@ -1,4 +1,10 @@
-import type { GenerateDetails, ValidationResult, PackingItem, AIPackingListResponse, CategorizationResult } from '@/types';
+import type {
+  GenerateDetails,
+  ValidationResult,
+  PackingItem,
+  AIPackingListResponse,
+  CategorizationResult,
+} from '@/types';
 
 /**
  * Service for handling packing list operations - client-side API calls only
@@ -38,10 +44,7 @@ export class PackingService {
   /**
    * Validate an existing packing list with optional context changes
    */
-  static async validateList(
-    currentList: PackingItem[], 
-    changes?: { notes?: string }
-  ): Promise<ValidationResult> {
+  static async validateList(currentList: PackingItem[], changes?: { notes?: string }): Promise<ValidationResult> {
     try {
       const response = await fetch('/api/ai/packing', {
         method: 'POST',
@@ -72,10 +75,7 @@ export class PackingService {
   /**
    * Categorize packing list items using AI
    */
-  static async categorizeItems(
-    items: PackingItem[], 
-    categories: string[]
-  ): Promise<CategorizationResult[]> {
+  static async categorizeItems(items: PackingItem[], categories: string[]): Promise<CategorizationResult[]> {
     try {
       const response = await fetch('/api/ai/packing', {
         method: 'POST',
@@ -106,13 +106,10 @@ export class PackingService {
   /**
    * Apply categorization results to packing items
    */
-  static applyCategorization(
-    items: PackingItem[], 
-    categorization: CategorizationResult[]
-  ): PackingItem[] {
-    const categoryMap = new Map(categorization.map(item => [item.id, item.category]));
-    
-    return items.map(item => {
+  static applyCategorization(items: PackingItem[], categorization: CategorizationResult[]): PackingItem[] {
+    const categoryMap = new Map(categorization.map((item) => [item.id, item.category]));
+
+    return items.map((item) => {
       const newCategory = categoryMap.get(item.id);
       return newCategory ? { ...item, category: newCategory } : item;
     });
@@ -121,11 +118,8 @@ export class PackingService {
   /**
    * Get new categories from categorization results
    */
-  static getNewCategories(
-    existingCategories: string[], 
-    categorization: CategorizationResult[]
-  ): string[] {
-    const newCategories = [...new Set(categorization.map(item => item.category))];
+  static getNewCategories(existingCategories: string[], categorization: CategorizationResult[]): string[] {
+    const newCategories = [...new Set(categorization.map((item) => item.category))];
     return [...new Set([...existingCategories, ...newCategories])];
   }
 
@@ -143,18 +137,16 @@ export class PackingService {
     const appliedChanges: string[] = [];
 
     // Apply add suggestions
-    suggestions.missing.forEach(suggestion => {
-      const exists = updatedItems.some(item => 
-        item.name.toLowerCase() === suggestion.name.toLowerCase()
-      );
-      
+    suggestions.missing.forEach((suggestion) => {
+      const exists = updatedItems.some((item) => item.name.toLowerCase() === suggestion.name.toLowerCase());
+
       if (!exists) {
         const newItem: PackingItem = {
           id: Date.now() + Math.random(),
           name: suggestion.name,
           qty: '1',
           category: suggestion.category,
-          packed: false
+          packed: false,
         };
         updatedItems.push(newItem);
         appliedChanges.push(`Added: ${suggestion.name}`);
@@ -162,16 +154,14 @@ export class PackingService {
     });
 
     // Apply remove suggestions
-    suggestions.remove.forEach(suggestion => {
-      updatedItems = updatedItems.filter(item => 
-        item.name.toLowerCase() !== suggestion.name.toLowerCase()
-      );
+    suggestions.remove.forEach((suggestion) => {
+      updatedItems = updatedItems.filter((item) => item.name.toLowerCase() !== suggestion.name.toLowerCase());
       appliedChanges.push(`Removed: ${suggestion.name}`);
     });
 
     // Apply adjustment suggestions
-    suggestions.adjust.forEach(suggestion => {
-      updatedItems = updatedItems.map(item => {
+    suggestions.adjust.forEach((suggestion) => {
+      updatedItems = updatedItems.map((item) => {
         if (item.name.toLowerCase() === suggestion.name.toLowerCase()) {
           return { ...item, [suggestion.field]: suggestion.suggested };
         }
@@ -181,30 +171,28 @@ export class PackingService {
     });
 
     // Apply replace suggestions
-    suggestions.replace.forEach(suggestion => {
-      const lowerCaseItemsToRemove = suggestion.items_to_remove.map(name => name.toLowerCase());
-      
+    suggestions.replace.forEach((suggestion) => {
+      const lowerCaseItemsToRemove = suggestion.items_to_remove.map((name) => name.toLowerCase());
+
       // Remove items to be replaced
-      updatedItems = updatedItems.filter(item => 
-        !lowerCaseItemsToRemove.includes(item.name.toLowerCase())
-      );
-      
+      updatedItems = updatedItems.filter((item) => !lowerCaseItemsToRemove.includes(item.name.toLowerCase()));
+
       // Add suggested replacement if it doesn't exist
-      const exists = updatedItems.some(item => 
-        item.name.toLowerCase() === suggestion.suggested_item.name.toLowerCase()
+      const exists = updatedItems.some(
+        (item) => item.name.toLowerCase() === suggestion.suggested_item.name.toLowerCase()
       );
-      
+
       if (!exists) {
         const newItem: PackingItem = {
           id: Date.now() + Math.random(),
           name: suggestion.suggested_item.name,
           qty: '1',
           category: suggestion.suggested_item.category,
-          packed: false
+          packed: false,
         };
         updatedItems.push(newItem);
       }
-      
+
       appliedChanges.push(`Replaced: ${suggestion.items_to_remove.join(', ')} with ${suggestion.suggested_item.name}`);
     });
 
@@ -222,27 +210,20 @@ export class PackingService {
    * Check if item already exists in the list
    */
   static itemExists(items: PackingItem[], itemName: string): boolean {
-    return items.some(item => 
-      item.name.toLowerCase() === itemName.trim().toLowerCase()
-    );
+    return items.some((item) => item.name.toLowerCase() === itemName.trim().toLowerCase());
   }
 
   /**
    * Create a new packing item
    */
-  static createPackingItem(
-    name: string, 
-    category: string, 
-    quantity: string, 
-    notes?: string
-  ): PackingItem {
+  static createPackingItem(name: string, category: string, quantity: string, notes?: string): PackingItem {
     return {
       id: this.generateItemId(),
       name: name.trim(),
       qty: quantity || '1',
       category: category.trim(),
       packed: false,
-      notes
+      notes,
     };
   }
 
@@ -250,29 +231,25 @@ export class PackingService {
    * Update packing item
    */
   static updatePackingItem(
-    items: PackingItem[], 
-    itemId: number, 
+    items: PackingItem[],
+    itemId: number,
     updates: Partial<Omit<PackingItem, 'id'>>
   ): PackingItem[] {
-    return items.map(item => 
-      item.id === itemId ? { ...item, ...updates } : item
-    );
+    return items.map((item) => (item.id === itemId ? { ...item, ...updates } : item));
   }
 
   /**
    * Remove packing item
    */
   static removePackingItem(items: PackingItem[], itemId: number): PackingItem[] {
-    return items.filter(item => item.id !== itemId);
+    return items.filter((item) => item.id !== itemId);
   }
 
   /**
    * Toggle packed status of item
    */
   static togglePackedStatus(items: PackingItem[], itemId: number): PackingItem[] {
-    return items.map(item => 
-      item.id === itemId ? { ...item, packed: !item.packed } : item
-    );
+    return items.map((item) => (item.id === itemId ? { ...item, packed: !item.packed } : item));
   }
 
   /**
@@ -282,53 +259,46 @@ export class PackingService {
     if (!searchTerm.trim()) {
       return items;
     }
-    
+
     const lowercaseFilter = searchTerm.toLowerCase();
-    return items.filter(item =>
-      item.name.toLowerCase().includes(lowercaseFilter) ||
-      item.notes?.toLowerCase().includes(lowercaseFilter)
+    return items.filter(
+      (item) => item.name.toLowerCase().includes(lowercaseFilter) || item.notes?.toLowerCase().includes(lowercaseFilter)
     );
   }
 
   /**
    * Get filtered categories based on visible items
    */
-  static getVisibleCategories(
-    categories: string[], 
-    visibleItems: PackingItem[]
-  ): string[] {
+  static getVisibleCategories(categories: string[], visibleItems: PackingItem[]): string[] {
     if (visibleItems.length === 0) {
       return categories;
     }
-    
-    const visibleCategorySet = new Set(visibleItems.map(item => item.category));
-    return categories.filter(category => visibleCategorySet.has(category));
+
+    const visibleCategorySet = new Set(visibleItems.map((item) => item.category));
+    return categories.filter((category) => visibleCategorySet.has(category));
   }
 
   /**
    * Sort categories by different criteria
    */
-  static sortCategories(
-    categories: string[], 
-    sortBy: 'az' | 'za' | 'count', 
-    items: PackingItem[]
-  ): string[] {
+  static sortCategories(categories: string[], sortBy: 'az' | 'za' | 'count', items: PackingItem[]): string[] {
     const newCategories = [...categories];
-    
+
     switch (sortBy) {
       case 'az':
         return newCategories.sort((a, b) => a.localeCompare(b));
       case 'za':
         return newCategories.sort((a, b) => b.localeCompare(a));
       case 'count': {
-        const counts = items.reduce((acc, item) => {
-          acc[item.category] = (acc[item.category] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>);
-        
-        return newCategories.sort((a, b) => 
-          (counts[b] || 0) - (counts[a] || 0) || a.localeCompare(b)
+        const counts = items.reduce(
+          (acc, item) => {
+            acc[item.category] = (acc[item.category] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>
         );
+
+        return newCategories.sort((a, b) => (counts[b] || 0) - (counts[a] || 0) || a.localeCompare(b));
       }
       default:
         return categories;
@@ -344,9 +314,9 @@ export class PackingService {
     percentage: number;
   } {
     const total = items.length;
-    const packed = items.filter(item => item.packed).length;
+    const packed = items.filter((item) => item.packed).length;
     const percentage = total > 0 ? Math.round((packed / total) * 100) : 0;
-    
+
     return { total, packed, percentage };
   }
 }

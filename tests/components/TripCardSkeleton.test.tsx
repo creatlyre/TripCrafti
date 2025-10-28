@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { TripCardSkeleton } from '@/components/TripCardSkeleton';
+
 import { describe, it, expect } from 'vitest';
+
+import { TripCardSkeleton } from '@/components/TripCardSkeleton';
 
 describe('TripCardSkeleton', () => {
   it('renders without crashing', () => {

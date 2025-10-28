@@ -1,0 +1,28 @@
+name = "tripcrafti-durable-objects"
+main = "src/workers/index.ts"
+compatibility_date = "2025-02-04"
+compatibility_flags = ["durable_object_alarms"]
+
+[vars]
+PUBLIC_SUPABASE_URL = "https://cyusoliinkrsrtxgtbbl.supabase.co"
+PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5dXNvbGlpbmtyc3J0eGd0YmJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNTEzNDAsImV4cCI6MjA3NDcyNzM0MH0.rQUT-Em7pzomm0l4JDZbGWcsYk6vfZUL3Xs2NJfmXuM"
+
+[[kv_namespaces]]
+binding = "SECRETS"
+id = "b2c9e78506a7423ba7d15b7bef93d7e4"
+
+# Durable Objects configuration
+[[durable_objects.bindings]]
+name = "ITINERARY_GENERATOR"
+class_name = "ItineraryDurableObject"
+
+# Durable Object migrations
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ItineraryDurableObject"]
+
+[observability]
+[observability.logs]
+enabled = false
+head_sampling_rate = 1
+invocation_logs = true

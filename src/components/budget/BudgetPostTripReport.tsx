@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
+
 import type { BudgetReport, Trip } from '@/types';
+
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
-interface Props { trip: Trip }
+interface Props {
+  trip: Trip;
+}
 
 const BudgetPostTripReport: React.FC<Props> = ({ trip }) => {
   const [report, setReport] = useState<BudgetReport | null>(null);
@@ -15,16 +19,22 @@ const BudgetPostTripReport: React.FC<Props> = ({ trip }) => {
     if (!tripEnded) return;
     let cancelled = false;
     (async () => {
-      setLoading(true); setError(null);
+      setLoading(true);
+      setError(null);
       try {
         const res = await fetch(`/api/trips/${trip.id}/budget/report`);
         if (!res.ok) throw new Error('Failed to load report');
         const data = await res.json();
         if (!cancelled) setReport(data);
-      } catch (e: any) { if (!cancelled) setError(e.message); }
-      finally { if (!cancelled) setLoading(false); }
+      } catch (e: any) {
+        if (!cancelled) setError(e.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [trip.id, tripEnded]);
 
   if (!tripEnded) return null;
@@ -60,15 +70,21 @@ const BudgetPostTripReport: React.FC<Props> = ({ trip }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {report.categories.map(c => {
+                    {report.categories.map((c) => {
                       const over = c.delta > 0;
                       return (
                         <tr key={c.category_id} className="bg-slate-800/40 hover:bg-slate-800/70 transition-colors">
                           <td className="py-1 px-2 truncate max-w-[140px]">{c.name}</td>
                           <td className="py-1 px-2 text-right font-mono">{c.planned.toFixed(2)}</td>
                           <td className="py-1 px-2 text-right font-mono">{c.spent.toFixed(2)}</td>
-                          <td className={`py-1 px-2 text-right font-mono ${over ? 'text-rose-400' : 'text-emerald-400'}`}>{c.delta.toFixed(2)}</td>
-                          <td className="py-1 px-2 text-right font-mono">{c.utilization != null ? (c.utilization * 100).toFixed(0) : '—'}</td>
+                          <td
+                            className={`py-1 px-2 text-right font-mono ${over ? 'text-rose-400' : 'text-emerald-400'}`}
+                          >
+                            {c.delta.toFixed(2)}
+                          </td>
+                          <td className="py-1 px-2 text-right font-mono">
+                            {c.utilization != null ? (c.utilization * 100).toFixed(0) : '—'}
+                          </td>
                         </tr>
                       );
                     })}

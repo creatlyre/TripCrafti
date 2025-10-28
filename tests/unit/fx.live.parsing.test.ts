@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+
 import { getFxRate } from '@/lib/fx';
 
 // We mock fetch to simulate /live then /convert fallback behaviors.
@@ -14,11 +15,11 @@ describe('fx live endpoint parsing', () => {
   it('parses /live quotes key', async () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ success: true, quotes: { USDPLN: 3.75 } })
+      json: async () => ({ success: true, quotes: { USDPLN: 3.75 } }),
     });
     const res = await getFxRate('USD', 'PLN');
     expect(res.rate).toBe(3.75);
-    expect(['live','cache']).toContain(res.source); // first call returns live
+    expect(['live', 'cache']).toContain(res.source); // first call returns live
   });
 
   it('falls back to /convert when /live missing quote and no generic rates', async () => {

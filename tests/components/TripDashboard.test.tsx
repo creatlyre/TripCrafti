@@ -1,8 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
+
 import userEvent from '@testing-library/user-event';
-import TripDashboard from '@/components/TripDashboard';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
 import { useAuth } from '@/components/hooks/useAuth';
+import TripDashboard from '@/components/TripDashboard';
 
 // --- Mocks ---
 
@@ -52,8 +54,8 @@ vi.mock('@/lib/i18n', () => ({
       open: 'Open',
       openPlan: 'View Plan',
       delete: {
-        confirm: 'Delete Trip'
-      }
+        confirm: 'Delete Trip',
+      },
     },
   }),
 }));
@@ -175,10 +177,13 @@ describe('TripDashboard', () => {
       await user.click(screen.getByRole('button', { name: 'Create Trip' }));
 
       await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalledWith('/api/trips', expect.objectContaining({
-          method: 'POST',
-          body: expect.stringContaining('My New Adventure'),
-        }));
+        expect(mockFetch).toHaveBeenCalledWith(
+          '/api/trips',
+          expect.objectContaining({
+            method: 'POST',
+            body: expect.stringContaining('My New Adventure'),
+          })
+        );
       });
 
       // Modal should close after successful creation

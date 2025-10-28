@@ -1,0 +1,53 @@
+---
+export interface Props {
+  size?: 'sm' | 'md' | 'lg';
+  showSubtitle?: boolean;
+  subtitle?: string;
+  href?: string;
+  class?: string;
+}
+
+const {
+  size = 'md',
+  showSubtitle = false,
+  subtitle = 'Travel Planning Dashboard',
+  href = '/',
+  class: className = '',
+} = Astro.props;
+
+// Size configurations
+const sizeConfig = {
+  sm: {
+    logoHeight: 'h-8',
+    text: 'text-xs',
+    title: 'text-base font-bold',
+    subtitle: 'text-xs -mt-0.5',
+  },
+  md: {
+    logoHeight: 'h-9',
+    text: 'text-xs',
+    title: 'text-lg font-bold',
+    subtitle: 'text-xs -mt-1',
+  },
+  lg: {
+    logoHeight: 'h-10',
+    text: 'text-sm',
+    title: 'text-xl font-bold',
+    subtitle: 'text-xs -mt-1',
+  },
+};
+
+const config = sizeConfig[size];
+---
+
+<a href={href} class={`flex items-center gap-3 text-slate-200 hover:text-white transition group ${className}`}>
+  <img
+    src="/Logo_TripCrafti.png"
+    alt="TripCrafti Logo"
+    class={`${config.logoHeight} w-auto object-contain group-hover:scale-105 transition-transform duration-200`}
+  />
+  <div class="flex flex-col">
+    <span class={`tracking-tight ${config.title}`}>TripCrafti</span>
+    {showSubtitle && <span class={`text-slate-400 hidden sm:block ${config.subtitle}`}>{subtitle}</span>}
+  </div>
+</a>

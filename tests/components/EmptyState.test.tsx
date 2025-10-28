@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
+
 import userEvent from '@testing-library/user-event';
-import { EmptyState } from '@/components/EmptyState';
 import { describe, it, expect, vi } from 'vitest';
+
+import { EmptyState } from '@/components/EmptyState';
 
 // Mock the icon component
 vi.mock('@/components/icons/SuitcaseIcon', () => ({
@@ -20,7 +22,9 @@ describe('EmptyState', () => {
     render(<EmptyState onActionClick={mockOnActionClick} dict={mockDict} />);
 
     expect(screen.getByText('No Trips Found')).toBeInTheDocument();
-    expect(screen.getByText('You have not created any trips yet. Get started by creating a new one.')).toBeInTheDocument();
+    expect(
+      screen.getByText('You have not created any trips yet. Get started by creating a new one.')
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create New Trip' })).toBeInTheDocument();
   });
 

@@ -1,7 +1,9 @@
-import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import Login from "../../src/components/auth/Login";
+import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import Login from '../../src/components/auth/Login';
 
 const signOutMock = vi.fn();
 const onAuthStateChangeMock = vi.fn((event?: any, session?: any) => ({
@@ -9,7 +11,7 @@ const onAuthStateChangeMock = vi.fn((event?: any, session?: any) => ({
 }));
 
 const useUserMock = vi.fn();
-vi.mock("@supabase/auth-helpers-react", () => ({
+vi.mock('@supabase/auth-helpers-react', () => ({
   useUser: () => useUserMock(),
   useSupabaseClient: () => ({
     auth: {
@@ -22,31 +24,31 @@ vi.mock("@supabase/auth-helpers-react", () => ({
   }),
 }));
 
-vi.mock("@supabase/auth-ui-react", () => ({
-  Auth: (props: any) => <div data-testid="auth-component">Auth Providers: {props.providers?.join(",")}</div>,
+vi.mock('@supabase/auth-ui-react', () => ({
+  Auth: (props: any) => <div data-testid="auth-component">Auth Providers: {props.providers?.join(',')}</div>,
 }));
-vi.mock("@supabase/auth-ui-shared", () => ({ ThemeSupa: {} }));
+vi.mock('@supabase/auth-ui-shared', () => ({ ThemeSupa: {} }));
 
-describe("Login component", () => {
+describe('Login component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("renders Auth UI when no user", () => {
+  it('renders Auth UI when no user', () => {
     useUserMock.mockReturnValue(null);
     render(<Login />);
-    expect(screen.getByTestId("auth-component")).toBeInTheDocument();
+    expect(screen.getByTestId('auth-component')).toBeInTheDocument();
     expect(screen.getByText(/Auth Providers: google,github/i)).toBeVisible();
   });
 
-  it("renders user info and sign out button when user present", () => {
-    useUserMock.mockReturnValue({ email: "user@example.com" });
+  it('renders user info and sign out button when user present', () => {
+    useUserMock.mockReturnValue({ email: 'user@example.com' });
     render(<Login />);
     // Match either English or Polish translation
     const signedInText = screen.getByText((content) => /Signed in as|Zalogowany jako/i.test(content));
     expect(signedInText).toBeVisible();
-    expect(screen.getByText("user@example.com")).toBeVisible();
-    const button = screen.getByRole("button", { name: /sign out|wyloguj/i });
+    expect(screen.getByText('user@example.com')).toBeVisible();
+    const button = screen.getByRole('button', { name: /sign out|wyloguj/i });
     fireEvent.click(button);
     expect(signOutMock).toHaveBeenCalled();
   });
