@@ -86,226 +86,371 @@ const BudgetTemplateSelector: React.FC<Props> = ({
   }
 
   return (
-    /* Root container: explicit height ensures left list (flex child) isn't collapsed inside modal with only max-height.
-       Previously using min-h sometimes allowed the browser to treat child as auto height 0 in certain flex contexts. */
-    <div className="flex flex-col gap-4 md:flex-row md:gap-6 bg-brand-navy-dark rounded-lg p-3 md:p-4 ring-1 ring-brand-navy-lighter/60 text-white flex-1 min-h-[60vh]">
-      {/* Left column: search, tags, list */}
-      <div className="w-80 md:w-80 flex-shrink-0 flex flex-col gap-4 bg-gradient-to-b from-brand-navy-dark to-brand-navy-light rounded-xl p-3 border border-brand-navy-lighter/70 shadow-inner shadow-black/30 relative z-20 bg-red-500/20">
-        <div className="relative">
-          <Input
-            aria-label={lang === 'pl' ? 'Szukaj szablonów' : 'Search templates'}
-            placeholder={lang === 'pl' ? 'Szukaj...' : 'Search...'}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="bg-brand-navy-dark border-brand-navy-lighter pr-8 text-white placeholder:text-brand-cyan/50"
-          />
-          {query && (
-            <button
-              onClick={() => setQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-brand-cyan/70 hover:text-brand-orange focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 rounded"
-              aria-label={lang === 'pl' ? 'Wyczyść' : 'Clear'}
-            >
-              ✕
-            </button>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto pr-1" aria-label="Tag filters">
-          {allTags.map((tag) => {
-            const active = activeTags.includes(tag);
-            return (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => toggleTag(tag)}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-cyan/60 focus:ring-offset-brand-navy-dark ${
-                  active
-                    ? 'bg-brand-cyan text-brand-navy shadow-sm shadow-brand-cyan/40'
-                    : 'bg-brand-navy-light text-brand-cyan/70 hover:text-brand-cyan border border-brand-navy-lighter/60 hover:border-brand-cyan/50'
-                }`}
-                aria-pressed={active}
-              >
-                {tag}
-              </button>
-            );
-          })}
-        </div>
-        <ul
-          role="listbox"
-          aria-label={dict?.categories.selectTemplate}
-          /* Provide a minimum height so content isn't collapsed when parent height is auto; flex-1 lets it fill remaining vertical space. */
-          className="min-h-[220px] max-h-[280px] overflow-y-auto rounded-lg border border-brand-navy-lighter/70 divide-y divide-brand-navy-lighter/50 bg-brand-navy-light shadow-sm"
-        >
-          {filtered.map((t) => {
-            const selected =
-              (selectedTemplate && selectedTemplate.id === t.id) || (!selectedTemplate && filtered[0] === t);
-            return (
-              <li
-                key={t.id}
-                role="option"
-                aria-selected={selected}
-                tabIndex={0}
-                onClick={() => setSelectedId(t.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setSelectedId(t.id);
-                  }
-                }}
-                className={`cursor-pointer group px-3 py-2 text-xs flex flex-col gap-0.5 focus:outline-none transition-colors rounded-md outline outline-1 outline-transparent bg-yellow-400/30 ${
-                  selected
-                    ? 'bg-brand-cyan/10 border border-brand-cyan/60 shadow-inner shadow-brand-cyan/20'
-                    : 'hover:bg-brand-navy-dark/60 border border-transparent'
-                }`}
-              >
-                <span className="flex items-center gap-1 font-medium text-black bg-white/90 px-1 rounded group-hover:text-black transition-colors">
-                  {t.emoji && <span aria-hidden>{t.emoji}</span>}
-                  {t.label}
-                </span>
-                <span className="text-[10px] text-brand-cyan/50 group-hover:text-brand-cyan/70 line-clamp-1">
-                  {(t.tags || []).slice(0, 3).join(' • ')}
-                </span>
-              </li>
-            );
-          })}
-          {filtered.length === 0 && (
-            <li className="px-3 py-6 text-center text-[11px] text-brand-cyan/60">
-              {lang === 'pl' ? 'Brak wyników.' : 'No matches.'}
-            </li>
-          )}
-        </ul>
-      </div>
+    /* Root container: Modern modal design with improved visual hierarchy */
+    <div className="flex flex-col gap-6 bg-gradient-to-br from-brand-navy-dark via-brand-navy to-brand-navy-light rounded-2xl p-4 md:p-6 border border-brand-cyan/20 shadow-2xl shadow-brand-navy-dark/50 text-white flex-1 min-h-[70vh] backdrop-blur-sm">
+      {/* Two-column layout */}
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8 flex-1">
+        {/* Left column: Enhanced search, tags, and template list */}
+        <div className="w-full md:w-96 flex-shrink-0 flex flex-col gap-5">
+          {/* Header section */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <span className="text-brand-cyan">📊</span>
+              {lang === 'pl' ? 'Wybierz szablon budżetu' : 'Choose Budget Template'}
+            </h3>
+            <p className="text-sm text-brand-cyan/80 leading-relaxed">
+              {lang === 'pl'
+                ? 'Skorzystaj z gotowych szablonów kategorii budżetowych dostosowanych do różnych typów podróży.'
+                : 'Use pre-made budget category templates tailored for different types of trips.'}
+            </p>
+          </div>
 
-      {/* Right column: preview */}
-      <div className="flex-1 flex flex-col gap-4 bg-brand-navy-dark rounded-xl p-4 border border-brand-navy-lighter/70 shadow-inner shadow-black/40 relative z-10">
-        {selectedTemplate && (
-          <div className="flex-1 space-y-4 overflow-auto pr-1 pb-28 min-h-0">
-            {/* leave space for sticky bar */}
-            <header className="space-y-1">
-              <h4 className="font-semibold flex items-center gap-2 text-sm tracking-wide text-white">
-                {selectedTemplate.emoji && <span aria-hidden>{selectedTemplate.emoji}</span>}
-                {selectedTemplate.label}
-              </h4>
-              <p className="text-[11px] leading-relaxed text-brand-cyan/90">{selectedTemplate.description}</p>
-              <div className="flex flex-wrap gap-1">
-                {(selectedTemplate.tags || []).map((tag) => (
-                  <span
+          {/* Enhanced search input */}
+          <div className="relative group">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-cyan/60 group-focus-within:text-brand-cyan transition-colors">
+              🔍
+            </div>
+            <Input
+              aria-label={lang === 'pl' ? 'Szukaj szablonów' : 'Search templates'}
+              placeholder={lang === 'pl' ? 'Wpisz nazwę szablonu...' : 'Type template name...'}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="bg-brand-navy-dark/80 border-brand-navy-lighter/60 hover:border-brand-cyan/40 focus:border-brand-cyan pl-10 pr-10 h-11 text-white placeholder:text-brand-cyan/40 rounded-xl transition-all duration-200 shadow-inner"
+            />
+            {query && (
+              <button
+                onClick={() => setQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-cyan/60 hover:text-brand-orange hover:bg-brand-orange/10 focus:outline-none focus:ring-2 focus:ring-brand-orange/50 rounded-full p-1 transition-all duration-200"
+                aria-label={lang === 'pl' ? 'Wyczyść' : 'Clear'}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Enhanced tag filters */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-brand-cyan/80 uppercase tracking-wider">
+              {lang === 'pl' ? 'Filtry' : 'Filters'}
+            </h4>
+            <div
+              className="flex flex-wrap gap-2 max-h-24 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-brand-navy-dark scrollbar-thumb-brand-cyan/30"
+              aria-label="Tag filters"
+            >
+              {allTags.map((tag) => {
+                const active = activeTags.includes(tag);
+                return (
+                  <button
                     key={tag}
-                    className="px-2 py-0.5 rounded-full bg-brand-navy-light text-[10px] text-brand-cyan/70 border border-brand-navy-lighter/60"
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-cyan/60 focus:ring-offset-brand-navy-dark transform hover:scale-105 ${
+                      active
+                        ? 'bg-gradient-to-r from-brand-cyan to-brand-cyan/80 text-brand-navy shadow-lg shadow-brand-cyan/30 border border-brand-cyan/20'
+                        : 'bg-brand-navy-light/80 text-brand-cyan/70 hover:text-white hover:bg-brand-navy-lighter border border-brand-navy-lighter/60 hover:border-brand-cyan/40 hover:shadow-md'
+                    }`}
+                    aria-pressed={active}
                   >
                     {tag}
-                  </span>
-                ))}
-              </div>
-            </header>
-            {/* Distribution bar */}
-            <div>
-              <p className="text-[11px] mb-1 font-medium text-brand-cyan/70">
-                {lang === 'pl' ? 'Dystrybucja kategorii' : 'Category Distribution'}
-              </p>
-              <div className="flex h-4 w-full overflow-hidden rounded-md border border-brand-navy-lighter/70 ring-1 ring-black/20">
-                {selectedTemplate.categories.map((c, idx) => {
-                  const portion = c.suggested_portion;
-                  const ratio = isRatio(portion) ? portion || 0 : 0;
-                  const width = `${Math.round(ratio * 100)}%`;
-                  const palette = ['bg-brand-cyan/70', 'bg-brand-orange/60', 'bg-brand-cyan/50', 'bg-brand-orange/50'];
-                  const color = palette[idx % palette.length];
-                  return (
-                    <div
-                      key={c.name}
-                      style={{ width }}
-                      className={`relative group ${color} border-r border-brand-navy-dark last:border-r-0`}
-                      title={`${c.name} ${Math.round(ratio * 100)}%`}
-                    >
-                      <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] flex items-center justify-center font-medium tracking-wide text-brand-navy-dark/90">
-                        {Math.round(ratio * 100)}%
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            {/* Category list */}
-            <div className="rounded-lg border border-brand-navy-lighter/70 divide-y divide-brand-navy-lighter/50 bg-brand-navy-light shadow-sm">
-              {selectedTemplate.categories.map((c) => {
-                const portion = c.suggested_portion;
-                const percent = isRatio(portion) ? Math.round((portion || 0) * 100) : null;
-                const amount = computeAmount(portion);
-                return (
-                  <div key={c.name} className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
-                    <div className="flex items-center gap-2 min-w-0">
-                      {c.icon_name && (
-                        <span
-                          className="w-6 h-6 flex items-center justify-center rounded-md bg-brand-navy-dark/60 text-[12px] text-brand-cyan border border-brand-navy-lighter/70"
-                          aria-hidden
-                        >
-                          {c.icon_name.slice(0, 2).toUpperCase()}
-                        </span>
-                      )}
-                      <span className="truncate text-white" title={c.name}>
-                        {c.name}
-                      </span>
-                    </div>
-                    <div className="text-right font-mono text-[11px] text-brand-cyan/70 whitespace-nowrap">
-                      {percent !== null ? `${percent}%` : ''}
-                      {amount ? (percent !== null ? ` · ${amount}` : amount) : ''}
-                    </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           </div>
-        )}
-        <div className="pointer-events-none">
-          <div className="fixed md:static left-0 right-0 bottom-4 md:bottom-auto px-4 md:px-0">
-            <div className="pointer-events-auto mx-auto md:ml-auto md:mr-0 w-full md:w-auto max-w-md md:max-w-none">
-              <div className="rounded-2xl border-2 border-brand-cyan/60 bg-gradient-to-r from-brand-navy-dark via-brand-navy-dark to-brand-navy-light p-4 shadow-lg shadow-brand-cyan/20 flex flex-col md:flex-row md:items-center md:justify-between gap-3 backdrop-blur-sm">
-                <div className="text-[11px] text-brand-cyan/70 hidden md:block font-medium tracking-wide">
-                  {selectedTemplate
-                    ? (lang === 'pl' ? 'Wybrany szablon:' : 'Selected template:') + ' ' + selectedTemplate.label
-                    : lang === 'pl'
-                      ? 'Wybierz szablon z listy.'
-                      : 'Choose a template from the list.'}
-                </div>
-                {hasExistingCategories && (
-                  <div className="text-[10px] -mt-1 -mb-1 text-amber-300/80 font-medium tracking-wide" role="note">
-                    {dict?.categories.applyOverwriteHint}
+
+          {/* Enhanced template list */}
+          <div className="flex-1 space-y-2">
+            <h4 className="text-xs font-semibold text-brand-cyan/80 uppercase tracking-wider">
+              {lang === 'pl' ? 'Szablony' : 'Templates'}
+              <span className="ml-2 text-brand-cyan/60 font-normal">({filtered.length})</span>
+            </h4>
+            <ul
+              role="listbox"
+              aria-label={dict?.categories.selectTemplate}
+              className="space-y-2 max-h-[340px] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-brand-navy-dark scrollbar-thumb-brand-cyan/30"
+            >
+              {filtered.map((t) => {
+                const selected =
+                  (selectedTemplate && selectedTemplate.id === t.id) || (!selectedTemplate && filtered[0] === t);
+                return (
+                  <li
+                    key={t.id}
+                    role="option"
+                    aria-selected={selected}
+                    tabIndex={0}
+                    onClick={() => setSelectedId(t.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedId(t.id);
+                      }
+                    }}
+                    className={`cursor-pointer group p-4 text-sm rounded-xl focus:outline-none transition-all duration-200 transform hover:scale-[1.02] ${
+                      selected
+                        ? 'bg-gradient-to-r from-brand-cyan/20 to-brand-cyan/10 border-2 border-brand-cyan/60 shadow-lg shadow-brand-cyan/20 ring-2 ring-brand-cyan/20'
+                        : 'bg-brand-navy-light/60 hover:bg-brand-navy-light border border-brand-navy-lighter/40 hover:border-brand-cyan/30 hover:shadow-md backdrop-blur-sm'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-all duration-200 ${
+                          selected
+                            ? 'bg-brand-cyan/20 text-brand-cyan ring-2 ring-brand-cyan/40'
+                            : 'bg-brand-navy-dark/60 text-brand-cyan/70 group-hover:bg-brand-navy-dark group-hover:text-brand-cyan'
+                        }`}
+                      >
+                        {t.emoji || '📋'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div
+                          className={`font-semibold truncate transition-colors ${
+                            selected ? 'text-white' : 'text-brand-cyan/90 group-hover:text-white'
+                          }`}
+                        >
+                          {t.label}
+                        </div>
+                        <div className="text-xs text-brand-cyan/60 group-hover:text-brand-cyan/80 line-clamp-1 mt-1">
+                          {(t.tags || []).slice(0, 3).join(' • ')}
+                        </div>
+                      </div>
+                      {selected && <div className="flex-shrink-0 text-brand-cyan animate-pulse">✓</div>}
+                    </div>
+                  </li>
+                );
+              })}
+              {filtered.length === 0 && (
+                <li className="p-8 text-center space-y-2">
+                  <div className="text-2xl text-brand-cyan/40">🔍</div>
+                  <div className="text-sm text-brand-cyan/60 font-medium">
+                    {lang === 'pl' ? 'Brak wyników' : 'No matches found'}
                   </div>
-                )}
-                <div aria-live="polite" aria-atomic="true" className="sr-only">
-                  {applyingTemplateId ? dict?.categories.applyingAnnounce : ''}
-                </div>
-                <Button
-                  disabled={!selectedTemplate || applyingTemplateId === selectedTemplate.id}
-                  onClick={apply}
-                  className="relative w-full md:w-auto bg-emerald-500 text-emerald-950 font-semibold tracking-wide text-sm py-2 px-7 shadow-lg shadow-emerald-500/40 hover:bg-emerald-400 hover:shadow-emerald-400/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400/50 active:scale-[0.96] transition-all disabled:opacity-60 border border-emerald-300/40 hover:border-emerald-200/60"
-                >
-                  <span className="flex items-center gap-2">
-                    {applyingTemplateId === selectedTemplate?.id ? (
-                      <span
-                        aria-hidden
-                        className="inline-block size-4 animate-spin rounded-full border-2 border-emerald-900/40 border-t-emerald-100"
-                      />
-                    ) : (
-                      <span aria-hidden className="text-base leading-none text-emerald-100">
-                        ⚡
+                  <div className="text-xs text-brand-cyan/40">
+                    {lang === 'pl' ? 'Spróbuj innych słów kluczowych' : 'Try different keywords'}
+                  </div>
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
+
+        {/* Right column: Enhanced preview section */}
+        <div className="flex-1 flex flex-col gap-6 bg-gradient-to-br from-brand-navy-light/80 to-brand-navy-dark/90 rounded-2xl p-6 border border-brand-cyan/20 shadow-2xl shadow-black/20 backdrop-blur-sm relative overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-cyan/5 via-transparent to-brand-orange/5 pointer-events-none" />
+          <div className="absolute top-4 right-4 text-6xl text-brand-cyan/5 pointer-events-none">💰</div>
+
+          {selectedTemplate ? (
+            <div className="flex-1 space-y-6 overflow-auto pr-2 pb-32 min-h-0 relative z-10 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-brand-cyan/20">
+              {/* Enhanced header */}
+              <header className="space-y-4 p-4 bg-gradient-to-r from-brand-navy-dark/60 to-brand-navy-light/40 rounded-xl border border-brand-cyan/20 backdrop-blur-sm">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-brand-cyan/20 to-brand-cyan/10 rounded-2xl flex items-center justify-center text-2xl border-2 border-brand-cyan/30 shadow-lg shadow-brand-cyan/10">
+                    {selectedTemplate.emoji || '📊'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                      {selectedTemplate.label}
+                      <span className="px-2 py-1 bg-brand-cyan/20 text-brand-cyan text-xs font-semibold rounded-full border border-brand-cyan/40">
+                        {selectedTemplate.categories.length} {lang === 'pl' ? 'kategorii' : 'categories'}
                       </span>
-                    )}
-                    <span>
-                      {applyingTemplateId === selectedTemplate?.id
-                        ? dict?.categories.applying
-                        : lang === 'pl'
-                          ? 'Zastosuj szablon'
-                          : 'Apply Template'}
-                    </span>
+                    </h4>
+                    <p className="text-sm leading-relaxed text-brand-cyan/90 mb-3">{selectedTemplate.description}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(selectedTemplate.tags || []).map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-3 py-1 rounded-full bg-brand-navy-light/80 text-xs text-brand-cyan/80 border border-brand-navy-lighter/60 font-medium"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </header>
+
+              {/* Enhanced distribution bar */}
+              <div className="space-y-3 p-4 bg-gradient-to-r from-brand-navy-dark/40 to-brand-navy-light/20 rounded-xl border border-brand-cyan/10">
+                <div className="flex items-center justify-between">
+                  <h5 className="text-sm font-semibold text-brand-cyan/90">
+                    {lang === 'pl' ? 'Dystrybucja budżetu' : 'Budget Distribution'}
+                  </h5>
+                  <span className="text-xs text-brand-cyan/60 font-mono">
+                    {baseBudget.toLocaleString()} {lang === 'pl' ? 'zł' : '$'}
                   </span>
-                  <span
-                    className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-300 shadow ring-2 ring-emerald-600/40 animate-ping [animation-duration:2.5s]"
-                    aria-hidden
-                  />
-                </Button>
+                </div>
+                <div className="relative">
+                  <div className="flex h-6 w-full overflow-hidden rounded-lg border-2 border-brand-cyan/20 shadow-inner">
+                    {selectedTemplate.categories.map((c, idx) => {
+                      const portion = c.suggested_portion;
+                      const ratio = isRatio(portion) ? portion || 0 : 0;
+                      const width = `${Math.round(ratio * 100)}%`;
+                      const palette = [
+                        'bg-gradient-to-r from-brand-cyan to-brand-cyan/80',
+                        'bg-gradient-to-r from-brand-orange to-brand-orange/80',
+                        'bg-gradient-to-r from-brand-cyan/70 to-brand-cyan/50',
+                        'bg-gradient-to-r from-brand-orange/70 to-brand-orange/50',
+                      ];
+                      const color = palette[idx % palette.length];
+                      return (
+                        <div
+                          key={c.name}
+                          style={{ width }}
+                          className={`relative group ${color} border-r border-brand-navy-dark/50 last:border-r-0 transition-all duration-200 hover:brightness-110`}
+                          title={`${c.name}: ${Math.round(ratio * 100)}%`}
+                        >
+                          <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity text-xs flex items-center justify-center font-bold tracking-wide text-white drop-shadow-md">
+                            {Math.round(ratio * 100)}%
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-brand-cyan/30 via-brand-orange/30 to-brand-cyan/30 rounded-full blur-sm" />
+                </div>
+              </div>
+
+              {/* Enhanced category list */}
+              <div className="space-y-3">
+                <h5 className="text-sm font-semibold text-brand-cyan/90 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-brand-cyan rounded-full animate-pulse" />
+                  {lang === 'pl' ? 'Szczegóły kategorii' : 'Category Details'}
+                </h5>
+                <div className="space-y-2">
+                  {selectedTemplate.categories.map((c, idx) => {
+                    const portion = c.suggested_portion;
+                    const percent = isRatio(portion) ? Math.round((portion || 0) * 100) : null;
+                    const amount = computeAmount(portion);
+                    const palette = ['brand-cyan', 'brand-orange', 'brand-cyan', 'brand-orange'];
+                    const accentColor = palette[idx % palette.length];
+                    return (
+                      <div
+                        key={c.name}
+                        className="group p-4 bg-gradient-to-r from-brand-navy-light/60 to-brand-navy-dark/40 rounded-xl border border-brand-navy-lighter/40 hover:border-brand-cyan/40 transition-all duration-200 hover:shadow-lg hover:shadow-brand-cyan/10"
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div
+                              className={`w-10 h-10 flex items-center justify-center rounded-lg bg-${accentColor}/20 border border-${accentColor}/40 group-hover:bg-${accentColor}/30 transition-colors`}
+                            >
+                              {c.icon_name ? (
+                                <span className={`text-sm font-bold text-${accentColor}`}>
+                                  {c.icon_name.slice(0, 2).toUpperCase()}
+                                </span>
+                              ) : (
+                                <span className={`text-${accentColor}`}>💰</span>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div
+                                className="font-semibold text-white group-hover:text-brand-cyan transition-colors truncate"
+                                title={c.name}
+                              >
+                                {c.name}
+                              </div>
+                              {percent !== null && (
+                                <div className="text-xs text-brand-cyan/60 mt-1">
+                                  {percent}% {lang === 'pl' ? 'całkowitego budżetu' : 'of total budget'}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right font-mono space-y-1">
+                            {percent !== null && (
+                              <div className={`text-sm font-bold text-${accentColor}`}>{percent}%</div>
+                            )}
+                            {amount && (
+                              <div className="text-xs text-brand-cyan/70 whitespace-nowrap">
+                                {amount} {lang === 'pl' ? 'zł' : '$'}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-center space-y-4 relative z-10">
+              <div className="space-y-4 max-w-md">
+                <div className="text-6xl text-brand-cyan/30">📊</div>
+                <h4 className="text-lg font-semibold text-white">
+                  {lang === 'pl' ? 'Wybierz szablon' : 'Select a Template'}
+                </h4>
+                <p className="text-sm text-brand-cyan/70 leading-relaxed">
+                  {lang === 'pl'
+                    ? 'Wybierz szablon z listy po lewej stronie, aby zobaczyć podgląd kategorii budżetowych i ich rozkład.'
+                    : 'Choose a template from the list on the left to see a preview of budget categories and their distribution.'}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Apply Section - Spanning both columns */}
+      <div className="border-t border-brand-cyan/20 pt-6">
+        <div className="space-y-4">
+          {/* Template info and warnings */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-brand-cyan/90">
+                {selectedTemplate
+                  ? lang === 'pl'
+                    ? 'Wybrany szablon:'
+                    : 'Selected template:'
+                  : lang === 'pl'
+                    ? 'Wybierz szablon z listy.'
+                    : 'Choose a template from the list.'}
+              </div>
+              {selectedTemplate && (
+                <div className="text-lg font-bold text-white flex items-center gap-2">
+                  {selectedTemplate.emoji && <span aria-hidden>{selectedTemplate.emoji}</span>}
+                  {selectedTemplate.label}
+                </div>
+              )}
+              {hasExistingCategories && (
+                <div className="text-sm text-amber-300/90 font-medium" role="note">
+                  {dict?.categories.applyOverwriteHint}
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Large Apply Button */}
+          <div aria-live="polite" aria-atomic="true" className="sr-only">
+            {applyingTemplateId ? dict?.categories.applyingAnnounce : ''}
+          </div>
+          <Button
+            disabled={!selectedTemplate || applyingTemplateId === selectedTemplate.id}
+            onClick={apply}
+            className="relative w-full h-16 bg-emerald-500 text-emerald-950 font-bold tracking-wide text-lg py-4 px-8 shadow-2xl shadow-emerald-500/40 hover:bg-emerald-400 hover:shadow-emerald-400/50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400/50 active:scale-[0.98] transition-all disabled:opacity-60 border-2 border-emerald-300/40 hover:border-emerald-200/60 rounded-2xl"
+          >
+            <span className="flex items-center justify-center gap-3">
+              {applyingTemplateId === selectedTemplate?.id ? (
+                <>
+                  <span
+                    aria-hidden
+                    className="inline-block size-6 animate-spin rounded-full border-3 border-emerald-900/40 border-t-emerald-100"
+                  />
+                  <span className="text-lg">{dict?.categories.applying || 'Applying...'}</span>
+                </>
+              ) : (
+                <>
+                  <span aria-hidden className="text-2xl leading-none text-emerald-100">
+                    ⚡
+                  </span>
+                  <span className="text-lg">{lang === 'pl' ? 'Zastosuj szablon' : 'Apply Template'}</span>
+                </>
+              )}
+            </span>
+            <span
+              className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-emerald-300 shadow-lg ring-2 ring-emerald-600/40 animate-ping [animation-duration:2.5s]"
+              aria-hidden
+            />
+          </Button>
         </div>
       </div>
     </div>
