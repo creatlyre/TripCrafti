@@ -1,22 +1,28 @@
 import type { APIRoute } from 'astro';
 
+import fs from 'fs/promises';
+import path from 'path';
+
 async function getClassificationsFromPublic(locale = 'en') {
   try {
     // Validate locale and default to 'en' if invalid
     const validLocales = ['en', 'pl'];
     const selectedLocale = validLocales.includes(locale) ? locale : 'en';
 
-    // Fetch the JSON file from the public directory via HTTP
-    const baseUrl = import.meta.env.SITE || 'http://localhost:3001';
-    const fileUrl = `${baseUrl}/ticketmaster_classifications_${selectedLocale}.json`;
+    // Read the JSON file directly from the public directory
+    const publicDir = path.join(process.cwd(), 'public');
+    const filePath = path.join(publicDir, `ticketmaster_classifications_${selectedLocale}.json`);
 
-    const response = await fetch(fileUrl);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch classifications file: ${response.statusText}`);
+    // Check if file exists
+    try {
+      await fs.access(filePath);
+    } catch {
+      throw new Error(`Classifications file not found: ticketmaster_classifications_${selectedLocale}.json`);
     }
 
-    const data = await response.json();
+    // Read and parse the file
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    const data = JSON.parse(fileContent);
 
     // Skip complex validation for now, just ensure basic structure
     if (!data._embedded?.classifications) {

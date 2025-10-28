@@ -11,9 +11,15 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   output: 'server',
   integrations: [react(), sitemap()],
-  server: { port: 3000 },
+  server: {
+    port: 3000,
+    host: true,
+  },
   vite: {
     plugins: [tailwindcss()],
+    optimizeDeps: {
+      include: ['zod', '@hookform/resolvers/zod'],
+    },
   },
   adapter: cloudflare(),
 });
