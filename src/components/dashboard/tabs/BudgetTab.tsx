@@ -1,9 +1,10 @@
-
 import React from 'react';
+
+import type { Lang } from '@/lib/i18n';
 import type { Trip } from '@/types';
+
 import BudgetSummaryWidget from '@/components/budget/BudgetSummary';
 import QuickAddExpense from '@/components/budget/QuickAddExpense';
-import type { Lang } from '@/lib/i18n';
 
 interface BudgetTabProps {
   trip: Trip;

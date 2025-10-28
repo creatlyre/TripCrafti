@@ -239,9 +239,9 @@ const BudgetTemplateSelector: React.FC<Props> = ({
               🔍
             </div>
             <Input
-              aria-label={lang === 'pl' ? 'Szukaj szablonów' : 'Search templates'}
+              aria-label={dict?.categories.searchAriaLabel || (lang === 'pl' ? 'Szukaj szablonów' : 'Search templates')}
               placeholder={
-                dict?.categories.searchPlaceholder ||
+                dict?.categories.searchPlaceholderText ||
                 (lang === 'pl' ? 'Wpisz nazwę szablonu...' : 'Type template name...')
               }
               value={query}
@@ -266,7 +266,7 @@ const BudgetTemplateSelector: React.FC<Props> = ({
             </h4>
             <div
               className="flex flex-wrap gap-2 max-h-24 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-brand-navy-dark scrollbar-thumb-brand-cyan/30"
-              aria-label="Tag filters"
+              aria-label={dict?.categories.tagFiltersLabel || (lang === 'pl' ? 'Filtry tagów' : 'Tag filters')}
             >
               {allTags.map((tag) => {
                 const active = activeTags.includes(tag);
@@ -417,7 +417,7 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                       (lang === 'pl' ? 'Dystrybucja budżetu' : 'Budget Distribution')}
                   </h5>
                   <span className="text-xs text-brand-cyan/60 font-mono">
-                    {baseBudget.toLocaleString()} {lang === 'pl' ? 'zł' : '$'}
+                    {baseBudget.toLocaleString()} {dict?.categories.currencySymbol || (lang === 'pl' ? 'zł' : '$')}
                   </span>
                 </div>
                 <div className="relative">
@@ -501,7 +501,7 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                             )}
                             {amount && (
                               <div className="text-xs text-brand-cyan/70 whitespace-nowrap">
-                                {amount} {lang === 'pl' ? 'zł' : '$'}
+                                {amount} {dict?.categories.currencySymbol || (lang === 'pl' ? 'zł' : '$')}
                               </div>
                             )}
                           </div>

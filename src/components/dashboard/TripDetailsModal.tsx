@@ -1,7 +1,8 @@
-
 import React, { Suspense, lazy } from 'react';
+
 import type { Lang } from '@/lib/i18n';
 import type { Trip, GeneratedItinerary, Itinerary, ItineraryPreferences } from '@/types';
+
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
@@ -50,48 +51,47 @@ export function TripDetailsModal({
         </DialogTitle>
         <div className="flex flex-col">
           <div className="flex items-center justify-between p-6 border-b bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-10">
-          <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                          {trip.title}
-                        </h2>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">{trip.destination}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {trip?.lodging && (
-                        <span
-                          className="text-xs text-slate-500 dark:text-slate-400 max-w-[240px] truncate"
-                          title={trip.lodging || undefined}
-                        >
-                          {lang === 'pl' ? 'Nocleg:' : 'Lodging:'} {trip.lodging}
-                        </span>
-                      )}
-                      <button
-                        onClick={() => onOpenChange(false)}
-                        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{trip.title}</h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400">{trip.destination}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {trip?.lodging && (
+                <span
+                  className="text-xs text-slate-500 dark:text-slate-400 max-w-[240px] truncate"
+                  title={trip.lodging || undefined}
+                >
+                  {dict?.dashboard?.tripDetails?.lodgingLabel || (lang === 'pl' ? 'Nocleg:' : 'Lodging:')}{' '}
+                  {trip.lodging}
+                </span>
+              )}
+              <button
+                onClick={() => onOpenChange(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div>
@@ -110,7 +110,10 @@ export function TripDetailsModal({
                   <TabsContent value="overview" className="p-6 space-y-6 m-0">
                     {activeTab === 'overview' && <OverviewTab trip={trip} lang={lang} />}
                   </TabsContent>
-                  <TabsContent value="itinerary" className="p-0 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800">
+                  <TabsContent
+                    value="itinerary"
+                    className="p-0 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800"
+                  >
                     {activeTab === 'itinerary' && (
                       <ItineraryTab
                         trip={trip}
@@ -122,16 +125,25 @@ export function TripDetailsModal({
                       />
                     )}
                   </TabsContent>
-                  <TabsContent value="budget" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
+                  <TabsContent
+                    value="budget"
+                    className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full"
+                  >
                     {activeTab === 'budget' && <BudgetTab trip={trip} lang={lang} />}
                   </TabsContent>
                   <TabsContent value="packing" className="p-0 m-0 min-h-full">
                     {activeTab === 'packing' && <PackingTab trip={trip} lang={lang} />}
                   </TabsContent>
-                  <TabsContent value="events" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
+                  <TabsContent
+                    value="events"
+                    className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full"
+                  >
                     {activeTab === 'events' && <EventsTab trip={trip} lang={lang} onAddEvent={onAddEvent} />}
                   </TabsContent>
-                  <TabsContent value="settings" className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full">
+                  <TabsContent
+                    value="settings"
+                    className="p-6 m-0 bg-gradient-to-br from-slate-50 to-gray-50 dark:from-slate-900 dark:to-slate-800 min-h-full"
+                  >
                     {activeTab === 'settings' && <SettingsTab dict={dict} />}
                   </TabsContent>
                 </Suspense>

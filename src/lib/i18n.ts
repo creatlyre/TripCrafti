@@ -101,6 +101,7 @@ export interface Dictionary {
       confirmDeleteExpense?: string;
       refresh: { action: string; refreshing: string };
       expenses: { heading: string; empty: string; prepaidBadge: string; fallbackTitle: string };
+      csvExport?: string;
     };
     summary: {
       totalBudget: string;
@@ -153,6 +154,7 @@ export interface Dictionary {
       percentOfBudget?: string;
       applyTemplateButton?: string;
       filtersLabel?: string;
+      tagFiltersLabel?: string;
       templatesLabel?: string;
       searchPlaceholder?: string;
       clearSearch?: string;
@@ -162,6 +164,10 @@ export interface Dictionary {
       selectTemplateHelp?: string;
       selectedTemplateLabel?: string;
       chooseFromList?: string;
+      searchAriaLabel?: string;
+      searchPlaceholderText?: string;
+      templateSelectorFailure?: string;
+      currencySymbol?: string;
     };
     budgetTemplates?: {
       templates: Record<
@@ -248,6 +254,10 @@ export interface Dictionary {
       };
       lodging: { label: string; tooltip: string };
       currency: { label: string; selectPlaceholder: string };
+    };
+    tripDetails?: {
+      lodgingLabel: string;
+      fullViewButton?: string;
     };
     tabs?: { overview: string; itinerary: string; budget: string; packing: string; settings: string; events?: string };
     status?: { creating: string; deleting: string };
@@ -489,6 +499,12 @@ export interface Dictionary {
       delta: string;
       utilization: string;
       generated: string;
+      over: string;
+      under: string;
+      plannedTotal: string;
+      spentTotal: string;
+      onTrip: string;
+      prepaid: string;
     };
   };
   ui?: {
@@ -811,6 +827,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
           prepaidBadge: 'Przedpłata',
           fallbackTitle: 'Wydatek',
         },
+        csvExport: 'Eksport CSV',
       },
       summary: {
         totalBudget: 'Całkowity budżet',
@@ -866,6 +883,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         percentOfBudget: '% całkowitego budżetu',
         applyTemplateButton: 'Zastosuj szablon',
         filtersLabel: 'Filtry',
+        tagFiltersLabel: 'Filtry tagów',
         templatesLabel: 'Szablony',
         searchPlaceholder: 'Wpisz nazwę szablonu...',
         clearSearch: 'Wyczyść',
@@ -875,6 +893,10 @@ export const dictionaries: Record<Lang, Dictionary> = {
         selectTemplateHelp: 'Wybierz szablon z listy, aby zobaczyć podgląd kategorii budżetowych i ich rozkład.',
         selectedTemplateLabel: 'Wybrany szablon:',
         chooseFromList: 'Wybierz szablon z listy.',
+        searchAriaLabel: 'Szukaj szablonów',
+        searchPlaceholderText: 'Wpisz nazwę szablonu...',
+        templateSelectorFailure: 'Nie udało się załadować tłumaczeń budżetu. Spróbuj ponownie później.',
+        currencySymbol: 'zł',
       },
       budgetTemplates: {
         templates: {
@@ -1218,6 +1240,10 @@ export const dictionaries: Record<Lang, Dictionary> = {
           selectPlaceholder: 'Wybierz',
         },
       },
+      tripDetails: {
+        lodgingLabel: 'Nocleg:',
+        fullViewButton: 'Pełny widok',
+      },
       tabs: {
         overview: 'Przegląd',
         itinerary: 'Plan podróży',
@@ -1539,15 +1565,21 @@ export const dictionaries: Record<Lang, Dictionary> = {
     },
     budgetExtra: {
       report: {
-        title: 'Post-Trip Budget Report',
-        loading: 'Loading…',
-        categories: 'Categories',
-        name: 'Name',
-        planned: 'Planned',
-        spent: 'Spent',
+        title: 'Raport budżetu po podróży',
+        loading: 'Ładowanie…',
+        categories: 'Kategorie',
+        name: 'Nazwa',
+        planned: 'Planowane',
+        spent: 'Wydane',
         delta: 'Delta',
-        utilization: 'Util%',
-        generated: 'Generated',
+        utilization: 'Wykorzystanie%',
+        generated: 'Wygenerowano',
+        over: 'Ponad',
+        under: 'Poniżej',
+        plannedTotal: 'Planowana suma',
+        spentTotal: 'Wydana suma',
+        onTrip: 'W podróży',
+        prepaid: 'Przedpłacone',
       },
     },
     ui: {
@@ -1871,6 +1903,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
           prepaidBadge: 'Prepaid',
           fallbackTitle: 'Expense',
         },
+        csvExport: 'CSV Export',
       },
       summary: {
         totalBudget: 'Total Budget',
@@ -1924,6 +1957,7 @@ export const dictionaries: Record<Lang, Dictionary> = {
         percentOfBudget: '% of total budget',
         applyTemplateButton: 'Apply Template',
         filtersLabel: 'Filters',
+        tagFiltersLabel: 'Tag filters',
         templatesLabel: 'Templates',
         searchPlaceholder: 'Type template name...',
         clearSearch: 'Clear',
@@ -1934,6 +1968,10 @@ export const dictionaries: Record<Lang, Dictionary> = {
           'Choose a template from the list to see a preview of budget categories and their distribution.',
         selectedTemplateLabel: 'Selected template:',
         chooseFromList: 'Choose a template from the list.',
+        searchAriaLabel: 'Search templates',
+        searchPlaceholderText: 'Type template name...',
+        templateSelectorFailure: 'Failed to load budget dictionary. Please try again later.',
+        currencySymbol: '$',
       },
       budgetTemplates: {
         templates: {
@@ -2386,6 +2424,10 @@ export const dictionaries: Record<Lang, Dictionary> = {
           selectPlaceholder: 'Select',
         },
       },
+      tripDetails: {
+        lodgingLabel: 'Lodging:',
+        fullViewButton: 'Full view',
+      },
       tabs: {
         overview: 'Overview',
         itinerary: 'Travel Plan',
@@ -2709,6 +2751,12 @@ export const dictionaries: Record<Lang, Dictionary> = {
         delta: 'Delta',
         utilization: 'Util%',
         generated: 'Generated',
+        over: 'Over',
+        under: 'Under',
+        plannedTotal: 'Planned Total',
+        spentTotal: 'Spent Total',
+        onTrip: 'On-Trip',
+        prepaid: 'Prepaid',
       },
     },
     ui: {

@@ -2,16 +2,22 @@ import React, { useEffect, useState } from 'react';
 
 import type { BudgetReport, Trip } from '@/types';
 
+import { getDictionary, type Lang } from '@/lib/i18n';
+
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 interface Props {
   trip: Trip;
+  lang: Lang;
 }
 
-const BudgetPostTripReport: React.FC<Props> = ({ trip }) => {
+const BudgetPostTripReport: React.FC<Props> = ({ trip, lang }) => {
   const [report, setReport] = useState<BudgetReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const dict = getDictionary(lang);
+  const t = dict.budgetExtra?.report;
 
   const tripEnded = new Date(trip.end_date + 'T23:59:59Z') < new Date();
 
@@ -24,10 +30,10 @@ const BudgetPostTripReport: React.FC<Props> = ({ trip }) => {
       try {
         const res = await fetch(`/api/trips/${trip.id}/budget/report`);
         if (!res.ok) throw new Error('Failed to load report');
-        const data = await res.json();
+        const data = (await res.json()) as BudgetReport;
         if (!cancelled) setReport(data);
-      } catch (e: any) {
-        if (!cancelled) setError(e.message);
+      } catch (e: unknown) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Unknown error');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -42,31 +48,37 @@ const BudgetPostTripReport: React.FC<Props> = ({ trip }) => {
   return (
     <Card className="border-slate-700 bg-slate-900/60">
       <CardHeader>
-        <CardTitle className="text-sm">Post-Trip Budget Report</CardTitle>
+        <CardTitle className="text-sm">{t?.title || 'Post-Trip Budget Report'}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 text-xs">
-        {loading && <div>Loading…</div>}
+        {loading && <div>{t?.loading || 'Loading…'}</div>}
         {error && <div className="text-red-500">{error}</div>}
         {report && (
           <div className="space-y-4">
             <div className="grid gap-3 md:grid-cols-5">
-              {STAT('Planned Total', report.plannedTotal.toFixed(2))}
-              {STAT('Spent Total', report.totalSpent.toFixed(2))}
-              {STAT('On-Trip', report.totalOnTrip.toFixed(2))}
-              {STAT('Prepaid', report.totalPrepaid.toFixed(2))}
-              {STAT('Delta', report.deltaTotal.toFixed(2), report.deltaTotal > 0 ? 'Over' : 'Under')}
+              {STAT(t?.plannedTotal || 'Planned Total', report.plannedTotal.toFixed(2))}
+              {STAT(t?.spentTotal || 'Spent Total', report.totalSpent.toFixed(2))}
+              {STAT(t?.onTrip || 'On-Trip', report.totalOnTrip.toFixed(2))}
+              {STAT(t?.prepaid || 'Prepaid', report.totalPrepaid.toFixed(2))}
+              {STAT(
+                t?.delta || 'Delta',
+                report.deltaTotal.toFixed(2),
+                report.deltaTotal > 0 ? t?.over || 'Over' : t?.under || 'Under'
+              )}
             </div>
             <div>
-              <h3 className="text-[11px] uppercase tracking-wide text-slate-400 mb-2">Categories</h3>
+              <h3 className="text-[11px] uppercase tracking-wide text-slate-400 mb-2">
+                {t?.categories || 'Categories'}
+              </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-[11px] border-separate border-spacing-y-1">
                   <thead className="text-slate-400">
                     <tr>
-                      <th className="text-left font-medium">Name</th>
-                      <th className="text-right font-medium">Planned</th>
-                      <th className="text-right font-medium">Spent</th>
-                      <th className="text-right font-medium">Delta</th>
-                      <th className="text-right font-medium">Util%</th>
+                      <th className="text-left font-medium">{t?.name || 'Name'}</th>
+                      <th className="text-right font-medium">{t?.planned || 'Planned'}</th>
+                      <th className="text-right font-medium">{t?.spent || 'Spent'}</th>
+                      <th className="text-right font-medium">{t?.delta || 'Delta'}</th>
+                      <th className="text-right font-medium">{t?.utilization || 'Util%'}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -92,7 +104,9 @@ const BudgetPostTripReport: React.FC<Props> = ({ trip }) => {
                 </table>
               </div>
             </div>
-            <p className="text-[10px] text-slate-500">Generated {new Date(report.generated_at).toLocaleString()}</p>
+            <p className="text-[10px] text-slate-500">
+              {t?.generated || 'Generated'} {new Date(report.generated_at).toLocaleString()}
+            </p>
           </div>
         )}
       </CardContent>
