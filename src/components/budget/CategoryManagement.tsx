@@ -7,7 +7,15 @@ import type { BudgetCategory, BudgetMode } from '../../types';
 
 import { BUDGET_CATEGORY_TEMPLATES, isRatio } from '../../lib/budget.templates';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+  DialogTemplateCategoryContent,
+} from '../ui/dialog';
 import { Input } from '../ui/input';
 import BudgetTemplateSelector from './BudgetTemplateSelector';
 
@@ -27,6 +35,15 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
   const [submitting, setSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const handleTemplateOpenChange = useCallback((v: boolean) => {
+    setTemplatesOpen(v);
+  }, []);
+  // Instrument templatesOpen for runtime debugging (dev only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as unknown as { __templatesOpen?: boolean }).__templatesOpen = templatesOpen;
+    }
+  }, [templatesOpen]);
   const [applyingTemplateId, setApplyingTemplateId] = useState<string | null>(null);
   const [tripBudget, setTripBudget] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -162,15 +179,25 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h3 className="text-lg font-semibold text-white">{dict.categories.heading}</h3>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <button className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-cyan/90 text-brand-navy font-semibold hover:from-brand-cyan/90 hover:to-brand-cyan hover:scale-105 hover:shadow-xl hover:shadow-brand-cyan/30 transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 focus:ring-offset-2 focus:ring-offset-brand-navy border-2 border-brand-cyan/30 hover:border-brand-cyan/50">
-              <span className="relative z-10 flex items-center gap-2">➕ {dict.categories.add}</span>
-              <div className="absolute inset-0 rounded-xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-sm bg-brand-navy-light border-brand-navy-lighter">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-brand-cyan to-brand-cyan/90 text-brand-navy font-semibold hover:from-brand-cyan/90 hover:to-brand-cyan hover:scale-105 hover:shadow-xl hover:shadow-brand-cyan/30 transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-cyan/50 focus:ring-offset-2 focus:ring-offset-brand-navy border-2 border-brand-cyan/30 hover:border-brand-cyan/50"
+          >
+            <span className="relative z-10 flex items-center gap-2">➕ {dict.categories.add}</span>
+            <div className="absolute inset-0 rounded-xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </button>
+          <DialogContent
+            aria-describedby="add-category-desc"
+            className="sm:max-w-sm bg-brand-navy-light border-brand-navy-lighter"
+          >
             <DialogHeader>
               <DialogTitle className="text-lg text-white">{dict.categories.newCategory}</DialogTitle>
+              <DialogDescription id="add-category-desc" className="sr-only">
+                {lang === 'pl'
+                  ? 'Dodaj nową kategorię budżetową do planu podróży.'
+                  : 'Add a new budget category to the trip plan.'}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -223,16 +250,27 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
             </div>
           </DialogContent>
         </Dialog>
-        <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
+        <Dialog open={templatesOpen} onOpenChange={handleTemplateOpenChange}>
           <DialogTrigger asChild>
-            <button className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-brand-orange/20 to-brand-orange/10 text-brand-orange border-2 border-brand-orange/30 hover:from-brand-orange/30 hover:to-brand-orange/20 hover:border-brand-orange/50 hover:scale-105 hover:shadow-xl hover:shadow-brand-orange/20 transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-orange/50 focus:ring-offset-2 focus:ring-offset-brand-navy font-semibold">
+            <button
+              type="button"
+              className="group relative px-6 py-3 rounded-xl bg-gradient-to-r from-brand-orange/20 to-brand-orange/10 text-brand-orange border-2 border-brand-orange/30 hover:from-brand-orange/30 hover:to-brand-orange/20 hover:border-brand-orange/50 hover:scale-105 hover:shadow-xl hover:shadow-brand-orange/20 transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-orange/50 focus:ring-offset-2 focus:ring-offset-brand-navy font-semibold"
+            >
               <span className="relative z-10 flex items-center gap-2">📋 {dict.categories.templates}</span>
               <div className="absolute inset-0 rounded-xl bg-brand-orange/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </button>
           </DialogTrigger>
-          <DialogContent className="dialog-template-category max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogTemplateCategoryContent
+            aria-describedby="budget-template-desc"
+            className="max-w-4xl max-h-[85vh] overflow-y-auto"
+          >
             <DialogHeader>
               <DialogTitle className="text-lg text-white">{dict.categories.selectTemplate}</DialogTitle>
+              <DialogDescription id="budget-template-desc" className="sr-only">
+                {lang === 'pl'
+                  ? 'Wybierz i zastosuj szablon budżetu dla podróży.'
+                  : 'Select and apply a budget template for the trip.'}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-6 text-sm">
               {dict.categories.templatesNote && (
@@ -240,20 +278,34 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
                   {dict.categories.templatesNote}
                 </div>
               )}
-              <BudgetTemplateSelector
-                lang={lang}
-                tripBudget={tripBudget}
-                applyingTemplateId={applyingTemplateId}
-                onApply={applyTemplate}
-                hasExistingCategories={categories.length > 0}
-              />
+              {(() => {
+                try {
+                  return (
+                    <BudgetTemplateSelector
+                      lang={lang}
+                      tripBudget={tripBudget}
+                      applyingTemplateId={applyingTemplateId}
+                      onApply={applyTemplate}
+                      hasExistingCategories={categories.length > 0}
+                    />
+                  );
+                } catch {
+                  return (
+                    <div className="p-4 text-xs text-brand-orange bg-brand-orange/10 rounded-lg" role="alert">
+                      {lang === 'pl'
+                        ? 'Błąd podczas renderowania selektora szablonów.'
+                        : 'Error rendering template selector.'}
+                    </div>
+                  );
+                }
+              })()}
               {tripBudget === null && (
                 <div className="text-xs text-brand-orange bg-brand-orange/10 p-3 rounded-lg">
                   {dict.categories.budgetNotLoaded}
                 </div>
               )}
             </div>
-          </DialogContent>
+          </DialogTemplateCategoryContent>
         </Dialog>
       </div>
       {loading && <div className="text-sm text-brand-cyan/60">{dict.categories.loading}</div>}

@@ -32,7 +32,8 @@ const BudgetTemplateSelector: React.FC<Props> = ({
   applyingTemplateId,
   hasExistingCategories = false,
 }) => {
-  const dict = getDictionary(lang).budget;
+  // We fetch dictionary but don't early-return before hooks to keep hook order stable.
+  const dict = getDictionary(lang)?.budget;
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeTags, setActiveTags] = useState<string[]>([]);
@@ -69,6 +70,19 @@ const BudgetTemplateSelector: React.FC<Props> = ({
     if (isRatio(portion)) return (baseBudget * (portion || 0)).toFixed(2);
     if (typeof portion === 'number') return portion.toFixed(2);
     return undefined;
+  }
+
+  if (!dict) {
+    return (
+      <div
+        className="p-4 text-xs rounded-lg border border-brand-orange/40 bg-brand-orange/10 text-brand-orange"
+        role="alert"
+      >
+        {lang === 'pl'
+          ? 'Nie udało się załadować tłumaczeń budżetu. Spróbuj ponownie później.'
+          : 'Failed to load budget dictionary. Please try again later.'}
+      </div>
+    );
   }
 
   return (
