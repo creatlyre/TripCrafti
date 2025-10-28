@@ -201,7 +201,7 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
             className="group relative text-sm px-6 py-3 rounded-xl border-2 border-brand-cyan/40 bg-brand-cyan/10 text-brand-cyan hover:bg-brand-cyan/90 hover:text-brand-navy hover:border-brand-cyan hover:shadow-xl hover:shadow-brand-cyan/30 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-cyan/50 hover:scale-105 transition-all duration-300 font-semibold active:scale-95"
           >
             <span className="relative z-10 flex items-center gap-2">
-              📊 {lang === 'pl' ? 'Eksport CSV' : 'CSV Export'}
+              📊 {dict.dashboard.csvExport || (lang === 'pl' ? 'Eksport CSV' : 'CSV Export')}
             </span>
             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-cyan/80 to-brand-cyan/60 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
           </button>
@@ -294,7 +294,7 @@ const BudgetDashboard: React.FC<Props> = ({ trip, lang = 'pl' }) => {
       {actionError && <div className="text-sm text-brand-orange bg-brand-orange/10 p-3 rounded-lg">{actionError}</div>}
       <BudgetSummaryWidget tripId={trip.id} refreshToken={summaryRefresh} budgetMode={budgetMode} />
       {/* Post trip report appears after end date */}
-      <BudgetPostTripReport trip={trip} />
+      <BudgetPostTripReport trip={trip} lang={lang} />
 
       {/* Mobile: Stack layout, Desktop: Grid layout */}
       <div className="space-y-6 lg:grid lg:grid-cols-3 lg:gap-8 lg:space-y-0">

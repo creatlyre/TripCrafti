@@ -65,14 +65,12 @@ const DialogTemplateCategoryContent = React.forwardRef<
       ref={ref}
       className={cn(
         'fixed left-1/2 top-1/2 z-50 grid w-full max-w-4xl -translate-x-1/2 -translate-y-1/2 gap-4 border border-brand-navy-lighter bg-brand-navy-dark p-6 shadow-2xl shadow-black/100 sm:rounded-xl',
-        // Ensure no accidental translucency from parent utility classes
-        'before:absolute before:inset-0 before:bg-brand-navy-dark before:content-[""] before:rounded-xl before:pointer-events-none',
         className
       )}
       {...props}
     >
-      {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-100 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand-cyan focus:ring-offset-2 focus:ring-offset-brand-navy">
+      <div className="relative z-10">{children}</div>
+      <DialogPrimitive.Close className="absolute right-4 top-4 z-20 rounded-sm opacity-100 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand-cyan focus:ring-offset-2 focus:ring-offset-brand-navy">
         <X className="h-4 w-4 text-brand-cyan" />
         <span className="sr-only" aria-hidden="true" />
       </DialogPrimitive.Close>

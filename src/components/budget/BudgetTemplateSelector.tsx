@@ -14,7 +14,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BUDGET_CATEGORY_TEMPLATES, isRatio, type BudgetCategoryTemplateSet } from '@/lib/budget.templates';
-import { getDictionary, type Lang } from '@/lib/i18n';
+import { getDictionary, type Lang, type Dictionary } from '@/lib/i18n';
 
 interface Props {
   lang?: Lang;
@@ -22,6 +22,32 @@ interface Props {
   onApply: (templateId: string) => void;
   applyingTemplateId?: string | null;
   hasExistingCategories?: boolean;
+}
+
+// Helper function to get localized template data
+function getLocalizedTemplate(
+  templateId: string,
+  dict: Dictionary['budget'] | undefined,
+  fallbackTemplate: BudgetCategoryTemplateSet
+): BudgetCategoryTemplateSet {
+  const localizedTemplate = dict?.budgetTemplates?.templates?.[templateId];
+  if (!localizedTemplate) {
+    return fallbackTemplate;
+  }
+
+  return {
+    id: templateId,
+    label: localizedTemplate.label || fallbackTemplate.label,
+    description: localizedTemplate.description || fallbackTemplate.description,
+    tags: fallbackTemplate.tags, // Keep original tags for filtering logic
+    emoji: fallbackTemplate.emoji,
+    categories: localizedTemplate.categories || fallbackTemplate.categories,
+  };
+}
+
+// Helper function to get localized tag display
+function getLocalizedTag(tag: string, dict: Dictionary['budget'] | undefined): string {
+  return dict?.budgetTemplates?.tags?.[tag] || tag;
 }
 
 // Redesigned selector: listbox + detail preview pane with single Apply action.
@@ -38,6 +64,11 @@ const BudgetTemplateSelector: React.FC<Props> = ({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeTags, setActiveTags] = useState<string[]>([]);
 
+  // Get localized templates
+  const localizedTemplates = useMemo(() => {
+    return BUDGET_CATEGORY_TEMPLATES.map((template) => getLocalizedTemplate(template.id, dict, template));
+  }, [dict]);
+
   const allTags = useMemo(() => Array.from(new Set(BUDGET_CATEGORY_TEMPLATES.flatMap((t) => t.tags || []))).sort(), []);
 
   const toggleTag = (tag: string) => {
@@ -46,13 +77,13 @@ const BudgetTemplateSelector: React.FC<Props> = ({
 
   const filtered = useMemo(() => {
     const lowerQ = query.toLowerCase().trim();
-    return BUDGET_CATEGORY_TEMPLATES.filter((t) => {
+    return localizedTemplates.filter((t) => {
       if (activeTags.length && !activeTags.every((ag) => (t.tags || []).includes(ag))) return false;
       if (!lowerQ) return true;
       const haystack = [t.label, t.description, ...t.categories.map((c) => c.name), ...(t.tags || [])];
       return haystack.some((v) => v.toLowerCase().includes(lowerQ));
     });
-  }, [query, activeTags]);
+  }, [query, activeTags, localizedTemplates]);
 
   const selectedTemplate: BudgetCategoryTemplateSet | undefined = useMemo(
     () => filtered.find((t) => t.id === selectedId) || filtered[0],
@@ -191,12 +222,14 @@ const BudgetTemplateSelector: React.FC<Props> = ({
           <div className="space-y-2">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
               <span className="text-brand-cyan">📊</span>
-              {lang === 'pl' ? 'Wybierz szablon budżetu' : 'Choose Budget Template'}
+              {dict?.categories.templateSelectorTitle ||
+                (lang === 'pl' ? 'Wybierz szablon budżetu' : 'Choose Budget Template')}
             </h3>
             <p className="text-sm text-brand-cyan/80 leading-relaxed">
-              {lang === 'pl'
-                ? 'Skorzystaj z gotowych szablonów kategorii budżetowych dostosowanych do różnych typów podróży.'
-                : 'Use pre-made budget category templates tailored for different types of trips.'}
+              {dict?.categories.templateSelectorSubtitle ||
+                (lang === 'pl'
+                  ? 'Skorzystaj z gotowych szablonów kategorii budżetowych dostosowanych do różnych typów podróży.'
+                  : 'Use pre-made budget category templates tailored for different types of trips.')}
             </p>
           </div>
 
@@ -206,8 +239,11 @@ const BudgetTemplateSelector: React.FC<Props> = ({
               🔍
             </div>
             <Input
-              aria-label={lang === 'pl' ? 'Szukaj szablonów' : 'Search templates'}
-              placeholder={lang === 'pl' ? 'Wpisz nazwę szablonu...' : 'Type template name...'}
+              aria-label={dict?.categories.searchAriaLabel || (lang === 'pl' ? 'Szukaj szablonów' : 'Search templates')}
+              placeholder={
+                dict?.categories.searchPlaceholderText ||
+                (lang === 'pl' ? 'Wpisz nazwę szablonu...' : 'Type template name...')
+              }
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="bg-brand-navy-dark/80 border-brand-navy-lighter/60 hover:border-brand-cyan/40 focus:border-brand-cyan pl-10 pr-10 h-11 text-white placeholder:text-brand-cyan/40 rounded-xl transition-all duration-200 shadow-inner"
@@ -216,7 +252,7 @@ const BudgetTemplateSelector: React.FC<Props> = ({
               <button
                 onClick={() => setQuery('')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-cyan/60 hover:text-brand-orange hover:bg-brand-orange/10 focus:outline-none focus:ring-2 focus:ring-brand-orange/50 rounded-full p-1 transition-all duration-200"
-                aria-label={lang === 'pl' ? 'Wyczyść' : 'Clear'}
+                aria-label={dict?.categories.clearSearch || (lang === 'pl' ? 'Wyczyść' : 'Clear')}
               >
                 ✕
               </button>
@@ -226,11 +262,11 @@ const BudgetTemplateSelector: React.FC<Props> = ({
           {/* Enhanced tag filters */}
           <div className="space-y-2">
             <h4 className="text-xs font-semibold text-brand-cyan/80 uppercase tracking-wider">
-              {lang === 'pl' ? 'Filtry' : 'Filters'}
+              {dict?.categories.filtersLabel || (lang === 'pl' ? 'Filtry' : 'Filters')}
             </h4>
             <div
               className="flex flex-wrap gap-2 max-h-24 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-brand-navy-dark scrollbar-thumb-brand-cyan/30"
-              aria-label="Tag filters"
+              aria-label={dict?.categories.tagFiltersLabel || (lang === 'pl' ? 'Filtry tagów' : 'Tag filters')}
             >
               {allTags.map((tag) => {
                 const active = activeTags.includes(tag);
@@ -246,7 +282,7 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                     }`}
                     aria-pressed={active}
                   >
-                    {tag}
+                    {getLocalizedTag(tag, dict)}
                   </button>
                 );
               })}
@@ -256,7 +292,7 @@ const BudgetTemplateSelector: React.FC<Props> = ({
           {/* Enhanced template list */}
           <div className="flex-1 space-y-2">
             <h4 className="text-xs font-semibold text-brand-cyan/80 uppercase tracking-wider">
-              {lang === 'pl' ? 'Szablony' : 'Templates'}
+              {dict?.categories.templatesLabel || (lang === 'pl' ? 'Szablony' : 'Templates')}
               <span className="ml-2 text-brand-cyan/60 font-normal">({filtered.length})</span>
             </h4>
             <ul
@@ -307,7 +343,10 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                           {t.label}
                         </div>
                         <div className="text-xs text-brand-cyan/60 group-hover:text-brand-cyan/80 line-clamp-1 mt-1">
-                          {(t.tags || []).slice(0, 3).join(' • ')}
+                          {(t.tags || [])
+                            .slice(0, 3)
+                            .map((tag) => getLocalizedTag(tag, dict))
+                            .join(' • ')}
                         </div>
                       </div>
                       {selected && <div className="flex-shrink-0 text-brand-cyan animate-pulse">✓</div>}
@@ -319,10 +358,11 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                 <li className="p-8 text-center space-y-2">
                   <div className="text-2xl text-brand-cyan/40">🔍</div>
                   <div className="text-sm text-brand-cyan/60 font-medium">
-                    {lang === 'pl' ? 'Brak wyników' : 'No matches found'}
+                    {dict?.categories.noMatchesFound || (lang === 'pl' ? 'Brak wyników' : 'No matches found')}
                   </div>
                   <div className="text-xs text-brand-cyan/40">
-                    {lang === 'pl' ? 'Spróbuj innych słów kluczowych' : 'Try different keywords'}
+                    {dict?.categories.tryDifferentKeywords ||
+                      (lang === 'pl' ? 'Spróbuj innych słów kluczowych' : 'Try different keywords')}
                   </div>
                 </li>
               )}
@@ -350,7 +390,8 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                     <h4 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
                       {selectedTemplate.label}
                       <span className="px-2 py-1 bg-brand-cyan/20 text-brand-cyan text-xs font-semibold rounded-full border border-brand-cyan/40">
-                        {selectedTemplate.categories.length} {lang === 'pl' ? 'kategorii' : 'categories'}
+                        {selectedTemplate.categories.length}{' '}
+                        {dict?.categories.categoriesLabel || (lang === 'pl' ? 'kategorii' : 'categories')}
                       </span>
                     </h4>
                     <p className="text-sm leading-relaxed text-brand-cyan/90 mb-3">{selectedTemplate.description}</p>
@@ -360,7 +401,7 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                           key={tag}
                           className="px-3 py-1 rounded-full bg-brand-navy-light/80 text-xs text-brand-cyan/80 border border-brand-navy-lighter/60 font-medium"
                         >
-                          {tag}
+                          {getLocalizedTag(tag, dict)}
                         </span>
                       ))}
                     </div>
@@ -372,10 +413,11 @@ const BudgetTemplateSelector: React.FC<Props> = ({
               <div className="space-y-3 p-4 bg-gradient-to-r from-brand-navy-dark/40 to-brand-navy-light/20 rounded-xl border border-brand-cyan/10">
                 <div className="flex items-center justify-between">
                   <h5 className="text-sm font-semibold text-brand-cyan/90">
-                    {lang === 'pl' ? 'Dystrybucja budżetu' : 'Budget Distribution'}
+                    {dict?.categories.budgetDistribution ||
+                      (lang === 'pl' ? 'Dystrybucja budżetu' : 'Budget Distribution')}
                   </h5>
                   <span className="text-xs text-brand-cyan/60 font-mono">
-                    {baseBudget.toLocaleString()} {lang === 'pl' ? 'zł' : '$'}
+                    {baseBudget.toLocaleString()} {dict?.categories.currencySymbol || (lang === 'pl' ? 'zł' : '$')}
                   </span>
                 </div>
                 <div className="relative">
@@ -413,7 +455,8 @@ const BudgetTemplateSelector: React.FC<Props> = ({
               <div className="space-y-3">
                 <h5 className="text-sm font-semibold text-brand-cyan/90 flex items-center gap-2">
                   <span className="w-2 h-2 bg-brand-cyan rounded-full animate-pulse" />
-                  {lang === 'pl' ? 'Szczegóły kategorii' : 'Category Details'}
+                  {dict?.categories.categoryDetailsHeading ||
+                    (lang === 'pl' ? 'Szczegóły kategorii' : 'Category Details')}
                 </h5>
                 <div className="space-y-2">
                   {selectedTemplate.categories.map((c, idx) => {
@@ -445,7 +488,9 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                               </div>
                               {percent !== null && (
                                 <div className="text-xs text-brand-cyan/60 mt-1">
-                                  {percent}% {lang === 'pl' ? 'całkowitego budżetu' : 'of total budget'}
+                                  {percent}%{' '}
+                                  {dict?.categories.percentOfBudget ||
+                                    (lang === 'pl' ? '% całkowitego budżetu' : '% of total budget')}
                                 </div>
                               )}
                             </div>
@@ -456,7 +501,7 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                             )}
                             {amount && (
                               <div className="text-xs text-brand-cyan/70 whitespace-nowrap">
-                                {amount} {lang === 'pl' ? 'zł' : '$'}
+                                {amount} {dict?.categories.currencySymbol || (lang === 'pl' ? 'zł' : '$')}
                               </div>
                             )}
                           </div>
@@ -472,12 +517,13 @@ const BudgetTemplateSelector: React.FC<Props> = ({
               <div className="space-y-4 max-w-md">
                 <div className="text-6xl text-brand-cyan/30">📊</div>
                 <h4 className="text-lg font-semibold text-white">
-                  {lang === 'pl' ? 'Wybierz szablon' : 'Select a Template'}
+                  {dict?.categories.selectTemplateText || (lang === 'pl' ? 'Wybierz szablon' : 'Select a Template')}
                 </h4>
                 <p className="text-sm text-brand-cyan/70 leading-relaxed">
-                  {lang === 'pl'
-                    ? 'Wybierz szablon z listy po lewej stronie, aby zobaczyć podgląd kategorii budżetowych i ich rozkład.'
-                    : 'Choose a template from the list on the left to see a preview of budget categories and their distribution.'}
+                  {dict?.categories.selectTemplatePrompt ||
+                    (lang === 'pl'
+                      ? 'Wybierz szablon z listy po lewej stronie, aby zobaczyć podgląd kategorii budżetowych i ich rozkład.'
+                      : 'Choose a template from the list on the left to see a preview of budget categories and their distribution.')}
                 </p>
               </div>
             </div>
@@ -493,12 +539,10 @@ const BudgetTemplateSelector: React.FC<Props> = ({
             <div className="space-y-1">
               <div className="text-sm font-medium text-brand-cyan/90">
                 {selectedTemplate
-                  ? lang === 'pl'
-                    ? 'Wybrany szablon:'
-                    : 'Selected template:'
-                  : lang === 'pl'
-                    ? 'Wybierz szablon z listy.'
-                    : 'Choose a template from the list.'}
+                  ? dict?.categories.selectedTemplateLabel ||
+                    (lang === 'pl' ? 'Wybrany szablon:' : 'Selected template:')
+                  : dict?.categories.chooseFromList ||
+                    (lang === 'pl' ? 'Wybierz szablon z listy.' : 'Choose a template from the list.')}
               </div>
               {selectedTemplate && (
                 <div className="text-lg font-bold text-white flex items-center gap-2">
@@ -541,7 +585,9 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                   <span aria-hidden className="text-2xl leading-none text-emerald-100">
                     ⚡
                   </span>
-                  <span className="text-lg">{lang === 'pl' ? 'Zastosuj szablon' : 'Apply Template'}</span>
+                  <span className="text-lg">
+                    {dict?.categories.applyTemplateButton || (lang === 'pl' ? 'Zastosuj szablon' : 'Apply Template')}
+                  </span>
                 </>
               )}
             </span>
