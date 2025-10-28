@@ -72,6 +72,101 @@ const BudgetTemplateSelector: React.FC<Props> = ({
     return undefined;
   }
 
+  // Enhanced category icon mapping
+  function getCategoryIcon(categoryName: string, iconName?: string): string {
+    // Priority 1: Use specific icon mapping based on category name
+    const categoryIconMap: Record<string, string> = {
+      // Transportation
+      transport: '🚌',
+      fuel: '⛽',
+      'local transport': '🚇',
+      flight: '✈️',
+      taxi: '🚕',
+      car: '🚗',
+      bus: '🚌',
+      train: '🚂',
+
+      // Accommodation
+      accommodation: '🏨',
+      hotel: '🏨',
+      hostel: '🏠',
+      airbnb: '🏡',
+      camping: '⛺',
+
+      // Food & Dining
+      food: '🍽️',
+      meals: '🍽️',
+      dining: '🍽️',
+      restaurant: '🍽️',
+      groceries: '🛒',
+      snacks: '🍿',
+
+      // Entertainment & Activities
+      entertainment: '🎭',
+      activities: '🏃',
+      'activities / excursions': '🗺️',
+      sightseeing: '🗽',
+      tours: '📸',
+      museum: '🏛️',
+      nightlife: '🍸',
+      shopping: '🛍️',
+      'souvenirs / shopping': '🛍️',
+
+      // Miscellaneous
+      'misc / incidental': '📋',
+      'emergency fund': '🚨',
+      insurance: '🛡️',
+      documents: '📄',
+      visa: '📋',
+      'networking / entertainment': '🤝',
+
+      // Beach/Resort specific
+      'beach activities': '🏖️',
+      'water sports': '🏄',
+      'resort amenities': '🌴',
+    };
+
+    // Check for exact match (case insensitive)
+    const lowerName = categoryName.toLowerCase();
+    if (categoryIconMap[lowerName]) {
+      return categoryIconMap[lowerName];
+    }
+
+    // Priority 2: Use partial matching for common keywords
+    if (lowerName.includes('transport') || lowerName.includes('travel')) return '🚌';
+    if (lowerName.includes('food') || lowerName.includes('meal') || lowerName.includes('dining')) return '🍽️';
+    if (lowerName.includes('accommodation') || lowerName.includes('hotel') || lowerName.includes('stay')) return '🏨';
+    if (lowerName.includes('entertainment') || lowerName.includes('activity') || lowerName.includes('fun')) return '🎭';
+    if (lowerName.includes('shopping') || lowerName.includes('souvenir')) return '🛍️';
+    if (lowerName.includes('emergency') || lowerName.includes('fund')) return '🚨';
+    if (lowerName.includes('fuel') || lowerName.includes('gas')) return '⛽';
+    if (lowerName.includes('beach') || lowerName.includes('sun')) return '🏖️';
+
+    // Priority 3: Use icon_name as fallback for generic mapping
+    if (iconName) {
+      const iconMap: Record<string, string> = {
+        bus: '🚌',
+        bed: '🏨',
+        utensils: '🍽️',
+        ticket: '🎭',
+        fuel: '⛽',
+        'alert-triangle': '🚨',
+        play: '🎮',
+        'more-horizontal': '📋',
+        compass: '🧭',
+        plane: '✈️',
+        car: '🚗',
+        home: '🏠',
+      };
+      if (iconMap[iconName]) {
+        return iconMap[iconName];
+      }
+    }
+
+    // Default fallback
+    return '💰';
+  }
+
   if (!dict) {
     return (
       <div
@@ -199,7 +294,9 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                             : 'bg-brand-navy-dark/60 text-brand-cyan/70 group-hover:bg-brand-navy-dark group-hover:text-brand-cyan'
                         }`}
                       >
-                        {t.emoji || '📋'}
+                        <span role="img" aria-hidden="true">
+                          {t.emoji || '📋'}
+                        </span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div
@@ -245,7 +342,9 @@ const BudgetTemplateSelector: React.FC<Props> = ({
               <header className="space-y-4 p-4 bg-gradient-to-r from-brand-navy-dark/60 to-brand-navy-light/40 rounded-xl border border-brand-cyan/20 backdrop-blur-sm">
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-brand-cyan/20 to-brand-cyan/10 rounded-2xl flex items-center justify-center text-2xl border-2 border-brand-cyan/30 shadow-lg shadow-brand-cyan/10">
-                    {selectedTemplate.emoji || '📊'}
+                    <span role="img" aria-hidden="true">
+                      {selectedTemplate.emoji || '📊'}
+                    </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
@@ -331,15 +430,11 @@ const BudgetTemplateSelector: React.FC<Props> = ({
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <div
-                              className={`w-10 h-10 flex items-center justify-center rounded-lg bg-${accentColor}/20 border border-${accentColor}/40 group-hover:bg-${accentColor}/30 transition-colors`}
+                              className={`w-12 h-12 flex items-center justify-center rounded-xl bg-${accentColor}/20 border-2 border-${accentColor}/30 group-hover:bg-${accentColor}/30 group-hover:border-${accentColor}/50 transition-all duration-200 shadow-lg`}
                             >
-                              {c.icon_name ? (
-                                <span className={`text-sm font-bold text-${accentColor}`}>
-                                  {c.icon_name.slice(0, 2).toUpperCase()}
-                                </span>
-                              ) : (
-                                <span className={`text-${accentColor}`}>💰</span>
-                              )}
+                              <span className="text-xl" role="img" aria-hidden="true">
+                                {getCategoryIcon(c.name, c.icon_name)}
+                              </span>
                             </div>
                             <div className="min-w-0 flex-1">
                               <div
@@ -407,7 +502,11 @@ const BudgetTemplateSelector: React.FC<Props> = ({
               </div>
               {selectedTemplate && (
                 <div className="text-lg font-bold text-white flex items-center gap-2">
-                  {selectedTemplate.emoji && <span aria-hidden>{selectedTemplate.emoji}</span>}
+                  {selectedTemplate.emoji && (
+                    <span role="img" aria-hidden="true">
+                      {selectedTemplate.emoji}
+                    </span>
+                  )}
                   {selectedTemplate.label}
                 </div>
               )}
