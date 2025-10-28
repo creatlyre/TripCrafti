@@ -16,18 +16,24 @@ describe('BudgetTemplateSelector', () => {
   it('renders templates and filters by search', () => {
     const handler = vi.fn();
     render(<BudgetTemplateSelector onApply={handler} tripBudget={1000} />);
-    // Expect at least one known template label
-    expect(screen.getByText(/City Break/i)).toBeInTheDocument();
+    // Expect at least one known template label (appears twice: list + preview)
+    const cityInstances = screen.getAllByText(/City Break/i);
+    expect(cityInstances.length).toBeGreaterThan(0);
     const search = screen.getByPlaceholderText(/Search/i);
     fireEvent.change(search, { target: { value: 'Business' } });
-    expect(screen.getByText(/Business Trip/i)).toBeInTheDocument();
+    const businessMatches = screen.getAllByText(/Business Trip/i);
+    expect(businessMatches.length).toBeGreaterThan(0);
   });
 
-  it('invokes onApply when apply button clicked', () => {
+  it('invokes onApply after selecting template and clicking apply', () => {
     const handler = vi.fn();
     render(<BudgetTemplateSelector onApply={handler} tripBudget={2000} />);
-    const btn = screen.getAllByRole('button', { name: /Apply|Zastosuj/i })[0];
-    fireEvent.click(btn);
+    // Select second template to ensure selection handler works
+    const listItems = screen.getAllByRole('option');
+    expect(listItems.length).toBeGreaterThan(1);
+    fireEvent.click(listItems[1]);
+    const applyBtn = screen.getByRole('button', { name: /Apply Template|Zastosuj szablon/i });
+    fireEvent.click(applyBtn);
     expect(handler).toHaveBeenCalledTimes(1);
   });
 });

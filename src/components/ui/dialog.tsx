@@ -53,6 +53,34 @@ const DialogContent = React.forwardRef<
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
+// Opaque variant for budget template/category dialogs.
+// Forces fully solid background & removes any semi-transparent theme tokens.
+const DialogTemplateCategoryContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        'fixed left-1/2 top-1/2 z-50 grid w-full max-w-4xl -translate-x-1/2 -translate-y-1/2 gap-4 border border-brand-navy-lighter bg-brand-navy-dark p-6 shadow-2xl shadow-black/50 sm:rounded-xl',
+        // Ensure no accidental translucency from parent utility classes
+        'before:absolute before:inset-0 before:bg-brand-navy-dark before:content-[""] before:rounded-xl before:pointer-events-none',
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand-cyan focus:ring-offset-2 focus:ring-offset-brand-navy">
+        <X className="h-4 w-4 text-brand-cyan" />
+        <span className="sr-only">Close</span>
+      </DialogPrimitive.Close>
+    </DialogPrimitive.Content>
+  </DialogPortal>
+));
+DialogTemplateCategoryContent.displayName = 'DialogTemplateCategoryContent';
+
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props} />
 );
@@ -90,6 +118,7 @@ export {
   DialogClose,
   DialogTrigger,
   DialogContent,
+  DialogTemplateCategoryContent,
   DialogHeader,
   DialogFooter,
   DialogTitle,

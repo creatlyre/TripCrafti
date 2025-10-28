@@ -16,6 +16,8 @@ export interface BudgetCategoryTemplateSet {
   label: string;
   description: string;
   categories: BudgetCategoryTemplateItem[];
+  tags?: string[]; // classification keywords for filtering (lowercase)
+  emoji?: string; // optional illustrative emoji shown in list
 }
 
 // Refactored to match streamlined UI (3 core templates) displayed in budget category modal.
@@ -25,6 +27,8 @@ export const BUDGET_CATEGORY_TEMPLATES: BudgetCategoryTemplateSet[] = [
     id: 'city_break_basic',
     label: 'City Break',
     description: 'Short city getaway (2–4 days) with food, attractions & transit.',
+    tags: ['city', 'short', 'weekend'],
+    emoji: '🏙️',
     categories: [
       { name: 'Transport', icon_name: 'bus', suggested_portion: 0.25 },
       { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.35 },
@@ -36,6 +40,8 @@ export const BUDGET_CATEGORY_TEMPLATES: BudgetCategoryTemplateSet[] = [
     id: 'road_trip',
     label: 'Road Trip',
     description: 'Driving adventure with fuel, lodging & flexible stops.',
+    tags: ['adventure', 'driving', 'flexible'],
+    emoji: '🚗',
     categories: [
       { name: 'Fuel', icon_name: 'fuel', suggested_portion: 0.3 },
       { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.25 },
@@ -48,6 +54,8 @@ export const BUDGET_CATEGORY_TEMPLATES: BudgetCategoryTemplateSet[] = [
     id: 'family_holiday',
     label: 'Family Holiday',
     description: 'Family-friendly trip with balanced spending.',
+    tags: ['family', 'balanced', 'multi-age'],
+    emoji: '👨‍👩‍👧',
     categories: [
       { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.4 },
       { name: 'Transport', icon_name: 'bus', suggested_portion: 0.25 },
@@ -60,6 +68,8 @@ export const BUDGET_CATEGORY_TEMPLATES: BudgetCategoryTemplateSet[] = [
     id: 'business_trip',
     label: 'Business Trip',
     description: 'Work-focused travel with emphasis on lodging & meals with some incidentals.',
+    tags: ['business', 'work', 'urban'],
+    emoji: '💼',
     categories: [
       { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.45 },
       { name: 'Meals', icon_name: 'utensils', suggested_portion: 0.25 },
@@ -72,6 +82,8 @@ export const BUDGET_CATEGORY_TEMPLATES: BudgetCategoryTemplateSet[] = [
     id: 'backpacking',
     label: 'Backpacking',
     description: 'Budget-conscious multi-stop travel with transit & hostels.',
+    tags: ['budget', 'adventure', 'multi-stop'],
+    emoji: '🎒',
     categories: [
       { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.25 },
       { name: 'Transport', icon_name: 'bus', suggested_portion: 0.3 },
@@ -84,6 +96,8 @@ export const BUDGET_CATEGORY_TEMPLATES: BudgetCategoryTemplateSet[] = [
     id: 'beach_holiday',
     label: 'Beach Holiday',
     description: 'Relaxation-focused coastal stay: lodging & food dominate.',
+    tags: ['beach', 'relax', 'sun'],
+    emoji: '🏖️',
     categories: [
       { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.4 },
       { name: 'Food', icon_name: 'utensils', suggested_portion: 0.25 },
@@ -96,6 +110,8 @@ export const BUDGET_CATEGORY_TEMPLATES: BudgetCategoryTemplateSet[] = [
     id: 'luxury_getaway',
     label: 'Luxury Getaway',
     description: 'Premium experience with upscale lodging & dining.',
+    tags: ['luxury', 'premium', 'dining'],
+    emoji: '✨',
     categories: [
       { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.5 },
       { name: 'Fine Dining', icon_name: 'utensils', suggested_portion: 0.25 },
@@ -108,6 +124,8 @@ export const BUDGET_CATEGORY_TEMPLATES: BudgetCategoryTemplateSet[] = [
     id: 'ski_trip',
     label: 'Ski Trip',
     description: 'Mountain travel with passes, gear & lodging.',
+    tags: ['winter', 'snow', 'sport'],
+    emoji: '🎿',
     categories: [
       { name: 'Accommodation', icon_name: 'bed', suggested_portion: 0.35 },
       { name: 'Ski Pass & Gear', icon_name: 'snowflake', suggested_portion: 0.25 },
@@ -120,6 +138,8 @@ export const BUDGET_CATEGORY_TEMPLATES: BudgetCategoryTemplateSet[] = [
     id: 'adventure_trek',
     label: 'Adventure Trek',
     description: 'Outdoor trekking with gear, guides & permits.',
+    tags: ['adventure', 'outdoor', 'trek'],
+    emoji: '🥾',
     categories: [
       { name: 'Guides / Permits', icon_name: 'map', suggested_portion: 0.25 },
       { name: 'Gear / Equipment', icon_name: 'backpack', suggested_portion: 0.25 },
