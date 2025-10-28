@@ -177,6 +177,7 @@ CRUD: destynacja, zakres dat, waluta, budżet bazowy, lodging (próba geocodingu
 * Prepaid vs on‑trip
 * Raport (`/api/trips/:id/budget/report`)
 * Eksport CSV (`/api/trips/:id/expenses/export.csv`)
+* Rozszerzone szablony kategorii budżetu z responsywnym selektorem (wyszukiwalny grid + przeliczenie % na kwoty)
 
 ### FX System
 * Cache 6h
