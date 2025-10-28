@@ -141,6 +141,9 @@ export interface Dictionary {
       confirmDeleteCategory?: string;
       simpleModeHint?: string;
       templatesNote?: string;
+      applyOverwriteHint?: string;
+      applyingAnnounce?: string;
+      appliedAnnounce?: string;
     };
     categoryTemplates?: Record<
       string,
@@ -819,6 +822,9 @@ export const dictionaries: Record<Lang, Dictionary> = {
         simpleModeHint:
           'Skup się na zmiennych wydatkach w trakcie podróży (noclegi/bilety opłacone z góry oznacz jako przedpłaty).',
         templatesNote: 'Kwoty oparte na budżecie podróży: wartości procentowe zostaną przeliczone na konkretne kwoty.',
+        applyOverwriteHint: 'Zastosowanie szablonu doda lub nadpisze istniejące kategorie.',
+        applyingAnnounce: 'Stosowanie szablonu w toku…',
+        appliedAnnounce: 'Szablon zastosowany.',
       },
       categoryTemplates: {
         city_break_basic: {
@@ -1705,6 +1711,9 @@ export const dictionaries: Record<Lang, Dictionary> = {
         confirmDeleteCategory: 'Delete this category?',
         simpleModeHint: 'Focus on variable on-trip spending (lodging / tickets paid upfront can be marked prepaid).',
         templatesNote: 'Amounts based on trip budget: percentage values will be converted into concrete amounts.',
+        applyOverwriteHint: 'Applying a template will add or overwrite existing categories.',
+        applyingAnnounce: 'Applying template in progress…',
+        appliedAnnounce: 'Template applied.',
       },
       categoryTemplates: {
         city_break_basic: {

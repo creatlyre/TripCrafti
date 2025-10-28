@@ -21,10 +21,17 @@ interface Props {
   tripBudget?: number | null;
   onApply: (templateId: string) => void;
   applyingTemplateId?: string | null;
+  hasExistingCategories?: boolean;
 }
 
 // Redesigned selector: listbox + detail preview pane with single Apply action.
-const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onApply, applyingTemplateId }) => {
+const BudgetTemplateSelector: React.FC<Props> = ({
+  lang = 'en',
+  tripBudget,
+  onApply,
+  applyingTemplateId,
+  hasExistingCategories = false,
+}) => {
   const dict = getDictionary(lang).budget;
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -242,6 +249,14 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
                       ? 'Wybierz szablon z listy.'
                       : 'Choose a template from the list.'}
                 </div>
+                {hasExistingCategories && (
+                  <div className="text-[10px] -mt-1 -mb-1 text-amber-300/80 font-medium tracking-wide" role="note">
+                    {dict?.categories.applyOverwriteHint}
+                  </div>
+                )}
+                <div aria-live="polite" aria-atomic="true" className="sr-only">
+                  {applyingTemplateId ? dict?.categories.applyingAnnounce : ''}
+                </div>
                 <Button
                   disabled={!selectedTemplate || applyingTemplateId === selectedTemplate.id}
                   onClick={apply}
@@ -249,9 +264,14 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
                 >
                   <span className="flex items-center gap-2">
                     {applyingTemplateId === selectedTemplate?.id ? (
-                      <span aria-hidden className="inline-block size-4 animate-spin rounded-full border-2 border-emerald-900/40 border-t-emerald-100" />
+                      <span
+                        aria-hidden
+                        className="inline-block size-4 animate-spin rounded-full border-2 border-emerald-900/40 border-t-emerald-100"
+                      />
                     ) : (
-                      <span aria-hidden className="text-base leading-none text-emerald-100">⚡</span>
+                      <span aria-hidden className="text-base leading-none text-emerald-100">
+                        ⚡
+                      </span>
                     )}
                     <span>
                       {applyingTemplateId === selectedTemplate?.id
@@ -261,7 +281,10 @@ const BudgetTemplateSelector: React.FC<Props> = ({ lang = 'en', tripBudget, onAp
                           : 'Apply Template'}
                     </span>
                   </span>
-                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-300 shadow ring-2 ring-emerald-600/40 animate-ping [animation-duration:2.5s]" aria-hidden />
+                  <span
+                    className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-300 shadow ring-2 ring-emerald-600/40 animate-ping [animation-duration:2.5s]"
+                    aria-hidden
+                  />
                 </Button>
               </div>
             </div>

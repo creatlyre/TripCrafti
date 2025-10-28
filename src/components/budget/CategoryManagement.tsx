@@ -245,6 +245,7 @@ const CategoryManagement: React.FC<Props> = ({ tripId, onCategoryAdded, lang = '
                 tripBudget={tripBudget}
                 applyingTemplateId={applyingTemplateId}
                 onApply={applyTemplate}
+                hasExistingCategories={categories.length > 0}
               />
               {tripBudget === null && (
                 <div className="text-xs text-brand-orange bg-brand-orange/10 p-3 rounded-lg">
